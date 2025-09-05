@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% block body_class %}frontpage{% endblock %}
+{% block content %}
+<div class="container-hero hero-wrap full-bleed">
+  <section class="hero hero-full" style="background-image:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop');">
+    <span class="eyebrow">Safe Transportation &amp; Logistics</span>
+    <h1>Adaptable coordinated factors<br/>Quick Conveyance</h1>
+    <p>Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.</p>
+    <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
+      <a class="btn btn-primary" href="{{ url_for('register') }}" style="text-decoration:none;">Get Started</a>
+      <a class="btn btn-secondary" href="{{ url_for('track') }}" style="text-decoration:none;">Learn More</a>
+    </div>
+  </section>
+</div>
+
+
+<!-- Services section (dynamic) -->
+<section class="services">
+  <div class="services-grid">
+    {% for s in services %}
+    <div class="service-card">
+      <div class="service-icon" aria-hidden="true">
+        {% if s.icon %}<span style="font-size:24px">{{ s.icon }}</span>{% else %}
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 17h1a3 3 0 1 0 6 0h4a3 3 0 1 0 6 0h1v-4l-3-4h-5V7H3v10Zm14-4h2.5l1.5 2v2h-1.18a3.001 3.001 0 0 0-5.64 0H9.82a3.001 3.001 0 0 0-5.64 0H3V9h14v4Z"/></svg>
+        {% endif %}
+      </div>
+      <div class="service-title">{{ s.title }}</div>
+      <div class="service-desc">{{ s.description }}</div>
+    </div>
+    {% else %}
+      <div class="service-card"><div class="service-title">No services yet</div></div>
+    {% endfor %}
+  </div>
+  <div style="text-align:right;margin-top:8px;">
+    <a class="btn btn-secondary" href="{{ url_for('admin_content_manager') }}">Manage Services</a>
+  </div>
+</section>
+
+<!-- About Us section -->
+<section class="about-us">
+  <div class="container">
+    <div class="about-content">
+      <div class="about-image">
+        <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=600&auto=format&fit=crop" alt="Logistics Team" />
+        <div class="experience-badge">
+          <div class="experience-number">25+</div>
+          <div class="experience-text">Years Experience</div>
+        </div>
+      </div>
+      
+      <div class="about-text">
+        <div class="about-eyebrow">ABOUT US</div>
+        <h2>We Are Trusted Logistics & Transport</h2>
+        <p>We are a leading logistics and transportation company with over 25 years of experience in the industry. Our team of experts is dedicated to providing reliable and efficient logistics solutions tailored to your needs.</p>
+        
+        <div class="features-grid">
+          {% for f in features %}
+          <div class="feature-item">
+            <div class="feature-icon">{{ f.icon or '⭐' }}</div>
+            <div class="feature-content">
+              <h4>{{ f.title }}</h4>
+              <p>{{ f.description }}</p>
+            </div>
+          </div>
+          {% else %}
+          <div class="feature-item"><div class="feature-content"><h4>No features yet</h4></div></div>
+          {% endfor %}
+        </div>
+        <div style="text-align:right;margin-top:8px;">
+          <a class="btn btn-secondary" href="{{ url_for('admin_content_manager') }}">Manage Features</a>
+        </div>
+        
+        <div class="about-actions">
+          <a href="{{ url_for('register') }}" class="btn btn-primary">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Choose Us section -->
+<section class="why-choose-us">
+  <div class="container">
+    <div class="why-choose-header">
+      <div class="why-choose-eyebrow">WHY CHOOSE US</div>
+      <h2>We Provide Best Services</h2>
+      <p>We are committed to providing the best logistics and transportation services to our clients with the highest levels of customer satisfaction.</p>
+    </div>
+    
+    <div class="why-choose-grid">
+      <div class="why-choose-card">
+        <div class="why-choose-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+          </svg>
+        </div>
+        <h3>Safe & Secure</h3>
+        <p>Your goods are in safe hands with our secure handling and transportation services.</p>
+      </div>
+      
+      <div class="why-choose-card">
+        <div class="why-choose-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
+          </svg>
+        </div>
+        <h3>On Time Delivery</h3>
+        <p>We guarantee timely delivery of your shipments with our efficient logistics network.</p>
+      </div>
+      
+      <div class="why-choose-card">
+        <div class="why-choose-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 6L12 10.5 8.5 8 12 5.5 15.5 8zM8.5 16L12 13.5 15.5 16 12 18.5 8.5 16z"/>
+          </svg>
+        </div>
+        <h3>24/7 Support</h3>
+        <p>Our dedicated support team is available round the clock to assist you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Our Services section -->
+<section class="our-services">
+  <div class="container">
+    <div class="our-services-header">
+      <div class="our-services-eyebrow">OUR SERVICES</div>
+      <h2>We Provide Best Services</h2>
+      <p>We offer a wide range of logistics services to meet your business needs.</p>
+    </div>
+    
+    <div class="our-services-grid">
+      <div class="our-service-card">
+        <div class="our-service-image">
+          <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=400&auto=format&fit=crop" alt="Air Freight" />
+        </div>
+        <div class="our-service-content">
+          <h3>Air Freight</h3>
+          <p>Fast and reliable air freight services worldwide.</p>
+          <a href="#" class="read-more-link">Read More →</a>
+        </div>
+      </div>
+      
+      <div class="our-service-card">
+        <div class="our-service-image">
+          <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=400&auto=format&fit=crop" alt="Ocean Freight" />
+        </div>
+        <div class="our-service-content">
+          <h3>Ocean Freight</h3>
+          <p>Cost-effective ocean freight solutions.</p>
+          <a href="#" class="read-more-link">Read More →</a>
+        </div>
+      </div>
+      
+      <div class="our-service-card">
+        <div class="our-service-image">
+          <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=400&auto=format&fit=crop" alt="Land Transport" />
+        </div>
+        <div class="our-service-content">
+          <h3>Land Transport</h3>
+          <p>Efficient land transportation services.</p>
+          <a href="#" class="read-more-link">Read More →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact/Quote section -->
+<section class="contact-quote-section">
+  <div class="contact-quote-container">
+    <!-- Left side - Contact Info -->
+    <div class="contact-info">
+      <h2>Need Help With Your Shipping?</h2>
+      <p>Our team is here to help you with all your logistics needs. Contact us today for a free quote.</p>
+      
+      <div class="contact-methods">
+        <div class="contact-method">
+          <div class="contact-icon">
+            📞
+          </div>
+          <div class="contact-details">
+            <h4>Call Us Anytime</h4>
+            <p>+94 21 492 7799</p>
+          </div>
+        </div>
+        
+        <div class="contact-method">
+          <div class="contact-icon">
+            ✉️
+          </div>
+          <div class="contact-details">
+            <h4>Email Us</h4>
+            <p>info@stgfl.com</p>
+          </div>
+        </div>
+        
+        <div class="contact-method">
+          <div class="contact-icon">
+            📍
+          </div>
+          <div class="contact-details">
+            <h4>Visit Us</h4>
+            <p>Ariviyal Nagar, Kilinochchi, Sri Lanka</p>
+          </div>
+        </div>
+
+        <div class="contact-method">
+          <div class="contact-icon">🕒</div>
+          <div class="contact-details">
+            <h4>Business Hours</h4>
+            <p>Mon - Fri: 9:00 AM - 6:00 PM<br>
+               Sat: 9:00 AM - 2:00 PM<br>
+               Sun: Closed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right side - Quote Form -->
+    <div class="quote-form">
+      <h2>Get A Free Quote</h2>
+      <p>Fill out the form below and our team will get back to you as soon as possible.</p>
+      
+      <form class="quote-form-container">
+        <div class="form-row">
+          <input type="text" placeholder="Your Name" class="form-input" required>
+          <input type="email" placeholder="Your Email" class="form-input" required>
+        </div>
+        
+        <input type="text" placeholder="Subject" class="form-input full-width" required>
+        
+        <select class="form-input full-width" required>
+          <option value="">Select Service</option>
+          <option value="air-freight">Air Freight</option>
+          <option value="ocean-freight">Ocean Freight</option>
+          <option value="land-transport">Land Transport</option>
+          <option value="warehousing">Warehousing</option>
+        </select>
+        
+        <textarea placeholder="Your Message" class="form-input full-width message-input" rows="4" required></textarea>
+        
+        <button type="submit" class="send-message-btn">Send Message</button>
+        
+        <button type="submit" class="quote-submit-btn">
+          <i class="bi bi-arrow-up"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Location Map section -->
+<section class="location-map-section">
+  <div class="container">
+    <div class="map-header">
+      <h2>Find Us Here</h2>
+      <p>Visit our office location in Kilinochchi, Sri Lanka</p>
+    </div>
+    
+    <div class="map-container">
+      <iframe 
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.123456789!2d80.39876!3d9.38472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3afe1db0d5c0c5c5%3A0x1234567890abcdef!2sAriviyal%20Nagar%2C%20Kilinochchi%2C%20Sri%20Lanka!5e0!3m2!1sen!2slk!4v1234567890123!5m2!1sen!2slk&markers=color:red%7Clabel:A%7C9.38472,80.39876"
+        width="100%" 
+        height="400" 
+        style="border:0;" 
+        allowfullscreen="" 
+        loading="lazy" 
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+    
+    <div class="location-info">
+      <div class="location-details">
+        <div class="location-item">
+          <div class="location-icon">📍</div>
+          <div>
+            <h4>Address</h4>
+            <p>Ariviyal Nagar, Kilinochchi, Sri Lanka</p>
+          </div>
+        </div>
+        
+        <div class="location-item">
+          <div class="location-icon">🕒</div>
+          <div>
+            <h4>Business Hours</h4>
+            <p>Mon - Fri: 9:00 AM - 6:00 PM<br>
+               Sat: 9:00 AM - 2:00 PM<br>
+               Sun: Closed</p>
+          </div>
+        </div>
+        
+        <div class="location-item">
+          <div class="location-icon">📞</div>
+          <div>
+            <h4>Contact</h4>
+            <p>Phone: +94 21 492 7799<br>
+               Email: info@stgfl.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer section -->
+<footer class="footer">
+  <div class="footer-content">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Company Info -->
+        <div class="footer-column">
+          <div class="footer-logo">
+            <div class="logo-icon">🚛</div>
+            <span class="logo-text">Logistick</span>
+          </div>
+          <p class="footer-description">
+            Your reliable logistics partner for all your transportation and supply chain needs. 
+            We deliver excellence with every shipment.
+          </p>
+          <div class="social-links">
+            <a href="https://facebook.com/yourpage" class="social-link" target="_blank" rel="noopener" aria-label="Facebook">
+              <!-- Facebook Icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.41c0-2.5 1.5-3.88 3.8-3.88 1.1 0 2.25.2 2.25.2v2.47h-1.27c-1.25 0-1.64.78-1.64 1.58v1.9h2.79l-.45 2.91h-2.34V22c4.78-.76 8.44-4.92 8.44-9.94Z"/></svg>
+            </a>
+            <a href="https://instagram.com/yourhandle" class="social-link" target="_blank" rel="noopener" aria-label="Instagram">
+              <!-- Instagram Icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3.5A5.5 5.5 0 1 1 6.5 13 5.5 5.5 0 0 1 12 7.5Zm0 2A3.5 3.5 0 1 0 15.5 13 3.5 3.5 0 0 0 12 9.5Zm5.75-3a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6.5Z"/></svg>
+            </a>
+            <a href="https://twitter.com/yourhandle" class="social-link" target="_blank" rel="noopener" aria-label="Twitter">
+              <!-- Twitter/X Icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 3h4.6l4.22 6.08L16.8 3H21l-7.56 9.96L21.5 21h-4.6l-4.6-6.64L7.2 21H2l7.9-10.4L3 3Z"/></svg>
+            </a>
+            <a href="https://wa.me/94714927799" class="social-link" target="_blank" rel="noopener" aria-label="WhatsApp">
+              <!-- WhatsApp Icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 3.5A10 10 0 0 0 3.54 17.73L2 22l4.39-1.49A10 10 0 1 0 20.5 3.5ZM12 20a8 8 0 0 1-4.07-1.1l-.29-.17-2.61.88.88-2.52-.18-.3A8 8 0 1 1 12 20Zm4.65-5.35c-.25-.13-1.45-.72-1.68-.8s-.39-.12-.56.13-.64.8-.78.97-.29.2-.54.07a6.65 6.65 0 0 1-1.96-1.21 7.34 7.34 0 0 1-1.36-1.68c-.14-.25 0-.38.11-.5s.25-.29.37-.43.16-.25.24-.41a.48.48 0 0 0 0-.46c-.06-.13-.56-1.34-.77-1.83s-.41-.42-.56-.43h-.48a.93.93 0 0 0-.68.32 2.86 2.86 0 0 0-.9 2.11 5 5 0 0 0 1 2.61 11.4 11.4 0 0 0 4.38 4 15 15 0 0 0 1.53.56 3.69 3.69 0 0 0 1.7.11 2.77 2.77 0 0 0 1.82-1.29 2.33 2.33 0 0 0 .16-1.29c-.06-.13-.22-.2-.47-.33Z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-column">
+          <h3 class="footer-title">Quick Links</h3>
+          <ul class="footer-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About Us</a></li>
+            <li><a href="/services">Services</a></li>
+            <li><a href="/track">Track Shipment</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Our Services -->
+        <div class="footer-column">
+          <h3 class="footer-title">Our Services</h3>
+          <ul class="footer-links">
+            <li><a href="#">Air Freight</a></li>
+            <li><a href="#">Ocean Freight</a></li>
+            <li><a href="#">Land Transport</a></li>
+            <li><a href="#">Warehousing</a></li>
+            <li><a href="#">Supply Chain</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="footer-column">
+          <h3 class="footer-title">Contact Info</h3>
+          <div class="contact-info-footer">
+            <div class="contact-item-footer">
+              <span class="contact-icon-footer">📍</span>
+              <p>Sri Lanka German Training Institute, Ariviyal Nagar, Kilinochchi, Sri Lanka</p>
+            </div>
+            <div class="contact-item-footer">
+              <span class="contact-icon-footer">📞</span>
+              <p>+94 21 492 7799</p>
+            </div>
+            <div class="contact-item-footer">
+              <span class="contact-icon-footer">✉️</span>
+              <p>info@stgfl.com</p>
+            </div>
+            <div class="contact-item-footer">
+              <span class="contact-icon-footer">🕒</span>
+              <p>Mon - Fri: 8:30A.M - 16:15P.M</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer Bottom -->
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-content">
+        <p>&copy; 2025 Logistick. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <span>|</span>
+          <a href="#">Terms & Conditions</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function() {
+    const grid = document.querySelector('.services-grid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.service-card'));
+    let selected = null;
+    cards.forEach(card => {
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'button');
+      card.addEventListener('click', toggle);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle.call(card); }
+      });
+    });
+    function toggle() {
+      if (selected === this) {
+        this.classList.remove('selected');
+        this.setAttribute('aria-selected', 'false');
+        grid.classList.remove('dim-others');
+        selected = null;
+        return;
+      }
+      cards.forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-selected', 'false'); });
+      this.classList.add('selected');
+      this.setAttribute('aria-selected', 'true');
+      grid.classList.add('dim-others');
+      selected = this;
+    }
+  })();
+  </script>
+{% endblock %}

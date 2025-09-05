@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🚚</span>
+                    <span class="logo-text">Admin Panel</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/users" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Users</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Shipments</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📚</span>
+                            <span class="nav-text">Books</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/content" class="nav-link">
+                            <span class="nav-icon">🧩</span>
+                            <span class="nav-text">Content</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🎫</span>
+                            <span class="nav-text">Bookings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">💰</span>
+                            <span class="nav-text">Revenue</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📈</span>
+                            <span class="nav-text">Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">A</div>
+                    <div class="user-info">
+                        <div class="user-name">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Top Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="datetime-display">
+                        <span id="current-date"></span>
+                        <span id="current-time"></span>
+                        <span id="current-day"></span>
+                    </div>
+                    <div class="header-actions">
+                        <div class="notification-dropdown">
+                            <button class="notification-btn" id="notificationBtn">
+                                🔔
+                                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                            </button>
+                            <div class="notification-menu" id="notificationMenu">
+                                <div class="notification-header">
+                                    <h3>Notifications</h3>
+                                    <button class="mark-all-read-btn" id="markAllReadBtn">Mark all as read</button>
+                                </div>
+                                <div class="notification-list" id="notificationList">
+                                    <div class="loading-notifications">Loading notifications...</div>
+                                </div>
+                                <div class="notification-footer">
+                                    <button class="view-all-btn">View All Notifications</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown">
+                            <button class="profile-btn" id="profileBtn">👤</button>
+                            <div class="profile-menu" id="profileMenu">
+                                <div class="profile-header">
+                                    <div class="profile-avatar-large">A</div>
+                                    <div class="profile-info">
+                                        <h3>Administrator</h3>
+                                        <p>admin@company.com</p>
+                                    </div>
+                                </div>
+                                <div class="profile-details">
+                                    <div class="detail-item">
+                                        <label>Name:</label>
+                                        <div class="detail-value">
+                                            <span id="adminName">Administrator</span>
+                                            <button class="edit-btn" onclick="editField('name')">✏️</button>
+                                        </div>
+                                        <input type="text" id="adminNameInput" class="edit-input" style="display: none;" value="Administrator">
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Email:</label>
+                                        <div class="detail-value">
+                                            <span id="adminEmail">admin@company.com</span>
+                                            <button class="edit-btn" onclick="editField('email')">✏️</button>
+                                        </div>
+                                        <input type="email" id="adminEmailInput" class="edit-input" style="display: none;" value="admin@company.com">
+                                    </div>
+                                    <div class="detail-item">
+                                        <label>Password:</label>
+                                        <div class="detail-value">
+                                            <span id="adminPassword">••••••••</span>
+                                            <div class="password-actions">
+                                                <button class="toggle-password-btn" onclick="togglePasswordVisibility()" title="Show/Hide Password">👁️</button>
+                                                <button class="edit-btn" onclick="editField('password')">✏️</button>
+                                            </div>
+                                        </div>
+                                        <div class="password-input-container" style="display: none;">
+                                            <input type="password" id="adminPasswordInput" class="edit-input" value="admin123">
+                                            <button class="toggle-input-password-btn" onclick="toggleInputPasswordVisibility()" title="Show/Hide Password">👁️</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="profile-actions">
+                                    <button class="save-btn" id="saveBtn" onclick="saveChanges()" style="display: none;">Save Changes</button>
+                                    <button class="cancel-btn" id="cancelBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
+                                    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+        <div class="dashboard-grid">
+            <!-- Statistics Cards -->
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <h3>Total Users</h3>
+                    <p class="stat-number">1,234</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-info">
+                    <h3>Total Books</h3>
+                    <p class="stat-number">567</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🎫</div>
+                <div class="stat-info">
+                    <h3>Active Bookings</h3>
+                    <p class="stat-number">89</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3>Revenue</h3>
+                    <p class="stat-number">₹45,678</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                <button class="action-btn">Add New User</button>
+                <button class="action-btn">Manage Books</button>
+                <button class="action-btn">View Reports</button>
+                <button class="action-btn">System Settings</button>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <h3>Recent Activity</h3>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <span class="activity-time">10:30 AM</span>
+                    <span class="activity-text">New user registration: John Doe</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">09:45 AM</span>
+                    <span class="activity-text">Book booking confirmed: "The Great Gatsby"</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">09:15 AM</span>
+                    <span class="activity-text">Payment received: ₹500</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">08:30 AM</span>
+                    <span class="activity-text">New book added to inventory</span>
+                </div>
+            </div>
+        </div>
+    </div>
+        </main>
+    </div>
+
+<script>
+// Function to update date, time, and day
+function updateDateTime() {
+    const now = new Date();
+    
+    // Format date
+    const dateOptions = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    const formattedDate = now.toLocaleDateString('en-US', dateOptions);
+    
+    // Format time
+    const timeOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: true 
+    };
+    const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
+    
+    // Format day
+    const dayOptions = { weekday: 'long' };
+    const formattedDay = now.toLocaleDateString('en-US', dayOptions);
+    
+    // Update the display
+    document.getElementById('current-date').textContent = formattedDate;
+    document.getElementById('current-time').textContent = formattedTime;
+    document.getElementById('current-day').textContent = formattedDay;
+}
+
+// Sidebar toggle functionality
+function toggleSidebar() {
+    const sidebar = document.querySelector('.dashboard-sidebar');
+    const main = document.querySelector('.dashboard-main');
+    
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('expanded');
+}
+
+// Profile dropdown functionality
+let isEditing = false;
+let currentEditField = null;
+
+function toggleProfileMenu() {
+    const profileMenu = document.getElementById('profileMenu');
+    profileMenu.classList.toggle('show');
+}
+
+// Password visibility toggle functions
+let passwordVisible = false;
+let inputPasswordVisible = false;
+
+function togglePasswordVisibility() {
+    const passwordSpan = document.getElementById('adminPassword');
+    const toggleBtn = document.querySelector('.toggle-password-btn');
+    
+    if (passwordVisible) {
+        passwordSpan.textContent = '••••••••';
+        toggleBtn.textContent = '👁️';
+        passwordVisible = false;
+    } else {
+        passwordSpan.textContent = document.getElementById('adminPasswordInput').value;
+        toggleBtn.textContent = '🙈';
+        passwordVisible = true;
+    }
+}
+
+function toggleInputPasswordVisibility() {
+    const passwordInput = document.getElementById('adminPasswordInput');
+    const toggleBtn = document.querySelector('.toggle-input-password-btn');
+    
+    if (inputPasswordVisible) {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+        inputPasswordVisible = false;
+    } else {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+        inputPasswordVisible = true;
+    }
+}
+
+function editField(fieldType) {
+    if (isEditing) return;
+    
+    isEditing = true;
+    currentEditField = fieldType;
+    
+    if (fieldType === 'password') {
+        // Special handling for password field
+        const detailValue = document.querySelector('.detail-item:nth-child(3) .detail-value');
+        const passwordContainer = document.querySelector('.password-input-container');
+        
+        detailValue.style.display = 'none';
+        passwordContainer.style.display = 'flex';
+        document.getElementById('adminPasswordInput').focus();
+    } else {
+        const span = document.getElementById(`admin${fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}`);
+        const input = document.getElementById(`admin${fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}Input`);
+        
+        span.style.display = 'none';
+        input.style.display = 'inline-block';
+        input.focus();
+    }
+    
+    // Show save/cancel buttons
+    document.getElementById('saveBtn').style.display = 'inline-block';
+    document.getElementById('cancelBtn').style.display = 'inline-block';
+    
+    // Hide edit buttons and password toggle
+    document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = 'none');
+    document.querySelectorAll('.toggle-password-btn').forEach(btn => btn.style.display = 'none');
+}
+
+function saveChanges() {
+    if (!currentEditField) return;
+    
+    const input = document.getElementById(`admin${currentEditField.charAt(0).toUpperCase() + currentEditField.slice(1)}Input`);
+    const span = document.getElementById(`admin${currentEditField.charAt(0).toUpperCase() + currentEditField.slice(1)}`);
+    
+    let newValue = input.value.trim();
+    
+    if (!newValue) {
+        alert('Field cannot be empty!');
+        return;
+    }
+    
+    // Update the display value
+    if (currentEditField === 'password') {
+        span.textContent = '••••••••';
+    } else {
+        span.textContent = newValue;
+        
+        // Update profile header if name or email changed
+        if (currentEditField === 'name') {
+            document.querySelector('.profile-info h3').textContent = newValue;
+            document.querySelector('.user-name').textContent = newValue;
+            document.querySelector('.user-avatar').textContent = newValue.charAt(0).toUpperCase();
+            document.querySelector('.profile-avatar-large').textContent = newValue.charAt(0).toUpperCase();
+        } else if (currentEditField === 'email') {
+            document.querySelector('.profile-info p').textContent = newValue;
+        }
+    }
+    
+    cancelEdit();
+    
+    // Show success message
+    showNotification('Profile updated successfully!', 'success');
+}
+
+function cancelEdit() {
+    if (!currentEditField) return;
+    
+    if (currentEditField === 'password') {
+        // Special handling for password field
+        const detailValue = document.querySelector('.detail-item:nth-child(3) .detail-value');
+        const passwordContainer = document.querySelector('.password-input-container');
+        
+        detailValue.style.display = 'flex';
+        passwordContainer.style.display = 'none';
+        
+        // Reset password input type and visibility
+        document.getElementById('adminPasswordInput').type = 'password';
+        document.querySelector('.toggle-input-password-btn').textContent = '👁️';
+        inputPasswordVisible = false;
+    } else {
+        const span = document.getElementById(`admin${currentEditField.charAt(0).toUpperCase() + currentEditField.slice(1)}`);
+        const input = document.getElementById(`admin${currentEditField.charAt(0).toUpperCase() + currentEditField.slice(1)}Input`);
+        
+        span.style.display = 'inline-block';
+        input.style.display = 'none';
+    }
+    
+    // Hide save/cancel buttons
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('cancelBtn').style.display = 'none';
+    
+    // Show edit buttons and password toggle
+    document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = 'inline-block');
+    document.querySelectorAll('.toggle-password-btn').forEach(btn => btn.style.display = 'inline-block');
+    
+    isEditing = false;
+    currentEditField = null;
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        showNotification('Logging out...', 'info');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1500);
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Notification functions
+function loadNotifications() {
+    const params = new URLSearchParams({ only: 'unread', limit: '5', max_age_hours: '24' });
+    fetch(`/api/notifications?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            updateNotificationBadge(data.unread_count);
+            displayNotifications(data.notifications);
+        })
+        .catch(error => {
+            console.error('Error loading notifications:', error);
+            document.getElementById('notificationList').innerHTML = '<div class="error-message">Failed to load notifications</div>';
+        });
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notificationBadge');
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function formatLocalTime(isoString) {
+    try {
+        const d = new Date(isoString);
+        return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch { return ''; }
+}
+
+function displayNotifications(notifications) {
+    const notificationList = document.getElementById('notificationList');
+    
+    if (notifications.length === 0) {
+        notificationList.innerHTML = '<div class="no-notifications">No notifications</div>';
+        return;
+    }
+    
+    let html = '';
+    notifications.forEach(notification => {
+        const timeAgo = notification.created_at_human || getTimeAgo(new Date(notification.created_at));
+        const typeIcon = getNotificationIcon(notification.type);
+        const timeTitle = notification.created_at_iso ? formatLocalTime(notification.created_at_iso) : '';
+        
+        html += `
+            <div class="notification-item ${notification.is_read ? 'read' : 'unread'}" data-id="${notification.id}">
+                <div class="notification-icon">${typeIcon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time" title="${timeTitle}">${timeAgo}</div>
+                </div>
+                ${!notification.is_read ? '<div class="unread-dot"></div>' : ''}
+            </div>
+        `;
+    });
+    
+    notificationList.innerHTML = html;
+    
+    // Add click handlers for notifications
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const notificationId = this.dataset.id;
+            markNotificationAsRead(notificationId);
+        });
+    });
+}
+
+function getNotificationIcon(type) {
+    switch(type) {
+        case 'booking': return '📦';
+        case 'shipment': return '🚚';
+        case 'message': return '💬';
+        default: return '🔔';
+    }
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+}
+
+function markNotificationAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadNotifications(); // Reload to update badge and styling
+        }
+    })
+    .catch(error => console.error('Error marking notification as read:', error));
+}
+
+function markAllNotificationsAsRead() {
+    fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadNotifications(); // Reload to update badge and styling
+            showNotification('All notifications marked as read', 'success');
+        }
+    })
+    .catch(error => console.error('Error marking all notifications as read:', error));
+}
+
+function toggleNotificationMenu() {
+    const notificationMenu = document.getElementById('notificationMenu');
+    const isVisible = notificationMenu.classList.contains('show');
+    
+    if (!isVisible) {
+        loadNotifications(); // Load fresh data when opening
+    }
+    
+    notificationMenu.classList.toggle('show');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Update date/time immediately and then every second
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // Load notifications initially
+    loadNotifications();
+    
+    // Refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+    
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Notification dropdown toggle
+    const notificationBtn = document.getElementById('notificationBtn');
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleNotificationMenu();
+        });
+    }
+    
+    // Mark all as read button
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            markAllNotificationsAsRead();
+        });
+    }
+    
+    // Profile dropdown toggle
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleProfileMenu();
+        });
+    }
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const notificationDropdown = document.querySelector('.notification-dropdown');
+        
+        if (!profileDropdown.contains(e.target)) {
+            document.getElementById('profileMenu').classList.remove('show');
+        }
+        
+        if (!notificationDropdown.contains(e.target)) {
+            document.getElementById('notificationMenu').classList.remove('show');
+        }
+    });
+    
+    // Navigation active state
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked item
+            this.parentElement.classList.add('active');
+        });
+    });
+    
+    // Handle Enter key in edit inputs
+    document.querySelectorAll('.edit-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveChanges();
+            } else if (e.key === 'Escape') {
+                cancelEdit();
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

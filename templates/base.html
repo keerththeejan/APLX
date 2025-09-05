@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title or 'Flask + MySQL App' }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <!-- Top info bar -->
+  <div class="topbar">
+    <div class="container topbar-inner">
+      <div class="topbar-left">
+        <span>Ariviyal Nagar, Kilinochchi</span>
+        <span>info@company.com</span>
+        <span>+94 (0)21 492 7799</span>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Main navbar -->
+  <div class="navbar">
+    <div class="container navbar-inner">
+      <div class="brand">
+        <a href="{{ url_for('index') }}">
+          <span class="brand-icon">🚛</span>
+          Logistick
+        </a>
+      </div>
+      <nav class="navlinks">
+        <a href="{{ url_for('index') }}">Home</a>       
+        <a href="#">Services</a>
+        <a href="{{ url_for('contact') }}">Contact</a>
+        <a class="btn" href="{{ url_for('track') }}">Track</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block body_class %}admin-content{% endblock %}
+
+{% block content %}
+<div class="admin-content-page">
+  <h1>Homepage Content Manager</h1>
+  <p>Manage the Services and Features displayed on the homepage.</p>
+
+  <section class="admin-section">
+    <div class="section-header">
+      <h2>Services</h2>
+      <button id="addServiceBtn" class="btn btn-primary">Add Service</button>
+    </div>
+    <div id="servicesList" class="admin-list">
+      <div class="loading">Loading services…</div>
+    </div>
+  </section>
+
+  <section class="admin-section">
+    <div class="section-header">
+      <h2>Features</h2>
+      <button id="addFeatureBtn" class="btn btn-primary">Add Feature</button>
+    </div>
+    <div id="featuresList" class="admin-list">
+      <div class="loading">Loading features…</div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  // Utilities
+  function el(html){ const t = document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild }
+  function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
+  function toast(msg, type){
+    const n = el(`<div class="notification ${type||'info'}">${esc(msg)}</div>`);
+    document.body.appendChild(n);
+    setTimeout(()=>n.classList.add('show'), 20);
+    setTimeout(()=>{ n.classList.remove('show'); setTimeout(()=>n.remove(), 300); }, 2500);
+  }
+
+  // Services
+  const servicesList = document.getElementById('servicesList');
+  const featuresList = document.getElementById('featuresList');
+
+  async function loadServices(){
+    servicesList.innerHTML = '<div class="loading">Loading services…</div>';
+    const res = await fetch('/api/home/services');
+    const data = await res.json();
+    const items = data.items || [];
+    if(items.length === 0){ servicesList.innerHTML = '<div class="empty">No services yet</div>'; return; }
+    const frag = document.createDocumentFragment();
+    items.forEach(s=> frag.appendChild(renderServiceRow(s)) );
+    servicesList.innerHTML='';
+    servicesList.appendChild(frag);
+  }
+
+  function renderServiceRow(s){
+    const row = el(`
+      <div class="row" data-id="${s.id}">
+        <div class="row-main">
+          <div class="row-col wide">
+            <div class="row-title">${esc(s.title)}</div>
+            <div class="row-desc">${esc(s.description)}</div>
+            <div class="row-meta">Icon: ${esc(s.icon||'')} | Image: ${esc(s.image_url||'')} | Order: ${esc(s.display_order)} | Active: ${s.active? 'Yes':'No'}</div>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-small" data-act="edit">Edit</button>
+          <button class="btn btn-small" data-act="toggle">${s.active? 'Disable':'Enable'}</button>
+          <button class="btn btn-small btn-danger" data-act="delete">Delete</button>
+        </div>
+      </div>
+    `);
+    row.querySelector('[data-act="edit"]').addEventListener('click', ()=> openServiceEditor(s));
+    row.querySelector('[data-act="toggle"]').addEventListener('click', ()=> updateService(s.id, { active: !s.active }));
+    row.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteService(s.id));
+    return row;
+  }
+
+  async function createService(payload){
+    const res = await fetch('/api/home/services', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to create'); }
+    toast('Service added','success');
+    await loadServices();
+  }
+  async function updateService(id, payload){
+    const res = await fetch(`/api/home/services/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to update'); }
+    toast('Service updated','success');
+    await loadServices();
+  }
+  async function deleteService(id){
+    if(!confirm('Delete this service?')) return;
+    const res = await fetch(`/api/home/services/${id}`, { method:'DELETE' });
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to delete'); }
+    toast('Service deleted','success');
+    await loadServices();
+  }
+
+  function openServiceEditor(s){
+    const isNew = !s;
+    s = s || { title:'', description:'', icon:'', image_url:'', display_order:0, active:true };
+    const dlg = el(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <h3>${isNew? 'Add':'Edit'} Service</h3>
+          <div class="form-grid">
+            <label>Title<input id="svcTitle" value="${esc(s.title)}" /></label>
+            <label>Description<textarea id="svcDesc">${esc(s.description)}</textarea></label>
+            <label>Icon (emoji)<input id="svcIcon" value="${esc(s.icon||'')}" /></label>
+            <label>Image URL<input id="svcImg" value="${esc(s.image_url||'')}" /></label>
+            <label>Display Order<input id="svcOrder" type="number" value="${Number(s.display_order)||0}" /></label>
+            <label class="row-inline"><input id="svcActive" type="checkbox" ${s.active? 'checked':''}/> Active</label>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="svcCancel">Cancel</button>
+            <button class="btn btn-primary" id="svcSave">Save</button>
+          </div>
+        </div>
+      </div>
+    `);
+    document.body.appendChild(dlg);
+    dlg.querySelector('#svcCancel').onclick = ()=> dlg.remove();
+    dlg.querySelector('#svcSave').onclick = async ()=>{
+      const payload = {
+        title: dlg.querySelector('#svcTitle').value.trim(),
+        description: dlg.querySelector('#svcDesc').value.trim(),
+        icon: dlg.querySelector('#svcIcon').value.trim(),
+        image_url: dlg.querySelector('#svcImg').value.trim(),
+        display_order: Number(dlg.querySelector('#svcOrder').value||0),
+        active: dlg.querySelector('#svcActive').checked
+      };
+      try{
+        if(isNew) await createService(payload); else await updateService(s.id, payload);
+        dlg.remove();
+      }catch(e){ toast(e.message || 'Error','error'); }
+    };
+  }
+
+  // Features
+  async function loadFeatures(){
+    featuresList.innerHTML = '<div class="loading">Loading features…</div>';
+    const res = await fetch('/api/home/features');
+    const data = await res.json();
+    const items = data.items || [];
+    if(items.length === 0){ featuresList.innerHTML = '<div class="empty">No features yet</div>'; return; }
+    const frag = document.createDocumentFragment();
+    items.forEach(f=> frag.appendChild(renderFeatureRow(f)) );
+    featuresList.innerHTML='';
+    featuresList.appendChild(frag);
+  }
+
+  function renderFeatureRow(f){
+    const row = el(`
+      <div class="row" data-id="${f.id}">
+        <div class="row-main">
+          <div class="row-col wide">
+            <div class="row-title">${esc(f.title)}</div>
+            <div class="row-desc">${esc(f.description)}</div>
+            <div class="row-meta">Icon: ${esc(f.icon||'')} | Order: ${esc(f.display_order)} | Active: ${f.active? 'Yes':'No'}</div>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-small" data-act="edit">Edit</button>
+          <button class="btn btn-small" data-act="toggle">${f.active? 'Disable':'Enable'}</button>
+          <button class="btn btn-small btn-danger" data-act="delete">Delete</button>
+        </div>
+      </div>
+    `);
+    row.querySelector('[data-act="edit"]').addEventListener('click', ()=> openFeatureEditor(f));
+    row.querySelector('[data-act="toggle"]').addEventListener('click', ()=> updateFeature(f.id, { active: !f.active }));
+    row.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteFeature(f.id));
+    return row;
+  }
+
+  async function createFeature(payload){
+    const res = await fetch('/api/home/features', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to create'); }
+    toast('Feature added','success');
+    await loadFeatures();
+  }
+  async function updateFeature(id, payload){
+    const res = await fetch(`/api/home/features/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to update'); }
+    toast('Feature updated','success');
+    await loadFeatures();
+  }
+  async function deleteFeature(id){
+    if(!confirm('Delete this feature?')) return;
+    const res = await fetch(`/api/home/features/${id}`, { method:'DELETE' });
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to delete'); }
+    toast('Feature deleted','success');
+    await loadFeatures();
+  }
+
+  function openFeatureEditor(f){
+    const isNew = !f;
+    f = f || { title:'', description:'', icon:'', display_order:0, active:true };
+    const dlg = el(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <h3>${isNew? 'Add':'Edit'} Feature</h3>
+          <div class="form-grid">
+            <label>Title<input id="fTitle" value="${esc(f.title)}" /></label>
+            <label>Description<textarea id="fDesc">${esc(f.description)}</textarea></label>
+            <label>Icon (emoji)<input id="fIcon" value="${esc(f.icon||'')}" /></label>
+            <label>Display Order<input id="fOrder" type="number" value="${Number(f.display_order)||0}" /></label>
+            <label class="row-inline"><input id="fActive" type="checkbox" ${f.active? 'checked':''}/> Active</label>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="fCancel">Cancel</button>
+            <button class="btn btn-primary" id="fSave">Save</button>
+          </div>
+        </div>
+      </div>
+    `);
+    document.body.appendChild(dlg);
+    dlg.querySelector('#fCancel').onclick = ()=> dlg.remove();
+    dlg.querySelector('#fSave').onclick = async ()=>{
+      const payload = {
+        title: dlg.querySelector('#fTitle').value.trim(),
+        description: dlg.querySelector('#fDesc').value.trim(),
+        icon: dlg.querySelector('#fIcon').value.trim(),
+        display_order: Number(dlg.querySelector('#fOrder').value||0),
+        active: dlg.querySelector('#fActive').checked
+      };
+      try{
+        if(isNew) await createFeature(payload); else await updateFeature(f.id, payload);
+        dlg.remove();
+      }catch(e){ toast(e.message || 'Error','error'); }
+    };
+  }
+
+  // Bindings
+  document.getElementById('addServiceBtn').addEventListener('click', ()=> openServiceEditor());
+  document.getElementById('addFeatureBtn').addEventListener('click', ()=> openFeatureEditor());
+
+  // Initial load
+  loadServices();
+  loadFeatures();
+})();
+</script>
+<style>
+  .admin-content-page{ padding: 12px 0 32px; }
+  .admin-section{ margin: 24px 0; background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
+  .section-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .admin-list .row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:10px; background:#fafafa; }
+  .row-main{ display:flex; gap:12px; flex:1; }
+  .row-col.wide{ flex:1; }
+  .row-title{ font-weight:600; margin-bottom:4px; }
+  .row-desc{ color:#4b5563; font-size:14px; margin-bottom:4px; }
+  .row-meta{ color:#6b7280; font-size:12px; }
+  .row-actions{ display:flex; gap:8px; }
+  .btn{ background:#e5e7eb; border:1px solid #d1d5db; padding:6px 10px; border-radius:6px; cursor:pointer; }
+  .btn:hover{ background:#dfe3e8; }
+  .btn-primary{ background:#2563eb; color:#fff; border-color:#1d4ed8; }
+  .btn-primary:hover{ background:#1d4ed8; }
+  .btn-danger{ background:#ef4444; color:#fff; border-color:#dc2626; }
+  .btn-small{ padding:4px 8px; font-size:12px; }
+  .loading, .empty{ color:#6b7280; font-size:14px; padding:6px 2px; }
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; }
+  .modal{ background:#fff; border-radius:10px; width: min(560px, 92vw); padding:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+  .form-grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+  .form-grid label{ display:flex; flex-direction:column; font-size:14px; gap:6px; }
+  .form-grid input, .form-grid textarea{ padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; }
+  .row-inline{ flex-direction:row !important; align-items:center; gap:8px !important; }
+  .notification{ position: fixed; right: 16px; bottom: 16px; background:#111827; color:#fff; padding:10px 12px; border-radius:8px; opacity:0; transform: translateY(8px); transition: all .2s ease; }
+  .notification.show{ opacity:1; transform: translateY(0); }
+  .notification.success{ background:#065f46; }
+  .notification.error{ background:#991b1b; }
+</style>
+{% endblock %}
