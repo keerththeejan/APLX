@@ -20,27 +20,21 @@
             <nav class="sidebar-nav">
                 <ul class="nav-menu">
                     <li class="nav-item active">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
                             <span class="nav-icon">📊</span>
                             <span class="nav-text">Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/users" class="nav-link">
+                        <a href="{{ url_for('users') }}" class="nav-link">
                             <span class="nav-icon">👥</span>
                             <span class="nav-text">Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('shipments') }}" class="nav-link">
                             <span class="nav-icon">📦</span>
                             <span class="nav-text">Shipments</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">📚</span>
-                            <span class="nav-text">Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -56,13 +50,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">💰</span>
-                            <span class="nav-text">Revenue</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('analytics_page') }}" class="nav-link">
                             <span class="nav-icon">📈</span>
                             <span class="nav-text">Analytics</span>
                         </a>
@@ -209,7 +197,7 @@
                 <div class="stat-icon">💰</div>
                 <div class="stat-info">
                     <h3>Revenue</h3>
-                    <p class="stat-number">₹45,678</p>
+                    <p class="stat-number">Rs 45,678.00</p>
                 </div>
             </div>
         </div>
@@ -239,7 +227,7 @@
                 </div>
                 <div class="activity-item">
                     <span class="activity-time">09:15 AM</span>
-                    <span class="activity-text">Payment received: ₹500</span>
+                    <span class="activity-text">Payment received: Rs 500.00</span>
                 </div>
                 <div class="activity-item">
                     <span class="activity-time">08:30 AM</span>
@@ -662,7 +650,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            e.preventDefault();
+            const href = this.getAttribute('href');
+            const isPlaceholder = !href || href === '#';
+
+            if (isPlaceholder) {
+                e.preventDefault();
+            }
             
             // Remove active class from all items
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -671,8 +664,36 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add active class to clicked item
             this.parentElement.classList.add('active');
+
+            // Navigate for real links
+            if (!isPlaceholder) {
+                // allow default navigation behavior
+                // In case some browsers still need explicit navigation due to preventions elsewhere
+                window.location.href = href;
+            }
         });
     });
+
+    // Set active nav item based on current path on load
+    try {
+        const currentPath = window.location.pathname;
+        let matched = false;
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href !== '#') {
+                const a = document.createElement('a');
+                a.href = href;
+                if (a.pathname === currentPath) {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    link.parentElement.classList.add('active');
+                    matched = true;
+                }
+            }
+        });
+        if (!matched) {
+            // keep existing default active
+        }
+    } catch (e) { /* no-op */ }
     
     // Handle Enter key in edit inputs
     document.querySelectorAll('.edit-input').forEach(input => {

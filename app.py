@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import inspect
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 import os
 import datetime
 import random
@@ -92,6 +94,7 @@ def create_app():
         phone = db.Column(db.String(30), nullable=True)
         company = db.Column(db.String(150), nullable=True)
         address = db.Column(db.Text, nullable=True)
+        password_hash = db.Column(db.String(255), nullable=True)
         updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     class HomeService(db.Model):
@@ -222,9 +225,63 @@ def create_app():
         """Get count of unread notifications"""
         return Notification.query.filter_by(is_read=False).count()
 
+    # Time helpers
+    def format_colombo(dt: datetime.datetime | None) -> str:
+        """Format a datetime in Asia/Colombo time as 'YYYY-MM-DD HH:MM:SS'.
+        If dt is naive, assume it is in UTC.
+        """
+        if not dt:
+            return ''
+        try:
+            # Treat naive as UTC then convert
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=datetime.timezone.utc)
+            colombo = dt.astimezone(ZoneInfo('Asia/Colombo'))
+            return colombo.strftime('%Y-%m-%d %H:%M:%S')
+        except Exception:
+            # Fallback to naive formatting
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Currency helpers
+    @app.template_filter('lkr')
+    def jinja_lkr(value):
+        """Format a number as Sri Lankan Rupees, e.g., 'Rs 1,234.50'."""
+        try:
+            v = float(value or 0)
+        except (TypeError, ValueError):
+            v = 0.0
+        return f"Rs {v:,.2f}"
+
     # Create tables if they don't exist
     with app.app_context():
         db.create_all()
+        # Ensure new columns exist (dialect-aware)
+        try:
+            dialect = db.engine.dialect.name
+            inspector = inspect(db.engine)
+            # Admin.password_hash
+            admin_cols = {col['name'] for col in inspector.get_columns('admin_profile')}
+            if 'password_hash' not in admin_cols:
+                if dialect.startswith('mysql'):
+                    db.session.execute(db.text("ALTER TABLE admin_profile ADD COLUMN password_hash VARCHAR(255)"))
+                else:
+                    db.session.execute(db.text("ALTER TABLE admin_profile ADD COLUMN password_hash TEXT"))
+                db.session.commit()
+        except Exception as e:
+            app.logger.warning(f"Admin schema migration warning: {e}")
+        # Shipments: add paid_amount if missing (for due calculations)
+        try:
+            dialect = db.engine.dialect.name
+            inspector = inspect(db.engine)
+            ship_cols = {col['name'] for col in inspector.get_columns('shipments')}
+            if 'paid_amount' not in ship_cols:
+                if dialect.startswith('mysql'):
+                    db.session.execute(db.text("ALTER TABLE shipments ADD COLUMN paid_amount FLOAT DEFAULT 0"))
+                else:
+                    db.session.execute(db.text("ALTER TABLE shipments ADD COLUMN paid_amount REAL DEFAULT 0"))
+                db.session.commit()
+        except Exception as e:
+            app.logger.warning(f"Shipments schema migration warning: {e}")
         
         # Add sample customer data if no customers exist
         if Customer.query.count() == 0:
@@ -346,6 +403,39 @@ def create_app():
         shipments = Shipment.query.order_by(Shipment.created_at.desc()).all()
         return render_template('index.html', shipments=shipments, services=services, features=features)
 
+    @app.route('/book', methods=['GET', 'POST'])
+    def book_page():
+        if request.method == 'POST':
+            form = request.form
+            required = ['sender_name', 'receiver_name', 'origin', 'destination']
+            missing = [k for k in required if not form.get(k, '').strip()]
+            if missing:
+                flash(f"Missing fields: {', '.join(missing)}", 'error')
+            else:
+                try:
+                    awb = generate_awb()
+                    shipment = Shipment(
+                        awb=awb,
+                        sender_name=form.get('sender_name').strip(),
+                        sender_phone=form.get('sender_phone', '').strip() or None,
+                        receiver_name=form.get('receiver_name').strip(),
+                        receiver_phone=form.get('receiver_phone', '').strip() or None,
+                        origin=form.get('origin').strip(),
+                        destination=form.get('destination').strip(),
+                        weight_kg=float(form.get('weight_kg')) if form.get('weight_kg') else None,
+                        price=float(form.get('price')) if form.get('price') else None,
+                        status='Booked',
+                    )
+                    db.session.add(shipment)
+                    db.session.commit()
+                    create_notification('booking', 'New Shipment Booked', f"New shipment from {form.get('sender_name')} to {form.get('receiver_name')}. AWB: {awb}", shipment.id)
+                    flash(f'Shipment booked. AWB: {awb}', 'success')
+                    return redirect(url_for('book_page'))
+                except SQLAlchemyError as e:
+                    db.session.rollback()
+                    flash(f'Error booking shipment: {str(e)}', 'error')
+        return render_template('book.html', hide_nav=True)
+
     @app.route('/register', methods=['GET', 'POST'])
     def register():
         if request.method == 'POST':
@@ -457,7 +547,7 @@ def create_app():
             'phone': admin.phone or '',
             'company': admin.company or '',
             'address': admin.address or '',
-            'updated_at': admin.updated_at.strftime('%Y-%m-%d %H:%M:%S') if admin.updated_at else ''
+            'updated_at': format_colombo(admin.updated_at)
         }
         return render_template('admin_profile.html', admin=admin_data)
 
@@ -470,7 +560,7 @@ def create_app():
             'phone': admin.phone or '',
             'company': admin.company or '',
             'address': admin.address or '',
-            'updated_at': admin.updated_at.strftime('%Y-%m-%d %H:%M:%S') if admin.updated_at else ''
+            'updated_at': format_colombo(admin.updated_at)
         }
 
     @app.route('/api/admin/profile', methods=['POST'])
@@ -483,6 +573,7 @@ def create_app():
         phone = (data.get('phone') or '').strip()
         company = (data.get('company') or '').strip()
         address = (data.get('address') or '').strip()
+        password = (data.get('password') or '').strip()
 
         try:
             admin = get_or_create_admin()
@@ -491,6 +582,19 @@ def create_app():
             admin.phone = phone or None
             admin.company = company or None
             admin.address = address or None
+            # If a non-empty password is provided, update the password hash
+            if password:
+                try:
+                    from werkzeug.security import generate_password_hash
+                    admin.password_hash = generate_password_hash(password)
+                except Exception as e:
+                    app.logger.error(f"Failed to hash admin password: {e}")
+                    return {'success': False, 'error': 'Failed to set password'}, 500
+            # Always bump the updated_at timestamp on save
+            try:
+                admin.updated_at = datetime.datetime.utcnow()
+            except Exception:
+                pass
             db.session.commit()
 
             return {
@@ -501,9 +605,110 @@ def create_app():
                     'phone': admin.phone or '',
                     'company': admin.company or '',
                     'address': admin.address or '',
-                    'updated_at': admin.updated_at.strftime('%Y-%m-%d %H:%M:%S') if admin.updated_at else ''
+                    'updated_at': format_colombo(admin.updated_at)
                 }
             }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 500
+
+    @app.route('/api/customers/<int:customer_id>', methods=['GET'])
+    def get_customer(customer_id):
+        """API endpoint to get a customer's details"""
+        try:
+            customer = db.session.get(Customer, customer_id)
+            if not customer:
+                return {'success': False, 'error': 'Customer not found'}, 404
+            created = customer.created_at or datetime.datetime.utcnow()
+            return {
+                'success': True,
+                'id': customer.id,
+                'first_name': customer.first_name,
+                'last_name': customer.last_name,
+                'full_name': customer.full_name,
+                'email': customer.email,
+                'phone': customer.phone,
+                'address': customer.address,
+                'city': customer.city,
+                'state': customer.state,
+                'postal_code': customer.postal_code,
+                'country': customer.country,
+                'full_address': customer.full_address,
+                'is_active': customer.is_active,
+                'created_date': created.strftime('%d %b %Y'),
+                'created_time': created.strftime('%H:%M')
+            }
+        except SQLAlchemyError as e:
+            return {'success': False, 'error': str(e)}, 500
+
+    @app.route('/api/customers/<int:customer_id>', methods=['PUT'])
+    def update_customer(customer_id):
+        """API endpoint to update a customer"""
+        data = request.get_json(silent=True) or {}
+        try:
+            customer = db.session.get(Customer, customer_id)
+            if not customer:
+                return {'success': False, 'error': 'Customer not found'}, 404
+
+            # Assign fields if present
+            def val(key):
+                v = data.get(key)
+                if v is None:
+                    return None
+                v = str(v).strip()
+                return v or None
+
+            if 'first_name' in data: customer.first_name = val('first_name') or customer.first_name
+            if 'last_name' in data: customer.last_name = val('last_name') or customer.last_name
+            if 'email' in data:
+                new_email = (data.get('email') or '').strip().lower()
+                if new_email and new_email != customer.email:
+                    # ensure uniqueness
+                    if Customer.query.filter(Customer.email == new_email, Customer.id != customer.id).first():
+                        return {'success': False, 'error': 'Email already exists'}, 409
+                    customer.email = new_email
+            if 'phone' in data: customer.phone = val('phone')
+            if 'address' in data: customer.address = val('address')
+            if 'city' in data: customer.city = val('city')
+            if 'state' in data: customer.state = val('state')
+            if 'postal_code' in data: customer.postal_code = val('postal_code')
+            if 'country' in data: customer.country = val('country')
+            if 'is_active' in data: customer.is_active = bool(data.get('is_active'))
+
+            db.session.commit()
+
+            create_notification(
+                'message',
+                'Customer Updated',
+                f'Customer {customer.full_name} (ID: {customer.id}) was updated',
+                customer.id
+            )
+
+            return {'success': True}
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 500
+
+    @app.route('/api/customers/<int:customer_id>', methods=['DELETE'])
+    def delete_customer(customer_id):
+        """API endpoint to delete a customer"""
+        try:
+            customer = db.session.get(Customer, customer_id)
+            if not customer:
+                return {'success': False, 'error': 'Customer not found'}, 404
+            name = customer.full_name
+            db.session.delete(customer)
+            db.session.commit()
+
+            # Notify about deletion
+            create_notification(
+                'message',
+                'Customer Deleted',
+                f'Customer {name} (ID: {customer_id}) was deleted',
+                customer_id
+            )
+
+            return {'success': True}
         except SQLAlchemyError as e:
             db.session.rollback()
             return {'success': False, 'error': str(e)}, 500
@@ -513,6 +718,74 @@ def create_app():
         """Full notifications page showing read and unread notifications"""
         notifications = get_all_notifications(limit=None)
         return render_template('notifications.html', notifications=notifications)
+
+    # Analytics page
+    @app.route('/analytics')
+    def analytics_page():
+        return render_template('analytics.html', hide_nav=True)
+
+    @app.route('/api/analytics')
+    def api_analytics():
+        """Return analytics data for charts.
+        Query params:
+         - range: 'week' (default), 'year'
+        """
+        rng = (request.args.get('range') or 'week').lower()
+
+        try:
+            now = datetime.datetime.utcnow()
+            data = {}
+
+            # Weekly bar (last 7 days): profit as sum(price)
+            start_week = now - datetime.timedelta(days=6)
+            daily = {}
+            for i in range(7):
+                d = (start_week + datetime.timedelta(days=i)).date()
+                daily[d] = 0.0
+            week_shipments = db.session.query(db.text('*')).select_from(Shipment).filter(
+                Shipment.created_at >= start_week.replace(hour=0, minute=0, second=0, microsecond=0)
+            ).all()
+            # Convert rows back via ORM fetch to avoid raw text
+            week_shipments = Shipment.query.filter(Shipment.created_at >= start_week.replace(hour=0, minute=0, second=0, microsecond=0)).all()
+            for s in week_shipments:
+                d = (s.created_at or now).date()
+                if d in daily:
+                    daily[d] += float(s.price or 0)
+            data['week_bar'] = {
+                'labels': [d.strftime('%a') for d in daily.keys()],
+                'profits': [round(v, 2) for v in daily.values()],
+            }
+
+            # Due pie for last 7 days: paid vs due (price - paid_amount)
+            paid_total = 0.0
+            due_total = 0.0
+            for s in week_shipments:
+                price = float(s.price or 0)
+                paid = float(getattr(s, 'paid_amount', 0) or 0)
+                paid_total += min(paid, price)
+                due_total += max(price - paid, 0)
+            data['due_pie'] = {
+                'labels': ['Paid', 'Due'],
+                'values': [round(paid_total, 2), round(due_total, 2)]
+            }
+
+            # Year line: monthly profit for current year (sum of price)
+            year_start = datetime.datetime(now.year, 1, 1)
+            month_values = [0.0] * 12
+            year_shipments = Shipment.query.filter(Shipment.created_at >= year_start).all()
+            for s in year_shipments:
+                dt = s.created_at or now
+                m = dt.month - 1
+                month_values[m] += float(s.price or 0)
+            data['year_line'] = {
+                'labels': ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                'profits': [round(v,2) for v in month_values]
+            }
+
+            return {'success': True, 'data': data}
+        except Exception as e:
+            app.logger.error(f"Analytics error: {e}")
+            return {'success': False, 'error': str(e)}, 500
 
     @app.route('/admin/content')
     def admin_content_manager():
@@ -538,7 +811,7 @@ def create_app():
 
         # Age filter
         if max_age_hours and max_age_hours > 0:
-            cutoff = datetime.datetime.utcnow() - datetime.timedelta(hours=max_age_hours)
+            cutoff = datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=max_age_hours)
             base_q = base_q.filter(Notification.created_at >= cutoff)
 
         # Order newest first
@@ -645,7 +918,14 @@ def create_app():
         """Users management page"""
         search = request.args.get('search', '').strip()
         page = request.args.get('page', 1, type=int)
-        per_page = 10
+        per_page_param = (request.args.get('per_page') or '').lower()
+        allowed_page_sizes = {'5': 5, '25': 25, '50': 50, '100': 100}
+        if per_page_param == 'all':
+            per_page = 10**9  # effectively all on one page
+        elif per_page_param in allowed_page_sizes:
+            per_page = allowed_page_sizes[per_page_param]
+        else:
+            per_page = 10
         
         # Only show approved (active) customers
         query = Customer.query.filter_by(is_active=True)
@@ -666,7 +946,78 @@ def create_app():
             page=page, per_page=per_page, error_out=False
         )
         
-        return render_template('users.html', customers=customers, search=search)
+        return render_template('users.html', customers=customers, search=search, per_page=per_page_param or str(per_page))
+
+    @app.route('/shipments')
+    def shipments():
+        """Shipments management page"""
+        search = (request.args.get('search') or '').strip()
+        status = (request.args.get('status') or '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page_param = request.args.get('per_page', '10')
+
+        query = Shipment.query
+        if search:
+            s = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    Shipment.awb.ilike(s),
+                    Shipment.sender_name.ilike(s),
+                    Shipment.receiver_name.ilike(s),
+                    Shipment.origin.ilike(s),
+                    Shipment.destination.ilike(s)
+                )
+            )
+        if status:
+            query = query.filter(Shipment.status == status)
+
+        # Determine per_page (support 'all')
+        if str(per_page_param).lower() == 'all':
+            total_count = query.count()
+            per_page = max(total_count, 1)
+        else:
+            try:
+                per_page = int(per_page_param)
+            except (TypeError, ValueError):
+                per_page = 10
+
+        shipments = query.order_by(Shipment.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        statuses = ['Booked', 'In Transit', 'Delivered', 'Cancelled']
+        return render_template('shipments.html', shipments=shipments, search=search, status=status, statuses=statuses)
+
+    # Bookings page (admin view similar to Users/Shipments)
+    @app.route('/bookings')
+    def bookings():
+        """Bookings management page showing recently booked shipments"""
+        search = (request.args.get('search') or '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page_param = request.args.get('per_page', '10')
+
+        query = Shipment.query
+        if search:
+            s = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    Shipment.awb.ilike(s),
+                    Shipment.sender_name.ilike(s),
+                    Shipment.receiver_name.ilike(s),
+                    Shipment.origin.ilike(s),
+                    Shipment.destination.ilike(s)
+                )
+            )
+
+        # Per-page handling
+        if str(per_page_param).lower() == 'all':
+            total_count = query.count()
+            per_page = max(total_count, 1)
+        else:
+            try:
+                per_page = int(per_page_param)
+            except (TypeError, ValueError):
+                per_page = 10
+
+        shipments = query.order_by(Shipment.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        return render_template('bookings.html', shipments=shipments, search=search, per_page=per_page_param)
 
     # --- Home content management APIs ---
     @app.route('/api/home/services', methods=['GET', 'POST'])
@@ -831,6 +1182,84 @@ def create_app():
 
             return {'success': True, 'message': 'Customer approved successfully'}
             
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 500
+
+    @app.route('/api/customers', methods=['POST'])
+    def create_customer():
+        """Create a new customer record in the customers table.
+        Accepts JSON or form-encoded data.
+        Required: first_name, last_name, email
+        Optional: phone, address, city, state, postal_code, country, is_active
+        """
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+        first_name = (data.get('first_name') or '').strip()
+        last_name = (data.get('last_name') or '').strip()
+        email = (data.get('email') or '').strip().lower()
+        phone = (data.get('phone') or '').strip() or None
+        address = (data.get('address') or '').strip() or None
+        city = (data.get('city') or '').strip() or None
+        state = (data.get('state') or '').strip() or None
+        postal_code = (data.get('postal_code') or '').strip() or None
+        country = (data.get('country') or '').strip() or None
+        is_active = data.get('is_active')
+        # Default to True when created by admin, but allow explicit False
+        is_active = bool(is_active) if is_active is not None else True
+
+        # Basic validation
+        missing = [k for k, v in {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email
+        }.items() if not v]
+        if missing:
+            return {'success': False, 'error': f"Missing required fields: {', '.join(missing)}"}, 400
+
+        # Duplicate email check
+        if Customer.query.filter_by(email=email).first():
+            return {'success': False, 'error': 'Email already exists'}, 409
+
+        try:
+            customer = Customer(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                address=address,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                country=country,
+                is_active=is_active
+            )
+            db.session.add(customer)
+            db.session.commit()
+
+            # Notify admin area about creation
+            create_notification(
+                'message',
+                'Customer Created (Admin)',
+                f'New customer {customer.full_name} added with email: {customer.email}',
+                customer.id
+            )
+
+            return {
+                'success': True,
+                'customer': {
+                    'id': customer.id,
+                    'first_name': customer.first_name,
+                    'last_name': customer.last_name,
+                    'full_name': customer.full_name,
+                    'email': customer.email,
+                    'phone': customer.phone,
+                    'city': customer.city,
+                    'country': customer.country,
+                    'is_active': customer.is_active,
+                    'created_at': customer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }, 201
         except SQLAlchemyError as e:
             db.session.rollback()
             return {'success': False, 'error': str(e)}, 500
