@@ -44,7 +44,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('bookings') }}" class="nav-link">
                             <span class="nav-icon">🎫</span>
                             <span class="nav-text">Bookings</span>
                         </a>
@@ -56,7 +56,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('settings') }}" class="nav-link">
                             <span class="nav-icon">⚙️</span>
                             <span class="nav-text">Settings</span>
                         </a>
@@ -116,48 +116,14 @@
                             <button class="profile-btn" id="profileBtn">👤</button>
                             <div class="profile-menu" id="profileMenu">
                                 <div class="profile-header">
-                                    <div class="profile-avatar-large">A</div>
+                                    <div class="profile-avatar-large" id="profileAvatarMenu">A</div>
                                     <div class="profile-info">
-                                        <h3>Administrator</h3>
-                                        <p>admin@company.com</p>
-                                    </div>
-                                </div>
-                                <div class="profile-details">
-                                    <div class="detail-item">
-                                        <label>Name:</label>
-                                        <div class="detail-value">
-                                            <span id="adminName">Administrator</span>
-                                            <button class="edit-btn" onclick="editField('name')">✏️</button>
-                                        </div>
-                                        <input type="text" id="adminNameInput" class="edit-input" style="display: none;" value="Administrator">
-                                    </div>
-                                    <div class="detail-item">
-                                        <label>Email:</label>
-                                        <div class="detail-value">
-                                            <span id="adminEmail">admin@company.com</span>
-                                            <button class="edit-btn" onclick="editField('email')">✏️</button>
-                                        </div>
-                                        <input type="email" id="adminEmailInput" class="edit-input" style="display: none;" value="admin@company.com">
-                                    </div>
-                                    <div class="detail-item">
-                                        <label>Password:</label>
-                                        <div class="detail-value">
-                                            <span id="adminPassword">••••••••</span>
-                                            <div class="password-actions">
-                                                <button class="toggle-password-btn" onclick="togglePasswordVisibility()" title="Show/Hide Password">👁️</button>
-                                                <button class="edit-btn" onclick="editField('password')">✏️</button>
-                                            </div>
-                                        </div>
-                                        <div class="password-input-container" style="display: none;">
-                                            <input type="password" id="adminPasswordInput" class="edit-input" value="admin123">
-                                            <button class="toggle-input-password-btn" onclick="toggleInputPasswordVisibility()" title="Show/Hide Password">👁️</button>
-                                        </div>
+                                        <h3 id="profileNameMenu">Administrator</h3>
+                                        <p id="profileEmailMenu">admin@company.com</p>
                                     </div>
                                 </div>
                                 <div class="profile-actions">
-                                    <button class="save-btn" id="saveBtn" onclick="saveChanges()" style="display: none;">Save Changes</button>
-                                    <button class="cancel-btn" id="cancelBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
-                                    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                                    <a class="btn" href="{{ url_for('admin_profile') }}">Edit Profile</a>
                                 </div>
                             </div>
                         </div>
@@ -178,9 +144,9 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">📚</div>
+                <div class="stat-icon">🚚</div>
                 <div class="stat-info">
-                    <h3>Total Books</h3>
+                    <h3>Total Shipments</h3>
                     <p class="stat-number">567</p>
                 </div>
             </div>

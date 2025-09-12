@@ -612,6 +612,21 @@ def create_app():
             db.session.rollback()
             return {'success': False, 'error': str(e)}, 500
 
+    # Analytics summary API used by templates/analytics.html
+    @app.route('/api/analytics/summary', methods=['GET'])
+    def api_analytics_summary():
+        """Return shipments/bookings series and totals for the last 12 months.
+        If you later compute these from the DB, replace the static payload below.
+        """
+        payload = {
+            "totals": { "shipments": 320, "bookings": 278, "revenue": 1450000.0 },
+            "series": {
+                "shipments": [12,18,22,19,25,30,28,24,20,26,29,31],
+                "bookings":  [9,14,17,15,19,23,21,20,18,22,25,27]
+            }
+        }
+        return payload
+
     @app.route('/api/customers/<int:customer_id>', methods=['GET'])
     def get_customer(customer_id):
         """API endpoint to get a customer's details"""
@@ -640,6 +655,11 @@ def create_app():
             }
         except SQLAlchemyError as e:
             return {'success': False, 'error': str(e)}, 500
+
+    # Settings page
+    @app.route('/admin/settings')
+    def settings():
+        return render_template('settings.html')
 
     @app.route('/api/customers/<int:customer_id>', methods=['PUT'])
     def update_customer(customer_id):
