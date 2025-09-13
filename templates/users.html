@@ -185,7 +185,7 @@
                     </div>
                     
                     <div class="users-actions">
-                    <button type="button" class="btn btn-primary" id="openAddCustomerBtn" style="height:40px;" onclick="(function(){var m=document.getElementById('addCustomerModal'); if(m){m.style.display='block';}})()">+ Add Customer</button>
+                    <button type="button" class="btn btn-primary" id="openAddCustomerBtn" style="height:40px;" onclick="openAddCustomerModal()">+ Add Customer</button>
                     <form method="GET" class="search-form">
                         <div class="search-container">
                             <input type="text" name="search" placeholder="Search customers..." value="{{ search }}" class="search-input">
@@ -205,6 +205,29 @@
                         </form>
                     </div>
                 </div>
+
+    <!-- Status Edit Modal -->
+    <div class="modal" id="statusModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Customer Status</h3>
+                <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="status_id" />
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="status_is_active" />
+                        <span>Active</span>
+                    </label>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeStatusModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="statusSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
 
                 <!-- Users Table -->
                 <div class="users-table-container">
@@ -380,6 +403,28 @@
     </div>
 
 <script>
+// Lightweight client-side toast notifications
+function ensureToastContainer() {
+    let tc = document.querySelector('.toast-container');
+    if (!tc) {
+        tc = document.createElement('div');
+        tc.className = 'toast-container';
+        document.body.appendChild(tc);
+    }
+    return tc;
+}
+
+function showFlashMessage(message, type) {
+    const tc = ensureToastContainer();
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type === 'success' ? 'toast-success' : 'toast-error');
+    toast.textContent = message || '';
+    tc.appendChild(toast);
+    // Auto-remove after ~3.2s
+    setTimeout(() => {
+        try { toast.remove(); } catch (e) { /* no-op */ }
+    }, 3200);
+}
 // Include all the dashboard JavaScript functions from dashboard.html
 // Function to update date, time, and day
 function updateDateTime() {
@@ -476,7 +521,30 @@ function closeModal() {
 // Close Add Customer modal helper
 function closeAddCustomerModal() {
     const addCustomerModal = document.getElementById('addCustomerModal');
-    if (addCustomerModal) addCustomerModal.style.display = 'none';
+    if (addCustomerModal) {
+        addCustomerModal.classList.remove('show');
+        addCustomerModal.style.display = 'none';
+    }
+}
+
+// Open Add Customer modal helper (global)
+function openAddCustomerModal() {
+    try {
+        const m = document.getElementById('addCustomerModal');
+        if (m) {
+            m.classList.add('show');
+            m.style.display = 'flex';
+        }
+    } catch (e) { /* no-op */ }
+}
+
+// Close Status modal helper
+function closeStatusModal() {
+    const m = document.getElementById('statusModal');
+    if (m) {
+        m.classList.remove('show');
+        m.style.display = 'none';
+    }
 }
 
 // Load admin profile for navbar
@@ -668,6 +736,80 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Save status only
+    if (statusSaveBtn) {
+        statusSaveBtn.addEventListener('click', async () => {
+            try {
+                const id = document.getElementById('status_id').value;
+                const isActive = document.getElementById('status_is_active').checked;
+                const res = await fetch(`/api/customers/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: isActive })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update status');
+                // Update status badge in the table
+                const row = document.querySelector(`tr[data-customer-id="${id}"]`);
+                if (row) {
+                    const badge = row.querySelector('.status-badge');
+                    if (badge) {
+                        if (isActive) {
+                            badge.textContent = 'Active';
+                            badge.className = 'status-badge active';
+                        } else {
+                            badge.textContent = 'Inactive';
+                            badge.className = 'status-badge inactive';
+                        }
+                    }
+                }
+                closeStatusModal();
+                showFlashMessage('Status updated', 'success');
+            } catch (e) {
+                console.error('Status save failed', e);
+                showFlashMessage(e.message || 'Failed to update status', 'error');
+            }
+        });
+    }
+
+    // Define edit and delete helpers
+    window.editCustomer = async function(id) {
+        try {
+            // Fetch current customer to populate status checkbox
+            const res = await fetch(`/api/customers/${id}`);
+            const data = await res.json();
+            const c = data && data.customer ? data.customer : data;
+            const modal = document.getElementById('statusModal');
+            const idEl = document.getElementById('status_id');
+            const activeEl = document.getElementById('status_is_active');
+            if (!modal || !idEl || !activeEl) return;
+            idEl.value = id;
+            activeEl.checked = !!(c && c.is_active);
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        } catch (e) {
+            console.error('editCustomer failed', e);
+            showFlashMessage('Failed to open status editor', 'error');
+        }
+    }
+
+    window.deleteCustomer = async function(id) {
+        try {
+            const ok = window.confirm('Are you sure you want to delete this customer?');
+            if (!ok) return;
+            const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
+            // Remove row from table
+            const row = document.querySelector(`tr[data-customer-id="${id}"]`);
+            if (row) row.remove();
+            showFlashMessage('Customer deleted', 'success');
+        } catch (e) {
+            console.error('deleteCustomer failed', e);
+            showFlashMessage(e.message || 'Failed to delete customer', 'error');
+        }
+    }
+
     // On load: set active nav item based on current location
     try {
         const currentPath = window.location.pathname;
@@ -694,6 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('customerModal');
         const adminProfileModal = document.getElementById('adminProfileModal');
         const statusModal = document.getElementById('statusModal');
+        const addCustomerModalEl = document.getElementById('addCustomerModal');
         if (event.target === modal) {
             closeModal();
         }
@@ -702,6 +845,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (event.target === statusModal) {
             closeStatusModal();
+        }
+        if (event.target === addCustomerModalEl) {
+            closeAddCustomerModal();
         }
 
         // Close notification dropdown when clicking outside
@@ -859,10 +1005,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const addCustomerModal = document.getElementById('addCustomerModal');
     const addCustomerForm = document.getElementById('addCustomerForm');
     const saveBtn = document.getElementById('saveCustomerBtn');
+    const statusSaveBtn = document.getElementById('statusSaveBtn');
 
     if (openAddBtn) {
         openAddBtn.addEventListener('click', () => {
-            if (addCustomerModal) addCustomerModal.style.display = 'block';
+            if (addCustomerModal) addCustomerModal.classList.add('show');
         });
     }
 
@@ -891,7 +1038,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showFlashMessage('Customer created successfully', 'success');
                 // Close modal and refresh the page to reflect new data/pagination
                 closeAddCustomerModal();
-                window.location.reload();
+                // Wait briefly so the toast is visible before reload
+                setTimeout(() => window.location.reload(), 800);
             } catch (err) {
                 console.error('Add customer error:', err);
                 showFlashMessage(err.message || 'Failed to create customer', 'error');

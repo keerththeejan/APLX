@@ -3,12 +3,18 @@
 {% block content %}
 <div class="container-hero hero-wrap full-bleed">
   <section class="hero hero-full" style="background-image:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop');">
+    <div class="slideshow" aria-hidden="true">
+      <img class="active" src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="" />
+      <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1600&auto=format&fit=crop" alt="" />
+      <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop" alt="" />
+      <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600&auto=format&fit=crop" alt="" />
+    </div>
     <span class="eyebrow">Safe Transportation &amp; Logistics</span>
     <h1>Adaptable coordinated factors<br/>Quick Conveyance</h1>
     <p>Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.</p>
     <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
       <a class="btn btn-primary" href="{{ url_for('register') }}" style="text-decoration:none;">Get Started</a>
-      <a class="btn btn-secondary" href="{{ url_for('track') }}" style="text-decoration:none;">Learn More</a>
+      <a class="btn btn-secondary" href="#contact" style="text-decoration:none;">Learn More</a>
     </div>
   </section>
 </div>
@@ -18,7 +24,7 @@
 <section class="services">
   <div class="services-grid">
     {% for s in services %}
-    <div class="service-card">
+    <div class="service-card reveal reveal-card {% if loop.index == 1 %}stagger-1{% elif loop.index == 2 %}stagger-2{% else %}stagger-3{% endif %}">
       <div class="service-icon" aria-hidden="true">
         {% if s.icon %}<span style="font-size:24px">{{ s.icon }}</span>{% else %}
         <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 17h1a3 3 0 1 0 6 0h4a3 3 0 1 0 6 0h1v-4l-3-4h-5V7H3v10Zm14-4h2.5l1.5 2v2h-1.18a3.001 3.001 0 0 0-5.64 0H9.82a3.001 3.001 0 0 0-5.64 0H3V9h14v4Z"/></svg>
@@ -31,16 +37,13 @@
       <div class="service-card"><div class="service-title">No services yet</div></div>
     {% endfor %}
   </div>
-  <div style="text-align:right;margin-top:8px;">
-    <a class="btn btn-secondary" href="{{ url_for('admin_content_manager') }}">Manage Services</a>
-  </div>
 </section>
 
 <!-- About Us section -->
 <section class="about-us">
   <div class="container">
     <div class="about-content">
-      <div class="about-image">
+      <div class="about-image reveal stagger-1">
         <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=600&auto=format&fit=crop" alt="Logistics Team" />
         <div class="experience-badge">
           <div class="experience-number">25+</div>
@@ -48,14 +51,14 @@
         </div>
       </div>
       
-      <div class="about-text">
+      <div class="about-text reveal stagger-2">
         <div class="about-eyebrow">ABOUT US</div>
         <h2>We Are Trusted Logistics & Transport</h2>
         <p>We are a leading logistics and transportation company with over 25 years of experience in the industry. Our team of experts is dedicated to providing reliable and efficient logistics solutions tailored to your needs.</p>
         
         <div class="features-grid">
           {% for f in features %}
-          <div class="feature-item">
+          <div class="feature-item reveal {% if loop.index % 3 == 1 %}stagger-1{% elif loop.index % 3 == 2 %}stagger-2{% else %}stagger-3{% endif %}">
             <div class="feature-icon">{{ f.icon or '⭐' }}</div>
             <div class="feature-content">
               <h4>{{ f.title }}</h4>
@@ -68,10 +71,6 @@
         </div>
         <div style="text-align:right;margin-top:8px;">
           <a class="btn btn-secondary" href="{{ url_for('admin_content_manager') }}">Manage Features</a>
-        </div>
-        
-        <div class="about-actions">
-          <a href="{{ url_for('register') }}" class="btn btn-primary">Learn More</a>
         </div>
       </div>
     </div>
@@ -88,7 +87,7 @@
     </div>
     
     <div class="why-choose-grid">
-      <div class="why-choose-card">
+      <div class="why-choose-card reveal reveal-card stagger-1">
         <div class="why-choose-icon">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
@@ -131,7 +130,7 @@
     </div>
     
     <div class="our-services-grid">
-      <div class="our-service-card">
+      <div class="our-service-card reveal reveal-card stagger-1">
         <div class="our-service-image">
           <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=400&auto=format&fit=crop" alt="Air Freight" />
         </div>
@@ -168,10 +167,10 @@
 </section>
 
 <!-- Contact/Quote section -->
-<section class="contact-quote-section">
+<section id="contact" class="contact-quote-section reveal">
   <div class="contact-quote-container">
     <!-- Left side - Contact Info -->
-    <div class="contact-info">
+    <div class="contact-info reveal stagger-1">
       <h2>Need Help With Your Shipping?</h2>
       <p>Our team is here to help you with all your logistics needs. Contact us today for a free quote.</p>
       
@@ -219,7 +218,7 @@
     </div>
     
     <!-- Right side - Quote Form -->
-    <div class="quote-form">
+    <div class="quote-form reveal stagger-2">
       <h2>Get A Free Quote</h2>
       <p>Fill out the form below and our team will get back to you as soon as possible.</p>
       
@@ -305,7 +304,7 @@
 </section>
 
 <!-- Footer section -->
-<footer class="footer">
+<footer id="footer" class="footer">
   <div class="footer-content">
     <div class="container">
       <div class="footer-grid">
@@ -435,6 +434,163 @@
       grid.classList.add('dim-others');
       selected = this;
     }
+  })();
+
+  // Hero slideshow (cross-fade)
+  (function(){
+    const slideshow = document.querySelector('.hero .slideshow');
+    if (!slideshow) return;
+    const slides = Array.from(slideshow.querySelectorAll('img'));
+    if (slides.length <= 1) return;
+    const servicesSection = document.querySelector('.services');
+    let idx = 0;
+    let timer = null;
+    function show(i){
+      slides.forEach((img, k)=>img.classList.toggle('active', k === i));
+      // Mirror background on Services section
+      try {
+        if (servicesSection && slides[i] && slides[i].src) {
+          servicesSection.style.backgroundImage = `url('${slides[i].src}')`;
+        }
+      } catch (e) { /* no-op */ }
+    }
+    function next(){ idx = (idx + 1) % slides.length; show(idx); }
+    function start(){ if (!timer) timer = setInterval(next, 5000); }
+    function stop(){ if (timer) { clearInterval(timer); timer = null; } }
+    // Start after initial paint
+    show(0); start();
+    // Pause on hover for desktop
+    slideshow.addEventListener('mouseenter', stop);
+    slideshow.addEventListener('mouseleave', start);
+    // Also pause when page hidden
+    document.addEventListener('visibilitychange', ()=>{ document.hidden ? stop() : start(); });
+  })();
+
+  // Bubble header: compact on scroll
+  (function(){
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    function onScroll(){
+      if (window.scrollY > 10) navbar.classList.add('scrolled');
+      else navbar.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  // Why-Choose-Us background slideshow
+  (function(){
+    const section = document.querySelector('.why-choose-us');
+    if (!section) return;
+    const images = [
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600&auto=format&fit=crop'
+    ];
+    let idx = 0; 
+    function setBg(i){ section.style.backgroundImage = `url('${images[i]}')`; }
+    function next(){ idx = (idx + 1) % images.length; setBg(idx); }
+    if (images.length) setBg(0);
+    let timer = setInterval(next, 7000);
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.hidden) { clearInterval(timer); timer = null; }
+      else if (!timer) { timer = setInterval(next, 7000); }
+    });
+  })();
+
+  // Reveal on scroll (IntersectionObserver)
+  (function(){
+    // 1) Ensure reveal classes exist where expected
+    const autoSelectors = [
+      '.services .service-card',
+      '.services .service-title',
+      '.services .service-desc',
+      '.about-us .about-image',
+      '.about-us .about-text',
+      '.about-us .about-text h2',
+      '.about-us .about-text p',
+      '.about-us .feature-item',
+      '.why-choose-us .why-choose-card',
+      '.why-choose-us .why-choose-header *',
+      '.our-services .our-service-card',
+      '.our-services .our-services-header *',
+      '.contact-quote-section .contact-info',
+      '.contact-quote-section .quote-form',
+      '.contact-quote-section h2',
+      '.contact-quote-section p',
+      // Location/Map section
+      '.location-map-section .map-header *',
+      '.location-map-section .location-info',
+      '.location-map-section .location-details .location-item',
+      '.footer',
+      '.footer .footer-column',
+      '.footer .footer-title',
+      '.footer .footer-description',
+      '.footer .footer-links a',
+      '.contact-info-footer .contact-item-footer',
+      '.footer-bottom .footer-bottom-content'
+    ];
+    autoSelectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        if (!el.classList.contains('reveal')) el.classList.add('reveal');
+        // mark as replayable so it can animate again on re-entry
+        if (!el.classList.contains('reveal-replay')) el.classList.add('reveal-replay');
+      });
+    });
+
+    // Assign reveal-up + stagger to header texts
+    function addRevealAndStagger(selector) {
+      const list = document.querySelectorAll(selector);
+      list.forEach((el, i) => {
+        el.classList.add('reveal', 'reveal-up');
+        el.classList.add(['stagger-1','stagger-2','stagger-3','stagger-4','stagger-5'][i % 5]);
+      });
+    }
+    addRevealAndStagger('.why-choose-us .why-choose-header > *');
+    addRevealAndStagger('.our-services .our-services-header > *');
+    addRevealAndStagger('.contact-quote-section h2, .contact-quote-section p');
+    addRevealAndStagger('.location-map-section .map-header > *');
+    // Stagger location items
+    document.querySelectorAll('.location-map-section .location-details .location-item').forEach((el, i) => {
+      el.classList.add('reveal');
+      el.classList.add(['stagger-1','stagger-2','stagger-3','stagger-4','stagger-5'][i % 5]);
+    });
+
+    // Assign stagger to footer columns
+    const footerCols = document.querySelectorAll('.footer .footer-column');
+    footerCols.forEach((col, i) => {
+      col.classList.add('reveal');
+      col.classList.add(['stagger-1','stagger-2','stagger-3','stagger-4'][i % 4]);
+    });
+
+    // 2) Setup IO (or fall back)
+    const els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('reveal-visible'));
+      return;
+    }
+
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(entry => {
+        const el = entry.target;
+        if (entry.isIntersecting) {
+          el.classList.add('reveal-visible');
+        } else if (el.classList.contains('reveal-replay')) {
+          // remove visibility so animation can replay when it re-enters
+          el.classList.remove('reveal-visible');
+        }
+      });
+    }, { rootMargin: '0px 0px -15% 0px', threshold: 0.1 });
+
+    // 3) Observe and also immediately reveal items already in view
+    els.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top < (window.innerHeight * 0.88) && rect.bottom > 0;
+      if (inView) {
+        el.classList.add('reveal-visible');
+      }
+      io.observe(el);
+    });
   })();
   </script>
 {% endblock %}

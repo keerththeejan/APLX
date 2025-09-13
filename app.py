@@ -22,6 +22,26 @@ def create_app():
 
     app = Flask(__name__, static_folder='static', template_folder='templates')
     app.config.from_object('config.Config')
+    
+    # Normalize SQLite path and ensure directory exists to avoid "unable to open database file"
+    try:
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
+        if uri.startswith('sqlite:///'):
+            rel_path = uri.replace('sqlite:///', '')
+            # Make absolute path relative to this file's directory
+            if not os.path.isabs(rel_path):
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                abs_path = os.path.normpath(os.path.join(base_dir, rel_path))
+                # Ensure the parent directory exists
+                os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+                # Use forward slashes for SQLAlchemy URI compatibility on Windows
+                abs_path_uri = abs_path.replace('\\', '/')
+                app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{abs_path_uri}"
+            else:
+                os.makedirs(os.path.dirname(rel_path), exist_ok=True)
+    except Exception:
+        # If anything goes wrong here, proceed; SQLAlchemy will raise clearer errors later
+        pass
 
     # Initialize DB
     db.init_app(app)
@@ -260,6 +280,31 @@ def create_app():
             v = 0.0
         return f"Rs {v:,.2f}"
 
+    # Time filters (Sri Lanka / Asia/Colombo)
+    @app.template_filter('colombo')
+    def jinja_colombo(dt: datetime.datetime | None) -> str:
+        """Format a datetime in Asia/Colombo using default '%Y-%m-%d %H:%M:%S'."""
+        return format_colombo(dt)
+
+    @app.template_filter('colombo_human')
+    def jinja_colombo_human(dt: datetime.datetime | None) -> str:
+        """Format a datetime in Asia/Colombo as 'DD Mon YYYY HH:MM AM/PM'."""
+        if not dt:
+            return ''
+        # Ensure we treat naive timestamps as UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        try:
+            colombo = dt.astimezone(ZoneInfo('Asia/Colombo'))
+            return colombo.strftime('%d %b %Y %I:%M %p')
+        except Exception:
+            try:
+                ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+                colombo = dt.astimezone(ist)
+                return colombo.strftime('%d %b %Y %I:%M %p')
+            except Exception:
+                return ''
+
     # Ensure uploads directory exists
     def ensure_dir(path: str):
         try:
@@ -308,6 +353,82 @@ def create_app():
             create_notification('message', 'Service Added', f'New service "{title}" has been added', svc.id)
 
             return {'success': True, 'service': svc.to_dict()}
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 500
+
+    @app.route('/api/customers/<int:customer_id>', methods=['GET', 'PUT', 'DELETE'])
+    def customer_detail(customer_id: int):
+        """Retrieve, update, or delete a single customer.
+        - GET returns customer data
+        - PUT updates provided fields (partial update supported)
+        - DELETE removes the record
+        """
+        c = db.session.get(Customer, customer_id)
+        if not c:
+            return {'success': False, 'error': 'Not found'}, 404
+
+        if request.method == 'GET':
+            return {
+                'success': True,
+                'customer': {
+                    'id': c.id,
+                    'first_name': c.first_name,
+                    'last_name': c.last_name,
+                    'full_name': c.full_name,
+                    'email': c.email,
+                    'phone': c.phone,
+                    'address': c.address,
+                    'city': c.city,
+                    'state': c.state,
+                    'postal_code': c.postal_code,
+                    'country': c.country,
+                    'is_active': c.is_active,
+                    'created_at': c.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            }
+
+        if request.method == 'DELETE':
+            try:
+                db.session.delete(c)
+                db.session.commit()
+                return {'success': True}
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                return {'success': False, 'error': str(e)}, 500
+
+        # PUT
+        data = request.get_json(silent=True) or {}
+
+        # Optional unique email check if changing
+        new_email = data.get('email')
+        if isinstance(new_email, str):
+            new_email_norm = new_email.strip().lower()
+            if new_email_norm and new_email_norm != (c.email or '').lower():
+                if Customer.query.filter(Customer.email == new_email_norm, Customer.id != c.id).first():
+                    return {'success': False, 'error': 'Email already exists'}, 409
+                c.email = new_email_norm
+
+        # Generic string fields
+        for field in ['first_name', 'last_name', 'phone', 'address', 'city', 'state', 'postal_code', 'country']:
+            if field in data:
+                val = (data.get(field) or '').strip()
+                setattr(c, field, val or None)
+
+        # Boolean status parsing
+        if 'is_active' in data:
+            raw_active = data.get('is_active')
+            if isinstance(raw_active, bool):
+                c.is_active = raw_active
+            elif isinstance(raw_active, (int, float)):
+                c.is_active = int(raw_active) != 0
+            elif isinstance(raw_active, str):
+                v = raw_active.strip().lower()
+                c.is_active = v in ('true', '1', 'yes', 'y')
+
+        try:
+            db.session.commit()
+            return {'success': True}
         except SQLAlchemyError as e:
             db.session.rollback()
             return {'success': False, 'error': str(e)}, 500
@@ -1562,9 +1683,19 @@ def create_app():
         state = (data.get('state') or '').strip() or None
         postal_code = (data.get('postal_code') or '').strip() or None
         country = (data.get('country') or '').strip() or None
-        is_active = data.get('is_active')
-        # Default to True when created by admin, but allow explicit False
-        is_active = bool(is_active) if is_active is not None else True
+        raw_active = data.get('is_active')
+        # Default to True when created by admin
+        if raw_active is None:
+            is_active = True
+        elif isinstance(raw_active, bool):
+            is_active = raw_active
+        elif isinstance(raw_active, (int, float)):
+            is_active = int(raw_active) != 0
+        elif isinstance(raw_active, str):
+            v = raw_active.strip().lower()
+            is_active = v in ('true', '1', 'yes', 'y')
+        else:
+            is_active = True
 
         # Basic validation
         missing = [k for k, v in {

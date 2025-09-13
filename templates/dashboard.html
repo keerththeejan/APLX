@@ -139,7 +139,7 @@
                 <div class="stat-icon">📊</div>
                 <div class="stat-info">
                     <h3>Total Users</h3>
-                    <p class="stat-number">{{ stats.total_users }}</p>
+                    <p class="stat-number" id="statTotalUsers">{{ stats.total_users }}</p>
                 </div>
             </div>
 
@@ -147,7 +147,7 @@
                 <div class="stat-icon">🚚</div>
                 <div class="stat-info">
                     <h3>Total Shipments</h3>
-                    <p class="stat-number">{{ stats.total_shipments }}</p>
+                    <p class="stat-number" id="statTotalShipments">{{ stats.total_shipments }}</p>
                 </div>
             </div>
 
@@ -155,7 +155,7 @@
                 <div class="stat-icon">🎫</div>
                 <div class="stat-info">
                     <h3>Active Bookings</h3>
-                    <p class="stat-number">{{ stats.active_bookings }}</p>
+                    <p class="stat-number" id="statActiveBookings">{{ stats.active_bookings }}</p>
                 </div>
             </div>
 
@@ -163,7 +163,7 @@
                 <div class="stat-icon">💰</div>
                 <div class="stat-info">
                     <h3>Revenue</h3>
-                    <p class="stat-number">{{ stats.revenue|lkr }}</p>
+                    <p class="stat-number" id="statRevenue">{{ stats.revenue|lkr }}</p>
                 </div>
             </div>
         </div>
@@ -182,11 +182,11 @@
         <!-- Recent Activity -->
         <div class="recent-activity">
             <h3>Recent Activity</h3>
-            <div class="activity-list">
+            <div class="activity-list" id="recentActivityList">
                 {% if recent_notifications and recent_notifications|length > 0 %}
                     {% for n in recent_notifications %}
                     <div class="activity-item">
-                        <span class="activity-time">{{ n.created_at.strftime('%d %b %Y %I:%M %p') }}</span>
+                        <span class="activity-time">{{ n.created_at|colombo_human }}</span>
                         <span class="activity-text">{{ n.title }} — {{ n.message }}</span>
                     </div>
                     {% endfor %}
@@ -231,6 +231,67 @@ function updateDateTime() {
     document.getElementById('current-date').textContent = formattedDate;
     document.getElementById('current-time').textContent = formattedTime;
     document.getElementById('current-day').textContent = formattedDay;
+}
+
+// Render Recent Activity list from notifications payload
+function renderRecentActivity(items) {
+    const container = document.getElementById('recentActivityList');
+    if (!container) return;
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="activity-item"><span class="activity-text">No recent activity</span></div>';
+        return;
+    }
+    const html = items.map(n => {
+        const ts = n.created_at_human || (n.created_at_iso ? formatLocalTime(n.created_at_iso) : n.created_at || '');
+        return `
+            <div class="activity-item">
+                <span class="activity-time">${ts}</span>
+                <span class="activity-text">${n.title} — ${n.message}</span>
+            </div>
+        `;
+    }).join('');
+    container.innerHTML = html;
+}
+
+// Fetch and refresh recent activity from notifications API
+function refreshRecentActivity() {
+    const params = new URLSearchParams({ only: '', limit: '5', max_age_hours: '24' });
+    fetch(`/api/notifications?${params.toString()}`)
+        .then(r => r.json())
+        .then(data => {
+            const list = (data && data.notifications) ? data.notifications : [];
+            renderRecentActivity(list);
+        })
+        .catch(err => {
+            console.error('recent activity error', err);
+        });
+}
+
+// Fetch analytics summary and update stat cards
+function updateStats() {
+    fetch('/api/analytics/summary')
+        .then(r => r.json())
+        .then(payload => {
+            if (!payload) return;
+            try {
+                // Update totals
+                const totals = payload.totals || {};
+                const toLkr = (v)=> {
+                    try { return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 2 }).format(Number(v||0)); } catch { return `Rs ${Number(v||0).toFixed(2)}`; }
+                };
+                const usersEl = document.getElementById('statTotalUsers');
+                const shipmentsEl = document.getElementById('statTotalShipments');
+                const bookingsEl = document.getElementById('statActiveBookings');
+                const revenueEl = document.getElementById('statRevenue');
+                if (usersEl && typeof totals.shipments !== 'undefined') {
+                    // We don't have a users total in summary; keep existing for now
+                }
+                if (shipmentsEl && typeof totals.shipments !== 'undefined') shipmentsEl.textContent = totals.shipments;
+                if (bookingsEl && typeof totals.bookings !== 'undefined') bookingsEl.textContent = totals.bookings;
+                if (revenueEl && typeof totals.revenue !== 'undefined') revenueEl.textContent = toLkr(totals.revenue);
+            } catch (e) { /* ignore */ }
+        })
+        .catch(err => console.error('updateStats error', err));
 }
 
 // Sidebar toggle functionality
@@ -589,9 +650,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load notifications initially
     loadNotifications();
+    // Also refresh recent activity list from API
+    refreshRecentActivity();
+    // Initial stats refresh
+    updateStats();
     
     // Refresh notifications every 30 seconds
     setInterval(loadNotifications, 30000);
+    // Refresh recent activity every 30 seconds
+    setInterval(refreshRecentActivity, 30000);
+    // Refresh stats every 60 seconds
+    setInterval(updateStats, 60000);
     
     // Sidebar toggle
     const sidebarToggle = document.getElementById('sidebarToggle');
@@ -603,6 +672,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationBtn = document.getElementById('notificationBtn');
     if (notificationBtn) {
         notificationBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleNotificationMenu();
+        });
+    }
+    // Also open notifications when clicking the datetime display (top-right clock area)
+    const datetimeDisplay = document.querySelector('.datetime-display');
+    if (datetimeDisplay) {
+        datetimeDisplay.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleNotificationMenu();
+        });
+    }
+    // Open notifications when clicking sidebar header or footer (safe non-navigation zones)
+    const sidebarHeader = document.querySelector('.dashboard-sidebar .sidebar-header');
+    if (sidebarHeader) {
+        sidebarHeader.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleNotificationMenu();
+        });
+    }
+    const sidebarFooter = document.querySelector('.dashboard-sidebar .sidebar-footer');
+    if (sidebarFooter) {
+        sidebarFooter.addEventListener('click', function(e) {
             e.stopPropagation();
             toggleNotificationMenu();
         });
@@ -639,6 +731,15 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('notificationMenu').classList.remove('show');
         }
     });
+
+    // "View All Notifications" button navigates to the full list page
+    const viewAllBtn = document.querySelector('#notificationMenu .view-all-btn');
+    if (viewAllBtn) {
+        viewAllBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            window.location.href = '/notifications';
+        });
+    }
     
     // Navigation active state
     const navLinks = document.querySelectorAll('.nav-link');

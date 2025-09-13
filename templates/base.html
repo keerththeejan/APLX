@@ -55,6 +55,22 @@
     {% block content %}{% endblock %}
   </main>
 
+  <script>
+    (function(){
+      // Global bubble header compact on scroll (exclude dashboard pages)
+      if (!document.body.classList.contains('dashboard-body')) {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+          function onScroll(){
+            if (window.scrollY > 10) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+          }
+          window.addEventListener('scroll', onScroll, { passive: true });
+          onScroll();
+        }
+      }
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
