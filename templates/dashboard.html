@@ -66,10 +66,10 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar">A</div>
+                    <div class="user-avatar" id="profileAvatar">A</div>
                     <div class="user-info">
-                        <div class="user-name">Admin</div>
-                        <div class="user-role">Administrator</div>
+                        <div class="user-name" id="profileName">Admin</div>
+                        <div class="user-role"><span id="profileEmail">Administrator</span></div>
                     </div>
                 </div>
             </div>
@@ -139,7 +139,7 @@
                 <div class="stat-icon">📊</div>
                 <div class="stat-info">
                     <h3>Total Users</h3>
-                    <p class="stat-number">1,234</p>
+                    <p class="stat-number">{{ stats.total_users }}</p>
                 </div>
             </div>
 
@@ -147,7 +147,7 @@
                 <div class="stat-icon">🚚</div>
                 <div class="stat-info">
                     <h3>Total Shipments</h3>
-                    <p class="stat-number">567</p>
+                    <p class="stat-number">{{ stats.total_shipments }}</p>
                 </div>
             </div>
 
@@ -155,7 +155,7 @@
                 <div class="stat-icon">🎫</div>
                 <div class="stat-info">
                     <h3>Active Bookings</h3>
-                    <p class="stat-number">89</p>
+                    <p class="stat-number">{{ stats.active_bookings }}</p>
                 </div>
             </div>
 
@@ -163,7 +163,7 @@
                 <div class="stat-icon">💰</div>
                 <div class="stat-info">
                     <h3>Revenue</h3>
-                    <p class="stat-number">Rs 45,678.00</p>
+                    <p class="stat-number">{{ stats.revenue|lkr }}</p>
                 </div>
             </div>
         </div>
@@ -172,10 +172,10 @@
         <div class="quick-actions">
             <h3>Quick Actions</h3>
             <div class="action-buttons">
-                <button class="action-btn">Add New User</button>
-                <button class="action-btn">Manage Books</button>
-                <button class="action-btn">View Reports</button>
-                <button class="action-btn">System Settings</button>
+                <a class="action-btn" href="{{ url_for('users') }}">Add New User</a>
+                <a class="action-btn" href="{{ url_for('shipments') }}">Manage Shipments</a>
+                <a class="action-btn" href="{{ url_for('analytics_page') }}">View Reports</a>
+                <a class="action-btn" href="{{ url_for('settings') }}">System Settings</a>
             </div>
         </div>
 
@@ -183,22 +183,18 @@
         <div class="recent-activity">
             <h3>Recent Activity</h3>
             <div class="activity-list">
-                <div class="activity-item">
-                    <span class="activity-time">10:30 AM</span>
-                    <span class="activity-text">New user registration: John Doe</span>
-                </div>
-                <div class="activity-item">
-                    <span class="activity-time">09:45 AM</span>
-                    <span class="activity-text">Book booking confirmed: "The Great Gatsby"</span>
-                </div>
-                <div class="activity-item">
-                    <span class="activity-time">09:15 AM</span>
-                    <span class="activity-text">Payment received: Rs 500.00</span>
-                </div>
-                <div class="activity-item">
-                    <span class="activity-time">08:30 AM</span>
-                    <span class="activity-text">New book added to inventory</span>
-                </div>
+                {% if recent_notifications and recent_notifications|length > 0 %}
+                    {% for n in recent_notifications %}
+                    <div class="activity-item">
+                        <span class="activity-time">{{ n.created_at.strftime('%d %b %Y %I:%M %p') }}</span>
+                        <span class="activity-text">{{ n.title }} — {{ n.message }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <span class="activity-text">No recent activity</span>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -553,6 +549,38 @@ function toggleNotificationMenu() {
     notificationMenu.classList.toggle('show');
 }
 
+// Load admin profile info into sidebar footer and profile dropdown
+async function loadAdminProfile() {
+    try {
+        const res = await fetch('/api/admin/profile');
+        const data = await res.json();
+        if (data && (data.name !== undefined)) {
+            const name = (data.name || '').trim() || 'Admin';
+            const email = data.email || '';
+            const avatarChar = (name ? name[0] : 'A').toUpperCase();
+
+            // Sidebar footer
+            const sName = document.getElementById('profileName');
+            const sEmail = document.getElementById('profileEmail');
+            const sAvatar = document.getElementById('profileAvatar');
+            if (sName) sName.textContent = name;
+            if (sEmail) sEmail.textContent = email || 'Administrator';
+            if (sAvatar) sAvatar.textContent = avatarChar;
+
+            // Dropdown header
+            const dName = document.getElementById('profileNameMenu');
+            const dEmail = document.getElementById('profileEmailMenu');
+            const dAvatar = document.getElementById('profileAvatarMenu');
+            if (dName) dName.textContent = name;
+            if (dEmail) dEmail.textContent = email;
+            if (dAvatar) dAvatar.textContent = avatarChar;
+        }
+    } catch (e) {
+        // ignore; keep defaults
+        console.warn('Failed to load admin profile', e);
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     // Update date/time immediately and then every second
@@ -639,6 +667,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Load admin profile details
+    loadAdminProfile();
 
     // Set active nav item based on current path on load
     try {

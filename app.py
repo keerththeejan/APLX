@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import inspect
+from sqlalchemy import inspect, func
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
 import os
 import datetime
 import random
 import string
+from werkzeug.utils import secure_filename
 
 # Global SQLAlchemy instance
 
@@ -228,19 +229,26 @@ def create_app():
     # Time helpers
     def format_colombo(dt: datetime.datetime | None) -> str:
         """Format a datetime in Asia/Colombo time as 'YYYY-MM-DD HH:MM:SS'.
-        If dt is naive, assume it is in UTC.
+        If dt is naive, treat it as UTC. Works even if system tzdb is missing.
         """
         if not dt:
             return ''
+        # Ensure we treat naive timestamps as UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        # Try with ZoneInfo first
         try:
-            # Treat naive as UTC then convert
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=datetime.timezone.utc)
             colombo = dt.astimezone(ZoneInfo('Asia/Colombo'))
             return colombo.strftime('%Y-%m-%d %H:%M:%S')
         except Exception:
-            # Fallback to naive formatting
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
+            # Fallback: fixed offset +05:30 (IST)
+            try:
+                ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+                colombo = dt.astimezone(ist)
+                return colombo.strftime('%Y-%m-%d %H:%M:%S')
+            except Exception:
+                # Last resort: return naive string (likely UTC)
+                return dt.strftime('%Y-%m-%d %H:%M:%S')
 
     # Currency helpers
     @app.template_filter('lkr')
@@ -251,6 +259,232 @@ def create_app():
         except (TypeError, ValueError):
             v = 0.0
         return f"Rs {v:,.2f}"
+
+    # Ensure uploads directory exists
+    def ensure_dir(path: str):
+        try:
+            os.makedirs(path, exist_ok=True)
+        except Exception:
+            pass
+
+    @app.route('/api/services', methods=['POST'])
+    def api_create_service():
+        """Create a new HomeService. Accepts multipart/form-data or JSON.
+        form fields: title (required), description (required), icon (emoji/text optional), image (file optional)
+        """
+        try:
+            # Accept both JSON and multipart
+            if request.content_type and 'application/json' in request.content_type:
+                data = request.get_json(silent=True) or {}
+                title = (data.get('title') or '').strip()
+                description = (data.get('description') or '').strip()
+                icon = (data.get('icon') or '').strip() or None
+                image_url = None
+            else:
+                form = request.form
+                files = request.files
+                title = (form.get('title') or '').strip()
+                description = (form.get('description') or '').strip()
+                icon = (form.get('icon') or '').strip() or None
+                image_url = None
+                if 'image' in files and files['image'] and files['image'].filename:
+                    img = files['image']
+                    filename = secure_filename(img.filename)
+                    upload_dir = os.path.join(app.static_folder, 'uploads', 'services')
+                    ensure_dir(upload_dir)
+                    save_path = os.path.join(upload_dir, filename)
+                    img.save(save_path)
+                    # public URL
+                    image_url = url_for('static', filename=f'uploads/services/{filename}')
+
+            if not title or not description:
+                return {'success': False, 'error': 'Title and description are required'}, 400
+
+            svc = HomeService(title=title, description=description, icon=icon, image_url=image_url, display_order=0, active=True)
+            db.session.add(svc)
+            db.session.commit()
+
+            # Create a notification for visibility
+            create_notification('message', 'Service Added', f'New service "{title}" has been added', svc.id)
+
+            return {'success': True, 'service': svc.to_dict()}
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 500
+        except Exception as e:
+            return {'success': False, 'error': str(e)}, 500
+
+    # ------------------------------
+    # Home Services CRUD (Content Manager)
+    # ------------------------------
+    @app.route('/api/home/services', methods=['GET'])
+    def api_home_services_list():
+        try:
+            items = HomeService.query.order_by(HomeService.display_order.asc(), HomeService.id.asc()).all()
+            return { 'items': [s.to_dict() for s in items] }
+        except Exception as e:
+            return { 'items': [], 'error': str(e) }, 500
+
+    @app.route('/api/home/services', methods=['POST'])
+    def api_home_services_create():
+        data = request.get_json(silent=True) or {}
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
+        if not title or not description:
+            return { 'success': False, 'error': 'Title and description are required' }, 400
+        try:
+            s = HomeService(
+                title=title,
+                description=description,
+                icon=(data.get('icon') or '').strip() or None,
+                image_url=(data.get('image_url') or '').strip() or None,
+                display_order=int(data.get('display_order') or 0),
+                active=bool(data.get('active')),
+            )
+            db.session.add(s)
+            db.session.commit()
+            return { 'success': True, 'item': s.to_dict() }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+
+    @app.route('/api/home/services/<int:item_id>', methods=['PUT'])
+    def api_home_services_update(item_id):
+        data = request.get_json(silent=True) or {}
+        try:
+            s = db.session.get(HomeService, item_id)
+            if not s:
+                return { 'success': False, 'error': 'Not found' }, 404
+            def val(key, cast=str):
+                v = data.get(key)
+                if v is None:
+                    return None
+                try:
+                    return cast(v)
+                except Exception:
+                    return None
+            if 'title' in data: s.title = (val('title') or s.title)
+            if 'description' in data: s.description = (val('description') or s.description)
+            if 'icon' in data: s.icon = (val('icon') or None)
+            if 'image_url' in data: s.image_url = (val('image_url') or None)
+            if 'display_order' in data:
+                try:
+                    s.display_order = int(data.get('display_order') or 0)
+                except Exception:
+                    pass
+            if 'active' in data: s.active = bool(data.get('active'))
+            db.session.commit()
+            return { 'success': True }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+
+    @app.route('/api/home/services/<int:item_id>', methods=['DELETE'])
+    def api_home_services_delete(item_id):
+        try:
+            s = db.session.get(HomeService, item_id)
+            if not s:
+                return { 'success': False, 'error': 'Not found' }, 404
+            db.session.delete(s)
+            db.session.commit()
+            return { 'success': True }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+
+    # ------------------------------
+    # Home Features CRUD (Content Manager)
+    # ------------------------------
+    @app.route('/api/home/features', methods=['GET'])
+    def api_home_features_list():
+        try:
+            items = HomeFeature.query.order_by(HomeFeature.display_order.asc(), HomeFeature.id.asc()).all()
+            return { 'items': [f.to_dict() for f in items] }
+        except Exception as e:
+            return { 'items': [], 'error': str(e) }, 500
+
+    @app.route('/api/home/features', methods=['POST'])
+    def api_home_features_create():
+        data = request.get_json(silent=True) or {}
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
+        if not title or not description:
+            return { 'success': False, 'error': 'Title and description are required' }, 400
+        try:
+            f = HomeFeature(
+                title=title,
+                description=description,
+                icon=(data.get('icon') or '').strip() or None,
+                display_order=int(data.get('display_order') or 0),
+                active=bool(data.get('active')),
+            )
+            db.session.add(f)
+            db.session.commit()
+            return { 'success': True, 'item': f.to_dict() }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+
+    @app.route('/api/home/features/<int:item_id>', methods=['PUT'])
+    def api_home_features_update(item_id):
+        data = request.get_json(silent=True) or {}
+        try:
+            f = db.session.get(HomeFeature, item_id)
+            if not f:
+                return { 'success': False, 'error': 'Not found' }, 404
+            if 'title' in data: f.title = (data.get('title') or f.title)
+            if 'description' in data: f.description = (data.get('description') or f.description)
+            if 'icon' in data: f.icon = (data.get('icon') or None)
+            if 'display_order' in data:
+                try:
+                    f.display_order = int(data.get('display_order') or 0)
+                except Exception:
+                    pass
+            if 'active' in data: f.active = bool(data.get('active'))
+            db.session.commit()
+            return { 'success': True }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+
+    @app.route('/api/home/features/<int:item_id>', methods=['DELETE'])
+    def api_home_features_delete(item_id):
+        try:
+            f = db.session.get(HomeFeature, item_id)
+            if not f:
+                return { 'success': False, 'error': 'Not found' }, 404
+            db.session.delete(f)
+            db.session.commit()
+            return { 'success': True }
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return { 'success': False, 'error': str(e) }, 500
+    @app.route('/api/upload', methods=['POST'])
+    def api_upload():
+        """Generic upload endpoint for images. Accepts multipart with fields:
+        - file: the file to upload (required)
+        - folder: target subfolder under static/uploads (e.g., 'services', 'features'). Defaults to 'misc'.
+        Returns a public URL.
+        """
+        try:
+            if 'file' not in request.files:
+                return {'success': False, 'error': 'No file provided'}, 400
+            f = request.files['file']
+            if not f or not f.filename:
+                return {'success': False, 'error': 'Empty filename'}, 400
+            folder = (request.form.get('folder') or 'misc').strip().lower()
+            # allowlist
+            if folder not in {'services','features','misc'}:
+                folder = 'misc'
+            filename = secure_filename(f.filename)
+            upload_dir = os.path.join(app.static_folder, 'uploads', folder)
+            ensure_dir(upload_dir)
+            save_path = os.path.join(upload_dir, filename)
+            f.save(save_path)
+            url = url_for('static', filename=f'uploads/{folder}/{filename}')
+            return {'success': True, 'url': url}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}, 500
 
     # Create tables if they don't exist
     with app.app_context():
@@ -497,7 +731,31 @@ def create_app():
 
     @app.route('/dashboard')
     def dashboard():
-        return render_template('dashboard.html')
+        # Dynamic stats
+        try:
+            total_users = Customer.query.count()
+            total_shipments = Shipment.query.count()
+            active_bookings = Shipment.query.filter(~Shipment.status.in_(['Delivered', 'Cancelled'])).count()
+            revenue = db.session.query(func.coalesce(func.sum(Shipment.price), 0.0)).scalar() or 0.0
+        except Exception:
+            total_users = 0
+            total_shipments = 0
+            active_bookings = 0
+            revenue = 0.0
+
+        # Recent notifications (latest 5)
+        try:
+            recent_notifications = get_all_notifications(limit=5)
+        except Exception:
+            recent_notifications = []
+
+        stats = {
+            'total_users': total_users,
+            'total_shipments': total_shipments,
+            'active_bookings': active_bookings,
+            'revenue': float(revenue or 0.0),
+        }
+        return render_template('dashboard.html', stats=stats, recent_notifications=recent_notifications)
 
     @app.route('/api/contact-message', methods=['POST'])
     def api_contact_message():
@@ -615,17 +873,97 @@ def create_app():
     # Analytics summary API used by templates/analytics.html
     @app.route('/api/analytics/summary', methods=['GET'])
     def api_analytics_summary():
-        """Return shipments/bookings series and totals for the last 12 months.
-        If you later compute these from the DB, replace the static payload below.
-        """
-        payload = {
-            "totals": { "shipments": 320, "bookings": 278, "revenue": 1450000.0 },
-            "series": {
-                "shipments": [12,18,22,19,25,30,28,24,20,26,29,31],
-                "bookings":  [9,14,17,15,19,23,21,20,18,22,25,27]
+        """Return shipments/bookings series and totals for the last 12 months from DB."""
+        try:
+            now = datetime.datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            # Build last 12 month buckets oldest->newest
+            months = [ (now - datetime.timedelta(days=30*i)) for i in range(11, -1, -1) ]
+            # Normalize to first-of-month
+            months = [ m.replace(day=1) for m in months ]
+
+            # Precompute month boundaries
+            boundaries = []
+            for m in months:
+                # next month
+                if m.month == 12:
+                    nxt = m.replace(year=m.year+1, month=1)
+                else:
+                    nxt = m.replace(month=m.month+1)
+                boundaries.append((m, nxt))
+
+            # Query counts per month
+            shipments_series = []
+            bookings_series = []
+            for start, end in boundaries:
+                cnt = Shipment.query.filter(Shipment.created_at >= start, Shipment.created_at < end).count()
+                shipments_series.append(cnt)
+                # If you add a separate Booking model later, compute from it; for now mirror shipments
+                bookings_series.append(cnt)
+
+            # Totals
+            total_shipments = Shipment.query.count()
+            total_bookings = total_shipments  # placeholder until Booking model exists
+            total_revenue = db.session.query(func.coalesce(func.sum(Shipment.price), 0.0)).scalar() or 0.0
+
+            payload = {
+                "totals": { "shipments": total_shipments, "bookings": total_bookings, "revenue": float(total_revenue) },
+                "series": { "shipments": shipments_series, "bookings": bookings_series }
             }
-        }
-        return payload
+            return payload
+        except Exception as e:
+            app.logger.error(f"analytics summary error: {e}")
+            # Provide safe fallback so UI can still render
+            return {
+                "totals": { "shipments": 0, "bookings": 0, "revenue": 0.0 },
+                "series": { "shipments": [0]*12, "bookings": [0]*12 }
+            }
+
+    # Generic notifications list API used by dropdowns (supports filters)
+    @app.route('/api/notifications', methods=['GET'])
+    def api_notifications():
+        """Return notifications with optional filters:
+        - only: 'unread' to filter unread only
+        - limit: integer count of items to return (default 10)
+        - max_age_hours: if provided, only return items created within this many hours
+        Response includes unread_count, notifications, and each item has created_at_human & created_at_iso.
+        """
+        try:
+            only = (request.args.get('only') or '').lower()
+            try:
+                limit = int(request.args.get('limit') or 10)
+            except Exception:
+                limit = 10
+            try:
+                max_age_hours = int(request.args.get('max_age_hours')) if request.args.get('max_age_hours') else None
+            except Exception:
+                max_age_hours = None
+
+            q = Notification.query
+            if only == 'unread':
+                q = q.filter_by(is_read=False)
+            if max_age_hours is not None:
+                cutoff = datetime.datetime.utcnow() - datetime.timedelta(hours=max_age_hours)
+                q = q.filter(Notification.created_at >= cutoff)
+            q = q.order_by(Notification.created_at.desc())
+            items = (q.limit(limit).all() if limit else q.all())
+
+            def serialize(n: Notification):
+                return {
+                    'id': n.id,
+                    'type': n.type,
+                    'title': n.title,
+                    'message': n.message,
+                    'is_read': n.is_read,
+                    'created_at': n.created_at.isoformat() if n.created_at else None,
+                    'created_at_iso': n.created_at.isoformat() if n.created_at else None,
+                    'created_at_human': format_colombo(n.created_at),
+                }
+
+            unread_count = get_notification_count()
+            return { 'unread_count': unread_count, 'notifications': [serialize(n) for n in items] }
+        except Exception as e:
+            app.logger.error(f"notifications list error: {e}")
+            return { 'unread_count': 0, 'notifications': [] }
 
     @app.route('/api/customers/<int:customer_id>', methods=['GET'])
     def get_customer(customer_id):

@@ -132,6 +132,10 @@
               <input id="supportEmail" type="email" placeholder="support@example.com">
             </div>
             <div class="form-row">
+              <label for="companyPhone">Support Phone</label>
+              <input id="companyPhone" type="tel" placeholder="+94 7X XXX XXXX" pattern="^[0-9+()\s-]{6,20}$">
+            </div>
+            <div class="form-row">
               <label for="currency">Currency</label>
               <select id="currency">
                 <option value="LKR" selected>LKR (Sri Lankan Rupee)</option>
@@ -294,6 +298,7 @@
           const payload={
             companyName: document.getElementById('companyName').value.trim(),
             supportEmail: document.getElementById('supportEmail').value.trim(),
+            companyPhone: document.getElementById('companyPhone').value.trim(),
             currency: document.getElementById('currency').value,
             emailNotifs: document.getElementById('emailNotifs')?.checked || false,
             smsNotifs: document.getElementById('smsNotifs')?.checked || false

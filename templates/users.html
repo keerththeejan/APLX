@@ -102,10 +102,10 @@
             </nav>
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar">A</div>
+                    <div class="user-avatar" id="profileAvatar">A</div>
                     <div class="user-info">
-                        <div class="user-name">Admin</div>
-                        <div class="user-role">Administrator</div>
+                        <div class="user-name" id="profileName">Admin</div>
+                        <div class="user-role"><span id="profileEmail">Administrator</span></div>
                     </div>
                 </div>
             </div>
@@ -185,12 +185,13 @@
                     </div>
                     
                     <div class="users-actions">
-                        <form method="GET" class="search-form">
-                            <div class="search-container">
-                                <input type="text" name="search" placeholder="Search customers..." value="{{ search }}" class="search-input">
-                                <button type="submit" class="btn btn-primary">Search</button>
-                            </div>
-                        </form>
+                    <button type="button" class="btn btn-primary" id="openAddCustomerBtn" style="height:40px;" onclick="(function(){var m=document.getElementById('addCustomerModal'); if(m){m.style.display='block';}})()">+ Add Customer</button>
+                    <form method="GET" class="search-form">
+                        <div class="search-container">
+                            <input type="text" name="search" placeholder="Search customers..." value="{{ search }}" class="search-input">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
                         <form method="GET" class="per-page-form" style="display:flex; align-items:center; gap:8px;">
                             <input type="hidden" name="search" value="{{ search }}" />
                             <label for="per_page" style="color:#94a3b8; font-size:13px;">Show:</label>
@@ -350,7 +351,7 @@
                             <input type="text" name="city" />
                         </div>
                         <div class="form-group">
-                            <label>State</label>
+                            <label>Province</label>
                             <input type="text" name="state" />
                         </div>
                         <div class="form-group">
@@ -361,10 +362,12 @@
                             <label>Country</label>
                             <input type="text" name="country" />
                         </div>
-                        <div class="form-group full">
-                            <label>
-                                <input type="checkbox" name="is_active" checked /> Approve now
-                            </label>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="is_active">
+                                <option value="true" selected>Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-actions">
@@ -428,25 +431,35 @@ function viewCustomer(customerId) {
     fetch(`/api/customers/${customerId}`)
         .then(r => r.json())
         .then(data => {
-            const c = data.success ? data : data; // accept either shape
-            if (!c || (c.success === false)) throw new Error((c && c.error) || 'Not found');
-            const initials = `${(c.first_name||'')[0]||''}${(c.last_name||'')[0]||''}`.toUpperCase();
+            // Support multiple API response shapes
+            const c = (data && data.customer)
+                ? data.customer
+                : (data && data.success === false)
+                    ? null
+                    : data;
+            if (!c) throw new Error((data && data.error) || 'Not found');
+            const first = (c.first_name || '').trim();
+            const last = (c.last_name || '').trim();
+            const fullName = c.full_name || `${first} ${last}`.trim();
+            const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || (fullName.charAt(0).toUpperCase() || 'C');
             const phone = c.phone || 'Not provided';
-            const addr = c.full_address || 'Not provided';
+            const addr = c.full_address || [c.address, c.city, c.state, c.postal_code, c.country].filter(Boolean).join(', ') || 'Not provided';
+            const createdDate = c.created_date || '';
+            const createdTime = c.created_time || '';
             const statusBadge = c.is_active ? '<span class="status-badge active">Active</span>' : '<span class="status-badge inactive">Inactive</span>';
             modalBody.innerHTML = `
                 <div class="customer-detail-card">
                   <div class="customer-header" style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-                    <div class="customer-avatar-large" style="width:48px;height:48px;border-radius:50%;background:#374151;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">${initials || 'C'}</div>
+                    <div class="customer-avatar-large" style="width:48px;height:48px;border-radius:50%;background:#374151;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">${initials}</div>
                     <div style="flex:1;">
-                      <h3 style="margin:0 0 4px;">${c.full_name || ''} <small style="color:#94a3b8;">#${c.id}</small></small></h3>
+                      <h3 style="margin:0 0 4px;">${fullName} <small style="color:#94a3b8;">#${c.id || ''}</small></h3>
                       ${statusBadge}
                     </div>
                   </div>
-                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Email:</span> <span class="detail-value">${c.email || ''}</span></div>
+                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Email:</span> <span class="detail-value">${c.email || 'Not provided'}</span></div>
                   <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Phone:</span> <span class="detail-value">${phone}</span></div>
                   <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Address:</span> <span class="detail-value">${addr}</span></div>
-                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Registered:</span> <span class="detail-value">${c.created_date} ${c.created_time}</span></div>
+                  ${(createdDate||createdTime)?`<div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Registered:</span> <span class="detail-value">${createdDate} ${createdTime}</span></div>`:''}
                 </div>`;
         })
         .catch(err => {
@@ -458,6 +471,12 @@ function viewCustomer(customerId) {
 function closeModal() {
     const modal = document.getElementById('customerModal');
     if (modal) modal.style.display = 'none';
+}
+
+// Close Add Customer modal helper
+function closeAddCustomerModal() {
+    const addCustomerModal = document.getElementById('addCustomerModal');
+    if (addCustomerModal) addCustomerModal.style.display = 'none';
 }
 
 // Load admin profile for navbar
@@ -856,7 +875,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData(addCustomerForm);
                 // Convert to plain object
                 const payload = Object.fromEntries(formData.entries());
-                payload.is_active = formData.get('is_active') ? true : false;
+                // Parse status dropdown value ('true' | 'false')
+                const activeVal = formData.get('is_active');
+                payload.is_active = (activeVal === 'true');
 
                 const res = await fetch('/api/customers', {
                     method: 'POST',

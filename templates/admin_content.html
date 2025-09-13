@@ -67,10 +67,10 @@
       </nav>
       <div class="sidebar-footer">
         <div class="user-profile">
-          <div class="user-avatar">A</div>
+          <div class="user-avatar" id="profileAvatar">A</div>
           <div class="user-info">
-            <div class="user-name">Admin</div>
-            <div class="user-role">Administrator</div>
+            <div class="user-name" id="profileName">Admin</div>
+            <div class="user-role"><span id="profileEmail">Administrator</span></div>
           </div>
         </div>
       </div>
@@ -338,16 +338,17 @@ document.addEventListener('DOMContentLoaded', ()=>{
           <div class="form-grid">
             <label>Title<input id="svcTitle" value="${esc(s.title)}" /></label>
             <label>Description<textarea id="svcDesc">${esc(s.description)}</textarea></label>
-            <label>Icon (emoji)
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input id="svcIcon" value="${esc(s.icon||'')}" />
-                <button type="button" class="btn btn-small" id="svcIconSearch">Search Icons</button>
+            <label>Icon (emoji or upload)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="svcIcon" value="${esc(s.icon||'')}" placeholder="e.g., ✈️" />
+                <input id="svcIconFile" type="file" accept="image/*" />
+                <small style="color:#94a3b8;">If you upload, icon field will be set to the uploaded image URL</small>
               </div>
             </label>
-            <label>Image URL
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input id="svcImg" value="${esc(s.image_url||'')}" />
-                <button type="button" class="btn btn-small" id="svcImgSearch">Search Images</button>
+            <label>Image (browse or paste URL)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="svcImg" value="${esc(s.image_url||'')}" placeholder="https://..." />
+                <input id="svcImgFile" type="file" accept="image/*" />
               </div>
             </label>
             <label>Display Order<input id="svcOrder" type="number" value="${Number(s.display_order)||0}" /></label>
@@ -390,6 +391,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
         active: dlg.querySelector('#svcActive').checked
       };
       try{
+        // Handle uploads if files selected
+        const iconFile = dlg.querySelector('#svcIconFile')?.files?.[0];
+        const imgFile  = dlg.querySelector('#svcImgFile')?.files?.[0];
+        if (iconFile) {
+          const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','services');
+          const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+          if (j && j.success && j.url) { payload.icon = j.url; }
+        }
+        if (imgFile) {
+          const fd2 = new FormData(); fd2.append('file', imgFile); fd2.append('folder','services');
+          const r2 = await fetch('/api/upload', { method:'POST', body: fd2 }); const j2 = await r2.json();
+          if (j2 && j2.success && j2.url) { payload.image_url = j2.url; }
+        }
         if(isNew) await createService(payload); else await updateService(s.id, payload);
         dlg.remove();
       }catch(e){ toast(e.message || 'Error','error'); }
@@ -465,10 +479,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
           <div class="form-grid">
             <label>Title<input id="fTitle" value="${esc(f.title)}" /></label>
             <label>Description<textarea id="fDesc">${esc(f.description)}</textarea></label>
-            <label>Icon (emoji)
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input id="fIcon" value="${esc(f.icon||'')}" />
-                <button type="button" class="btn btn-small" id="fIconSearch">Search Icons</button>
+            <label>Icon (emoji or upload)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="fIcon" value="${esc(f.icon||'')}" placeholder="e.g., ✅" />
+                <input id="fIconFile" type="file" accept="image/*" />
+                <small style="color:#94a3b8;">If you upload, icon field will be set to the uploaded image URL</small>
               </div>
             </label>
             <label>Display Order<input id="fOrder" type="number" value="${Number(f.display_order)||0}" /></label>
@@ -501,6 +516,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
         active: dlg.querySelector('#fActive').checked
       };
       try{
+        // If an icon file is provided, upload and use its URL as icon value
+        const iconFile = dlg.querySelector('#fIconFile')?.files?.[0];
+        if (iconFile) {
+          const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','features');
+          const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+          if (j && j.success && j.url) { payload.icon = j.url; }
+        }
         if(isNew) await createFeature(payload); else await updateFeature(f.id, payload);
         dlg.remove();
       }catch(e){ toast(e.message || 'Error','error'); }
