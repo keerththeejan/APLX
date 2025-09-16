@@ -878,6 +878,11 @@ def create_app():
         }
         return render_template('dashboard.html', stats=stats, recent_notifications=recent_notifications)
 
+    @app.route('/dashboard/contact')
+    def dashboard_contact():
+        """Admin-only Contact page with Add Service/Add Feature forms."""
+        return render_template('contact_admin.html', hide_nav=True)
+
     @app.route('/api/contact-message', methods=['POST'])
     def api_contact_message():
         """Accept contact/quote messages and create a notification for admin."""

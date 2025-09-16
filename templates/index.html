@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block body_class %}frontpage{% endblock %}
 {% block content %}
+<!-- Mouse bubbles overlay (fixed, covers entire page) -->
+<div class="mouse-bubbles" aria-hidden="true"></div>
 <div class="container-hero hero-wrap full-bleed">
   <section class="hero hero-full" style="background-image:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop');">
     <div class="slideshow" aria-hidden="true">
@@ -69,9 +71,6 @@
           <div class="feature-item"><div class="feature-content"><h4>No features yet</h4></div></div>
           {% endfor %}
         </div>
-        <div style="text-align:right;margin-top:8px;">
-          <a class="btn btn-secondary" href="{{ url_for('admin_content_manager') }}">Manage Features</a>
-        </div>
       </div>
     </div>
   </div>
@@ -128,6 +127,92 @@
       <h2>We Provide Best Services</h2>
       <p>We offer a wide range of logistics services to meet your business needs.</p>
     </div>
+    <!-- Animated truck lane -->
+    <div class="truck-track" aria-hidden="true">
+      <svg class="truck" viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Decorative moving truck" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+        <defs>
+          <linearGradient id="truckBody" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0f172a" />
+            <stop offset="1" stop-color="#1f2937" />
+          </linearGradient>
+          <linearGradient id="cabin" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#60a5fa" />
+            <stop offset="1" stop-color="#2563eb" />
+          </linearGradient>
+          <filter id="spec" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
+            <feOffset dx="0" dy="1"/>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Ground shadow -->
+        <ellipse cx="190" cy="140" rx="140" ry="12" fill="rgba(0,0,0,0.10)" />
+        <!-- Container -->
+        <rect x="28" y="42" width="240" height="80" rx="10" fill="url(#truckBody)" stroke="#334155"/>
+        <!-- Container ribs -->
+        <g opacity="0.28" stroke="#93a4b8" stroke-width="2">
+          <path d="M52 46 v72"/><path d="M74 46 v72"/><path d="M96 46 v72"/><path d="M118 46 v72"/>
+          <path d="M140 46 v72"/><path d="M162 46 v72"/><path d="M184 46 v72"/><path d="M206 46 v72"/>
+        </g>
+        <!-- Branding plate -->
+        <rect x="56" y="66" width="140" height="26" rx="5" fill="#1d4ed8" filter="url(#spec)"/>
+        <text x="66" y="83" font-size="13" font-weight="800" letter-spacing=".06em" fill="#eef2ff" font-family="Segoe UI, Roboto, Arial">LOGISTICK CARGO</text>
+        <!-- Gloss highlight -->
+        <path d="M30 50 H265" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+        <!-- Cabin with windshield -->
+        <path d="M270 126 L270 58 L320 58 L346 86 L384 86 L384 126 Z" fill="url(#cabin)" stroke="#1e40af"/>
+        <rect x="280" y="64" width="34" height="18" rx="3" fill="#dbeafe" />
+        <rect x="314" y="92" width="14" height="12" rx="2" fill="#1e3a8a" opacity=".7"/>
+        <path d="M282 68 H312" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+        <!-- Head light -->
+        <circle cx="382" cy="106" r="3" fill="#fde68a" />
+        <!-- Wheels -->
+        <g class="wheel">
+          <circle cx="110" cy="132" r="20" fill="#0b1220" />
+          <circle cx="110" cy="132" r="10" fill="#64748b" />
+        </g>
+        <g class="wheel">
+          <circle cx="214" cy="132" r="20" fill="#0b1220" />
+          <circle cx="214" cy="132" r="10" fill="#64748b" />
+        </g>
+        <g class="wheel">
+          <circle cx="330" cy="132" r="20" fill="#0b1220" />
+          <circle cx="330" cy="132" r="10" fill="#64748b" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Animated plane flying over the cards -->
+    <svg class="plane" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+      <defs>
+        <linearGradient id="planeBody" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#e5e7eb" />
+          <stop offset="1" stop-color="#cbd5e1" />
+        </linearGradient>
+        <linearGradient id="planeGlass" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#a5b4fc" />
+          <stop offset="1" stop-color="#60a5fa" />
+        </linearGradient>
+      </defs>
+      <!-- soft shadow -->
+      <ellipse cx="84" cy="104" rx="52" ry="10" fill="rgba(0,0,0,0.1)" />
+      <!-- fuselage -->
+      <path d="M12 64 L138 54 C164 52 198 48 222 56 L224 60 L200 62 L224 66 L222 70 C198 78 164 74 138 72 L12 74 Z" fill="url(#planeBody)" stroke="#94a3b8"/>
+      <path d="M22 62 C88 58, 128 56, 210 60" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+      <!-- cockpit -->
+      <path d="M130 56 L148 55 L156 58 L148 61 Z" fill="url(#planeGlass)" />
+      <!-- main wing -->
+      <path d="M46 62 L104 52 L110 58 L54 70 Z" fill="#d1d5db" />
+      <path d="M54 60 L100 52" stroke="rgba(255,255,255,0.4)"/>
+      <!-- rear wing -->
+      <path d="M30 60 L62 46 L66 50 L36 66 Z" fill="#9aa2ad" />
+      <!-- tail -->
+      <path d="M18 60 L26 46 L30 48 L22 74 Z" fill="#6b7280" />
+      <!-- stripe -->
+      <rect x="42" y="64" width="54" height="3" fill="#1d4ed8" />
+      <!-- contrail -->
+      <path d="M0 88 C22 84, 44 84, 68 88" stroke="rgba(148,163,184,.35)" stroke-width="3" fill="none" stroke-linecap="round" />
+    </svg>
     
     <div class="our-services-grid">
       <div class="our-service-card reveal reveal-card stagger-1">
@@ -143,7 +228,7 @@
       
       <div class="our-service-card">
         <div class="our-service-image">
-          <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=400&auto=format&fit=crop" alt="Ocean Freight" />
+          <img src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop" alt="Ocean Freight" />
         </div>
         <div class="our-service-content">
           <h3>Ocean Freight</h3>
@@ -161,6 +246,34 @@
           <p>Efficient land transportation services.</p>
           <a href="#" class="read-more-link">Read More →</a>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Transport Photo Gallery (Auto-scrolling slideshow) -->
+<section class="transport-gallery">
+  <div class="container">
+    <div class="tg-slider reveal" aria-label="Logistics photo slideshow">
+      <div class="tg-track">
+        <!-- Sequence A -->
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=400&auto=format&fit=crop" alt="Container Ship at Dock"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=400&auto=format&fit=crop" alt="Container Cranes and Stacks"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="Airplane Engine on Tarmac"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop" alt="Logistics Truck at Warehouse"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1519638399535-1b036603ac77?q=80&w=900&auto=format&fit=crop" alt="Warehouse Aisle"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1554631221-f9603e6808be?q=80&w=900&auto=format&fit=crop" alt="Cargo Containers"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=900&auto=format&fit=crop" alt="Forklift in Warehouse"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1542296332-2e4473faf563?q=80&w=900&auto=format&fit=crop" alt="Cargo Plane Loading"></figure>
+        <!-- Sequence B (duplicate for seamless loop) -->
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=400&auto=format&fit=crop" alt="Container Ship at Dock"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=400&auto=format&fit=crop" alt="Container Cranes and Stacks"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="Airplane Engine on Tarmac"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop" alt="Logistics Truck at Warehouse"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1519638399535-1b036603ac77?q=80&w=900&auto=format&fit=crop" alt="Warehouse Aisle"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1554631221-f9603e6808be?q=80&w=900&auto=format&fit=crop" alt="Cargo Containers"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=900&auto=format&fit=crop" alt="Forklift in Warehouse"></figure>
+        <figure class="tg-item"><img src="https://images.unsplash.com/photo-1542296332-2e4473faf563?q=80&w=900&auto=format&fit=crop" alt="Cargo Plane Loading"></figure>
       </div>
     </div>
   </div>
@@ -268,6 +381,47 @@
         loading="lazy" 
         referrerpolicy="no-referrer-when-downgrade">
       </iframe>
+      <!-- Decorative overlay: pencil pin + background ship (over map) -->
+      <div class="map-decor" aria-hidden="true">
+        <div class="pin" title="Location">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Location pin outline">
+            <path d="M32 6c-9 0-16 7-16 16 0 12 16 30 16 30s16-18 16-30c0-9-7-16-16-16Zm0 22a6 6 0 1 1 0-12 6 6 0 0 1 0 12Z"/>
+          </svg>
+        </div>
+
+        <!-- Subtle background ship moving behind the map -->
+        <svg class="ship-bg" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Decorative ship outline">
+          <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 178 H232" opacity=".7" />
+            <path d="M24 170 L64 150 L92 150 L112 130 L168 130 L192 160 L232 170" />
+            <path d="M112 130 L120 90 L152 90 L168 130" />
+            <path d="M120 90 L132 62 L148 62 L152 90" />
+            <path d="M64 150 L72 140 L96 140 L92 150" />
+          </g>
+          <!-- Minimal wave -->
+          <path d="M32 188 q24 10 48 0 t48 0 t48 0 t48 0" fill="none" stroke="currentColor" stroke-width="3" opacity=".6" />
+        </svg>
+      </div>
+      <!-- White band outside map with clearer moving vehicles -->
+      <div class="map-vehicles" aria-hidden="true">
+        <!-- Sketch truck -->
+        <svg class="mv-vehicle mv-truck sketch" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 78 H132 V48 H168 L206 78 H208" />
+            <circle cx="70" cy="88" r="12" />
+            <circle cx="140" cy="88" r="12" />
+            <circle cx="190" cy="88" r="12" />
+          </g>
+        </svg>
+        <!-- Sketch plane -->
+        <svg class="mv-vehicle mv-plane sketch" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 70 L128 58 C156 56 182 54 206 60 L208 64 L186 66 L208 70 L206 74 C182 80 156 76 128 74 L10 76 Z" />
+            <path d="M48 68 L106 56 L112 62 L56 78 Z" />
+            <path d="M32 66 L62 52 L66 56 L38 82 Z" />
+          </g>
+        </svg>
+      </div>
     </div>
     
     <div class="location-info">
@@ -591,6 +745,51 @@
       }
       io.observe(el);
     });
+  })();
+
+  // Mouse bubble trail (respect reduced motion)
+  (function(){
+    const bubblesLayer = document.querySelector('.mouse-bubbles');
+    if (!bubblesLayer) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    let last = 0;
+    const throttleMs = 90; // fewer emissions for bigger, cleaner bubbles
+    const colors = [
+      'radial-gradient(circle at 30% 30%, rgba(147,197,253,.9), rgba(59,130,246,.65))',
+      'radial-gradient(circle at 30% 30%, rgba(203,213,225,.9), rgba(148,163,184,.55))',
+      'radial-gradient(circle at 30% 30%, rgba(110,231,183,.9), rgba(16,185,129,.55))'
+    ];
+    function spawnBubble(x, y, size, dx, dy) {
+      const el = document.createElement('span');
+      el.className = 'mouse-bubble';
+      el.style.width = size+'px';
+      el.style.height = size+'px';
+      el.style.left = x+'px';
+      el.style.top = y+'px';
+      el.style.background = colors[(Math.random()*colors.length)|0];
+      el.style.setProperty('--dx', dx+'px');
+      el.style.setProperty('--dy', dy+'px');
+      bubblesLayer.appendChild(el);
+      el.addEventListener('animationend', ()=> el.remove());
+    }
+    function onMove(e){
+      const now = performance.now();
+      if (now - last < throttleMs) return; last = now;
+      // Emit 3 larger bubbles with slight offsets
+      const baseX = e.clientX, baseY = e.clientY;
+      spawnBubble(baseX, baseY, 28 + Math.random()*16, (Math.random()*30-15).toFixed(1), (Math.random()*36-10).toFixed(1));
+      spawnBubble(baseX + (Math.random()*18-9), baseY + (Math.random()*18-9), 22 + Math.random()*14, (Math.random()*30-15).toFixed(1), (Math.random()*36-10).toFixed(1));
+      spawnBubble(baseX + (Math.random()*22-11), baseY + (Math.random()*22-11), 20 + Math.random()*12, (Math.random()*30-15).toFixed(1), (Math.random()*36-10).toFixed(1));
+      // Cap DOM children to avoid buildup
+      if (bubblesLayer.childElementCount > 120) {
+        for (let i = 0; i < 20; i++) {
+          const n = bubblesLayer.firstElementChild; if (!n) break; n.remove();
+        }
+      }
+    }
+    window.addEventListener('mousemove', onMove, { passive: true });
   })();
   </script>
 {% endblock %}

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  <!-- Global mouse bubbles overlay -->
+  <div class="mouse-bubbles" aria-hidden="true"></div>
   {% if not hide_nav %}
   <!-- Top info bar -->
   <div class="topbar">
@@ -69,6 +71,48 @@
           onScroll();
         }
       }
+    })();
+
+    // Global Mouse bubble trail (respect reduced motion). Guard against double init.
+    (function(){
+      if (window.__bubblesInit) return; window.__bubblesInit = true;
+      const bubblesLayer = document.querySelector('.mouse-bubbles');
+      if (!bubblesLayer) return;
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+
+      let last = 0;
+      const throttleMs = 90; // fewer emissions for bigger, cleaner bubbles
+      const colors = [
+        'radial-gradient(circle at 30% 30%, rgba(147,197,253,.9), rgba(59,130,246,.65))',
+        'radial-gradient(circle at 30% 30%, rgba(203,213,225,.9), rgba(148,163,184,.55))',
+        'radial-gradient(circle at 30% 30%, rgba(110,231,183,.9), rgba(16,185,129,.55))'
+      ];
+      function spawnBubble(x, y, size, dx, dy) {
+        const el = document.createElement('span');
+        el.className = 'mouse-bubble';
+        el.style.width = size+'px';
+        el.style.height = size+'px';
+        el.style.left = x+'px';
+        el.style.top = y+'px';
+        el.style.background = colors[(Math.random()*colors.length)|0];
+        el.style.setProperty('--dx', dx+'px');
+        el.style.setProperty('--dy', dy+'px');
+        bubblesLayer.appendChild(el);
+        el.addEventListener('animationend', ()=> el.remove());
+      }
+      function onMove(e){
+        const now = performance.now();
+        if (now - last < throttleMs) return; last = now;
+        const baseX = e.clientX, baseY = e.clientY;
+        spawnBubble(baseX, baseY, 28 + Math.random()*16, (Math.random()*30-15), (Math.random()*36-10));
+        spawnBubble(baseX + (Math.random()*18-9), baseY + (Math.random()*18-9), 22 + Math.random()*14, (Math.random()*30-15), (Math.random()*36-10));
+        spawnBubble(baseX + (Math.random()*22-11), baseY + (Math.random()*22-11), 20 + Math.random()*12, (Math.random()*30-15), (Math.random()*36-10));
+        if (bubblesLayer.childElementCount > 120) {
+          for (let i = 0; i < 20; i++) { const n = bubblesLayer.firstElementChild; if (!n) break; n.remove(); }
+        }
+      }
+      window.addEventListener('mousemove', onMove, { passive: true });
     })();
   </script>
   {% block scripts %}{% endblock %}

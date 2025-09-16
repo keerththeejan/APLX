@@ -82,36 +82,7 @@
         </button>
       </form>
       <div id="quoteStatus" class="inline-status" aria-live="polite"></div>
-
-      <hr style="border-color:#1f2937; margin:20px 0;">
-
-      <h2 style="margin-top:0;">Add Service</h2>
-      <p>Add a service with an icon and an optional image.</p>
-      <form id="serviceForm" class="quote-form-container" enctype="multipart/form-data">
-        <input id="sTitle" name="title" type="text" placeholder="Service Title" class="form-input full-width" required>
-        <textarea id="sDesc" name="description" placeholder="Short Description" class="form-input full-width" rows="3" required></textarea>
-        <div class="form-row">
-          <input id="sIcon" name="icon" type="text" placeholder="Icon (emoji/text, e.g., ✈️)" class="form-input" maxlength="10">
-          <input id="sImage" name="image" type="file" accept="image/*" class="form-input" />
-        </div>
-        <button id="sSubmit" type="submit" class="send-message-btn">Save Service</button>
-      </form>
-      <div id="serviceStatus" class="inline-status" aria-live="polite"></div>
-
-      <hr style="border-color:#1f2937; margin:20px 0;">
-
-      <h2>Add Feature</h2>
-      <p>Add a feature with an icon (emoji or upload).</p>
-      <form id="featureForm" class="quote-form-container" enctype="multipart/form-data">
-        <input id="fTitleC" name="title" type="text" placeholder="Feature Title" class="form-input full-width" required>
-        <textarea id="fDescC" name="description" placeholder="Short Description" class="form-input full-width" rows="3" required></textarea>
-        <div class="form-row">
-          <input id="fIconC" name="icon" type="text" placeholder="Icon (emoji/text, e.g., ✅)" class="form-input">
-          <input id="fIconFileC" name="icon_file" type="file" accept="image/*" class="form-input" />
-        </div>
-        <button id="fSubmitC" type="submit" class="send-message-btn">Save Feature</button>
-      </form>
-      <div id="featureStatus" class="inline-status" aria-live="polite"></div>
+      <!-- Admin-only forms (Add Service / Add Feature) intentionally removed on public Contact page -->
     </div>
   </div>
 </section>
@@ -182,82 +153,7 @@
     });
   })();
 
-  // Add Feature handler
-  (function(){
-    const form = document.getElementById('featureForm');
-    if(!form) return;
-    const btn = document.getElementById('fSubmitC');
-    const statusEl = document.getElementById('featureStatus');
-    function setStatus(text, type){
-      statusEl.textContent = text || '';
-      statusEl.className = 'inline-status ' + (type || '');
-    }
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      setStatus('', '');
-      try{
-        const title = document.getElementById('fTitleC').value.trim();
-        const description = document.getElementById('fDescC').value.trim();
-        if(!title || !description){
-          setStatus('Title and description are required', 'error');
-          return;
-        }
-        btn.disabled = true; const original = btn.textContent; btn.textContent = 'Saving...';
-        let iconVal = document.getElementById('fIconC').value.trim();
-        const iconFile = document.getElementById('fIconFileC').files[0];
-        if (iconFile) {
-          const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','features');
-          const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
-          if (j && j.success && j.url) { iconVal = j.url; }
-        }
-        const payload = { title, description, icon: iconVal, display_order: 0, active: true };
-        const res = await fetch('/api/home/features', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to save feature'); }
-        setStatus('Feature saved successfully', 'success');
-        form.reset();
-      }catch(err){
-        setStatus(err.message || 'Failed to save feature', 'error');
-      }finally{
-        btn.disabled = false; btn.textContent = 'Save Feature';
-      }
-    });
-  })();
-
-  // Add Service handler
-  (function(){
-    const form = document.getElementById('serviceForm');
-    if(!form) return;
-    const btn = document.getElementById('sSubmit');
-    const statusEl = document.getElementById('serviceStatus');
-    function setStatus(text, type){
-      statusEl.textContent = text || '';
-      statusEl.className = 'inline-status ' + (type || '');
-    }
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      setStatus('', '');
-      try{
-        const title = document.getElementById('sTitle').value.trim();
-        const description = document.getElementById('sDesc').value.trim();
-        if(!title || !description){
-          setStatus('Title and description are required', 'error');
-          return;
-        }
-        btn.disabled = true; const original = btn.textContent; btn.textContent = 'Saving...';
-        const fd = new FormData(form);
-        const res = await fetch('/api/services', { method:'POST', body: fd });
-        const data = await res.json();
-        if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to save service'); }
-        setStatus('Service saved successfully', 'success');
-        form.reset();
-      }catch(err){
-        setStatus(err.message || 'Failed to save service', 'error');
-      }finally{
-        btn.disabled = false; btn.textContent = 'Save Service';
-      }
-    });
-  })();
+  /* Admin-only forms removed on public Contact page: no feature/service handlers */
 </script>
 <style>
   .inline-status { margin-top: 10px; font-size: 14px; }
