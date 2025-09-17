@@ -14,6 +14,43 @@
   --shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 
+/* Contact/Quote background decorations (ship on dark left, plane on red right, truck at the seam) */
+.contact-quote-section { position: relative; overflow: hidden; }
+.contact-quote-section .contact-quote-container { position: relative; z-index: 1; }
+.contact-quote-section .contact-bg-decor {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+}
+.contact-quote-section .bg-ship { position: absolute; left: clamp(10px, 6vw, 60px); bottom: 20px; width: 200px; height: auto; animation: bg-bob 5.5s ease-in-out infinite; }
+.contact-quote-section .bg-plane { position: absolute; right: clamp(10px, 6vw, 60px); top: 18px; width: 180px; height: auto; animation: plane-enter 1.1s ease-out forwards, bg-drift 7s ease-in-out infinite 1.1s; }
+@keyframes plane-enter { from { transform: translate(60px, 0); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+.contact-quote-section .bg-truck { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; width: 210px; height: auto; animation: bg-idle 6s ease-in-out infinite; }
+
+@keyframes bg-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes bg-drift { 0%,100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-4px, -3px) rotate(-1deg); } }
+@keyframes bg-idle { 0%,100% { transform: translate(-50%,0); } 50% { transform: translate(-50%,-3px); } }
+
+@media (max-width: 768px) {
+  .contact-quote-section .bg-ship { width: 150px; left: 12px; bottom: 12px; }
+  .contact-quote-section .bg-plane { width: 140px; right: 12px; top: 10px; animation: plane-enter 1s ease-out forwards, bg-drift 7s ease-in-out infinite 1s; }
+  .contact-quote-section .bg-truck { width: 170px; bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-quote-section .bg-plane { animation: none; opacity: .9; }
+}
+.location-map-section { position: relative; }
+.location-map-section .map-bg {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(10px) brightness(0.6);
+  transform: scale(1.05); /* avoid edge gaps after blur */
+  z-index: 0;
+}
+.location-map-section > .container { position: relative; z-index: 1; }
+
 /* Mouse Bubble Trail */
 .mouse-bubbles {
   position: fixed;
@@ -21,17 +58,36 @@
   pointer-events: none;
   z-index: 9999; /* above content */
 }
+.mouse-spotlight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000; /* below bubbles, above content */
+  /* spotlight variables */
+  --x: -500px;
+  --y: -500px;
+  --r: 180px; /* default, overridden by JS */
+  /* Dim everything with a dark overlay... */
+  background: rgba(2, 6, 23, 0.48);
+  /* ...then cut a circular hole where the mouse is to reveal the image */
+  -webkit-mask: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 0 72%, black 76%);
+  mask: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 0 72%, black 76%);
+  transition: opacity .25s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mouse-spotlight { transition: none; }
+}
 .mouse-bubble {
   position: absolute;
   border-radius: 999px;
-  opacity: 0.85;
+  opacity: 0.35;
   transform: translate(-50%, -50%);
   animation: bubble-fade 1.35s ease-out forwards; /* a bit slower fade */
   filter: blur(0.2px);
   mix-blend-mode: screen; /* nice light blend */
 }
 @keyframes bubble-fade {
-  0%   { opacity: .9; transform: translate(calc(-50% + 0px), calc(-50% + 0px)) scale(1); }
+  0%   { opacity: .35; transform: translate(calc(-50% + 0px), calc(-50% + 0px)) scale(1); }
   100% { opacity: 0;  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -24px))) scale(1.25); }
 }
 
@@ -1754,9 +1810,18 @@ input, textarea {
   60% { transform: translate(60vw, -20px) rotate(-2deg); }
   100% { transform: translate(115vw, -40px) rotate(-5deg); opacity: 1; }
 }
+/* Ship sailing on the white band (outside the map) */
+.map-container .mv-ship { width: 220px; left: -320px; bottom: 28px; animation: mv-ship-sail 16s linear infinite .6s; }
+@keyframes mv-ship-sail {
+  0% { transform: translateX(0) translateY(0); opacity: 0; }
+  8% { opacity: 1; }
+  50% { transform: translateX(55vw) translateY(2px); }
+  100% { transform: translateX(calc(100vw + 640px)) translateY(0); opacity: 1; }
+}
 @media (max-width: 768px) {
   .map-container .mv-truck { width: 180px; bottom: 6px; }
   .map-container .mv-plane { width: 160px; bottom: 56px; }
+  .map-container .mv-ship { width: 180px; bottom: 22px; }
 }
 .location-info {
   background: white;

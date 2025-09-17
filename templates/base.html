@@ -11,6 +11,8 @@
 <body class="{% block body_class %}{% endblock %}">
   <!-- Global mouse bubbles overlay -->
   <div class="mouse-bubbles" aria-hidden="true"></div>
+  <!-- Mouse spotlight overlay (reveals image under content) -->
+  <div class="mouse-spotlight" aria-hidden="true"></div>
   {% if not hide_nav %}
   <!-- Top info bar -->
   <div class="topbar">
@@ -35,7 +37,7 @@
       </div>
       <nav class="navlinks">
         <a href="{{ url_for('index') }}">Home</a>       
-        <a href="#">Services</a>
+        <a href="{{ url_for('index') }}">Services</a>
         <a href="{{ url_for('contact') }}">Contact</a>
         <a class="btn" href="{{ url_for('track') }}">Track</a>
       </nav>
@@ -75,6 +77,10 @@
 
     // Global Mouse bubble trail (respect reduced motion). Guard against double init.
     (function(){
+      // Only enable on Home (/) and Contact (/contact) pages
+      const path = window.location.pathname || '/';
+      const enable = (path === '/' || path.startsWith('/contact'));
+      if (!enable) return;
       if (window.__bubblesInit) return; window.__bubblesInit = true;
       const bubblesLayer = document.querySelector('.mouse-bubbles');
       if (!bubblesLayer) return;
@@ -82,11 +88,11 @@
       if (prefersReduced) return;
 
       let last = 0;
-      const throttleMs = 90; // fewer emissions for bigger, cleaner bubbles
+      const throttleMs = 120; // slower emission for bigger, cleaner bubbles
       const colors = [
-        'radial-gradient(circle at 30% 30%, rgba(147,197,253,.9), rgba(59,130,246,.65))',
-        'radial-gradient(circle at 30% 30%, rgba(203,213,225,.9), rgba(148,163,184,.55))',
-        'radial-gradient(circle at 30% 30%, rgba(110,231,183,.9), rgba(16,185,129,.55))'
+        'radial-gradient(circle at 30% 30%, rgba(147,197,253,.35), rgba(59,130,246,.22))',
+        'radial-gradient(circle at 30% 30%, rgba(203,213,225,.32), rgba(148,163,184,.20))',
+        'radial-gradient(circle at 30% 30%, rgba(110,231,183,.32), rgba(16,185,129,.20))'
       ];
       function spawnBubble(x, y, size, dx, dy) {
         const el = document.createElement('span');
@@ -105,12 +111,42 @@
         const now = performance.now();
         if (now - last < throttleMs) return; last = now;
         const baseX = e.clientX, baseY = e.clientY;
-        spawnBubble(baseX, baseY, 28 + Math.random()*16, (Math.random()*30-15), (Math.random()*36-10));
-        spawnBubble(baseX + (Math.random()*18-9), baseY + (Math.random()*18-9), 22 + Math.random()*14, (Math.random()*30-15), (Math.random()*36-10));
-        spawnBubble(baseX + (Math.random()*22-11), baseY + (Math.random()*22-11), 20 + Math.random()*12, (Math.random()*30-15), (Math.random()*36-10));
-        if (bubblesLayer.childElementCount > 120) {
-          for (let i = 0; i < 20; i++) { const n = bubblesLayer.firstElementChild; if (!n) break; n.remove(); }
+        // If the cursor is over text, do NOT spawn bubbles; otherwise spawn small ones
+        const overText = !!window.__overText;
+        const desired = overText ? 0 : 2; // only 0-2 small bubbles in non-text areas
+        let toSpawn = desired - bubblesLayer.childElementCount;
+        if (toSpawn <= 0) return;
+        if (toSpawn >= 1) {
+          spawnBubble(baseX, baseY, 14 + Math.random()*6, (Math.random()*20-10), (Math.random()*28-10));
         }
+        if (toSpawn >= 2) {
+          spawnBubble(baseX + (Math.random()*14-7), baseY + (Math.random()*14-7), 10 + Math.random()*6, (Math.random()*20-10), (Math.random()*28-10));
+        }
+      }
+      window.addEventListener('mousemove', onMove, { passive: true });
+    })();
+
+    // Mouse Spotlight: reveal background image with a big circular window
+    (function(){
+      const path = window.location.pathname || '/';
+      const enable = (path === '/' || path.startsWith('/contact'));
+      if (!enable) return;
+      const el = document.querySelector('.mouse-spotlight');
+      if (!el) return;
+      // initial radius; can be overridden via CSS var
+      if (!el.style.getPropertyValue('--r')) {
+        // smaller spotlight: ~90px on mobile, ~140px on desktop
+        el.style.setProperty('--r', (window.matchMedia('(max-width: 600px)').matches ? '90px' : '140px'));
+      }
+      // Consider text zones as headings, paragraphs, links, buttons, and key content blocks
+      const textSelectors = 'h1,h2,h3,h4,h5,h6,p,span,a,button,.btn,.service-card,.why-choose-card,.contact-info,.quote-form,.location-info,.footer,.hero';
+      function onMove(e){
+        el.style.setProperty('--x', e.clientX + 'px');
+        el.style.setProperty('--y', e.clientY + 'px');
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const isText = !!(under && under.closest(textSelectors));
+        window.__overText = isText;
+        el.style.opacity = isText ? '1' : '0';
       }
       window.addEventListener('mousemove', onMove, { passive: true });
     })();
