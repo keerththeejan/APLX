@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>{{ title or 'Flask + MySQL App' }}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
@@ -149,6 +153,36 @@
         el.style.opacity = isText ? '1' : '0';
       }
       window.addEventListener('mousemove', onMove, { passive: true });
+    })();
+  </script>
+  <script>
+    // Reveal-on-scroll: add .reveal-visible when elements enter viewport
+    (function(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+      const items = Array.from(document.querySelectorAll('.reveal'));
+      if (!items.length) return;
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('reveal-visible');
+            // If you want one-time reveal, unobserve after adding
+            io.unobserve(e.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+      items.forEach(el => io.observe(el));
+    })();
+  </script>
+  <script>
+    // Register Service Worker (PWA)
+    (function(){
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function(){
+          navigator.serviceWorker.register("{{ url_for('static', filename='js/sw.js') }}")
+            .catch(function(e){ /* no-op */ });
+        });
+      }
     })();
   </script>
   {% block scripts %}{% endblock %}

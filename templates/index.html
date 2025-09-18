@@ -51,14 +51,14 @@
         </div>
       </div>
       
-      <div class="about-text reveal stagger-2">
-        <div class="about-eyebrow">ABOUT US</div>
-        <h2>We Are Trusted Logistics & Transport</h2>
-        <p>We are a leading logistics and transportation company with over 25 years of experience in the industry. Our team of experts is dedicated to providing reliable and efficient logistics solutions tailored to your needs.</p>
+      <div class="about-text">
+        <div class="about-eyebrow reveal reveal-left stagger-2">ABOUT US</div>
+        <h2 class="reveal reveal-up stagger-2">We Are Trusted Logistics & Transport</h2>
+        <p class="reveal reveal-right stagger-3">We are a leading logistics and transportation company with over 25 years of experience in the industry. Our team of experts is dedicated to providing reliable and efficient logistics solutions tailored to your needs.</p>
         
         <div class="features-grid">
           {% for f in features %}
-          <div class="feature-item reveal {% if loop.index % 3 == 1 %}stagger-1{% elif loop.index % 3 == 2 %}stagger-2{% else %}stagger-3{% endif %}">
+          <div class="feature-item reveal {% if loop.index is even %}reveal-right{% else %}reveal-left{% endif %} {% if loop.index % 3 == 1 %}stagger-1{% elif loop.index % 3 == 2 %}stagger-2{% else %}stagger-3{% endif %}">
             <div class="feature-icon">{{ f.icon or '⭐' }}</div>
             <div class="feature-content">
               <h4>{{ f.title }}</h4>
@@ -499,6 +499,37 @@
 <!-- Footer section -->
 <footer id="footer" class="footer">
   <div class="footer-content">
+    <!-- Decorative transport silhouettes in the footer background -->
+    <div class="footer-decor" aria-hidden="true">
+      <!-- Ship -->
+      <svg class="fd fd-ship" viewBox="0 0 256 128" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.18">
+          <path d="M8 104 Q40 112 72 104 T136 104 T200 104 T248 104" />
+          <path d="M24 100 L68 80 L176 80 L204 100 Z" />
+          <path d="M116 80 L116 60 L150 60 L158 72 L158 80 Z" />
+          <path d="M138 60 L138 44" />
+          <rect x="84" y="72" width="24" height="8" rx="2" />
+          <rect x="108" y="72" width="24" height="8" rx="2" />
+        </g>
+      </svg>
+      <!-- Plane -->
+      <svg class="fd fd-plane" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.22">
+          <path d="M10 70 L128 58 C156 56 182 54 206 60 L208 64 L186 66 L208 70 L206 74 C182 80 156 76 128 74 L10 76 Z" />
+          <path d="M48 68 L106 56 L112 62 L56 78 Z" />
+          <path d="M32 66 L62 52 L66 56 L38 82 Z" />
+        </g>
+      </svg>
+      <!-- Truck -->
+      <svg class="fd fd-truck" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.2">
+          <path d="M12 78 H132 V48 H168 L206 78 H208" />
+          <circle cx="70" cy="88" r="12" />
+          <circle cx="140" cy="88" r="12" />
+          <circle cx="190" cy="88" r="12" />
+        </g>
+      </svg>
+    </div>
     <div class="container">
       <div class="footer-grid">
         <!-- Company Info -->
@@ -627,6 +658,56 @@
       grid.classList.add('dim-others');
       selected = this;
     }
+  })();
+
+  // Transport gallery: compute edge-to-edge pan distance and duration (robust for mobile)
+  (function(){
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReduced.matches) return;
+    const slider = document.querySelector('.transport-gallery .tg-slider');
+    const track  = document.querySelector('.transport-gallery .tg-track');
+    if (!slider || !track) return;
+    // Force GPU transform for smoother animation
+    track.style.transform = 'translate3d(0,0,0)';
+
+    function setVars(){
+      const visible = slider.clientWidth || 0;
+      const total   = track.scrollWidth || 0;
+      const delta   = Math.max(0, total - visible);
+      if (delta < 8) {
+        // Not enough to pan; disable animation to avoid tiny jitter
+        track.style.setProperty('--tg-shift', '0px');
+        track.style.setProperty('--tg-duration', '16s');
+        track.style.animationPlayState = 'paused';
+        return;
+      }
+      track.style.animationPlayState = 'running';
+      track.style.setProperty('--tg-shift', (-delta) + 'px');
+      // Duration proportional to distance; ~16s per 1000px (clamped)
+      const duration = Math.min(48, Math.max(12, 16 * (delta / 1000)));
+      track.style.setProperty('--tg-duration', duration + 's');
+    }
+
+    // Recalculate when images finish loading
+    const imgs = track.querySelectorAll('img');
+    imgs.forEach(img => {
+      if (img.complete) return;
+      img.addEventListener('load', setVars, { once: true });
+      img.addEventListener('error', setVars, { once: true });
+    });
+
+    // Observe size changes (orientation, font size, viewport changes)
+    const ro = new ResizeObserver(setVars);
+    ro.observe(slider);
+    ro.observe(track);
+    window.addEventListener('orientationchange', () => setTimeout(setVars, 200));
+    window.addEventListener('resize', setVars);
+    prefersReduced.addEventListener?.('change', () => { if (prefersReduced.matches) track.style.animation = 'none'; });
+
+    // Initial
+    setTimeout(setVars, 0);
+    if (document.readyState === 'complete') setVars();
+    else window.addEventListener('load', setVars, { once: true });
   })();
 
   // Hero slideshow (cross-fade)

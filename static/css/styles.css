@@ -104,7 +104,8 @@
   display: flex;
   gap: 28px;
   will-change: transform;
-  animation: tg-scroll 12s linear infinite; /* was 36s – slightly faster */
+  /* Pan from one edge to the other and back */
+  animation: tg-pan var(--tg-duration, 20s) linear infinite alternate;
 }
 .transport-gallery .tg-item {
   flex: 0 0 calc((100% - 84px) / 4); /* 4 visible with 28px gaps */
@@ -115,16 +116,18 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.08);
 }
 .transport-gallery .tg-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-@keyframes tg-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
+@keyframes tg-pan { from { transform: translateX(0); } to { transform: translateX(var(--tg-shift, 0)); } }
 /* Pause on hover for desktop */
 .transport-gallery .tg-slider:hover .tg-track { animation-play-state: paused; }
 /* Responsiveness */
 @media (max-width: 1024px) { .transport-gallery .tg-item { flex-basis: calc((100% - 56px) / 3); } }
 @media (max-width: 768px)  { .transport-gallery .tg-item { flex-basis: calc((100% - 18px) / 2); } .transport-gallery .tg-track { gap: 18px; } }
 @media (max-width: 520px)  { .transport-gallery .tg-item { flex-basis: 100%; } .transport-gallery .tg-track { gap: 14px; } }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .transport-gallery .tg-track { animation: none !important; }
+}
 
 /* Users Table - dark theme readability */
 .users-table {
@@ -399,9 +402,11 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+/* Better tap feel on mobile */
+* { -webkit-tap-highlight-color: transparent; }
 
 /* Frontpage full-bleed layout */
-html, body { height: 100%; }
+html, body { height: 100%; max-width: 100%; overflow-x: hidden; }
 .frontpage main.container { max-width: 100%; padding: 0; }
 .frontpage .container-hero { max-width: 100%; }
 .full-bleed { width: 100%; }
@@ -753,7 +758,47 @@ input, textarea {
 .flash-error { color: #ef4444; }
 .flash-warning { color: #ef4444; }
 
-.footer { opacity: .7; border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px; }
+.footer { opacity: .7; border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px; position: relative; overflow: hidden; }
+
+/* Footer decorative background (ship, plane, truck) */
+.footer .footer-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  color: rgba(239, 241, 244, 0.945); /* currentColor for outlines */
+}
+.footer .container, .footer .footer-grid, .footer .footer-content { position: relative; z-index: 1; }
+
+.footer .footer-decor .fd { position: absolute; opacity: 0.5; }
+/* Ship: left-bottom, gentle bob */
+.footer .footer-decor .fd-ship { left: 2%; bottom: 18px; width: 260px; height: auto; opacity: .28; animation: fd-bob 6s ease-in-out infinite; }
+/* Truck: center-bottom, slow horizontal drift */
+.footer .footer-decor .fd-truck { left: 48%; transform: translateX(-50%); bottom: 10px; width: 240px; height: auto; opacity: .24; animation: fd-truck-slide 20s linear infinite; }
+/* Plane: right-top, slow diagonal float */
+.footer .footer-decor .fd-plane { right: 4%; top: 8%; width: 200px; height: auto; opacity: .22; animation: fd-plane-float 14s ease-in-out infinite; }
+
+@keyframes fd-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes fd-plane-float {
+  0% { transform: translate(0, 0) rotate(2deg); }
+  50% { transform: translate(-12px, -6px) rotate(-1deg); }
+  100% { transform: translate(0, 0) rotate(2deg); }
+}
+@keyframes fd-truck-slide {
+  0%   { transform: translateX(-50%) translateY(0); }
+  50%  { transform: translateX(calc(-50% + 22px)) translateY(-1px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+@media (max-width: 768px) {
+  .footer .footer-decor .fd-ship { width: 200px; left: -2%; bottom: 12px; }
+  .footer .footer-decor .fd-truck { width: 200px; bottom: 6px; }
+  .footer .footer-decor .fd-plane { width: 140px; right: -4%; top: 6%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer .footer-decor .fd-ship,
+  .footer .footer-decor .fd-plane,
+  .footer .footer-decor .fd-truck { animation: none; }
+}
 
 /* Utilities */
 .muted { color: var(--muted); }
@@ -992,10 +1037,14 @@ input, textarea {
   /* Container padding */
   .container { padding: 0 12px; }
 
+  /* Hide thin topbar on mobile to feel more like an app header */
+  .topbar { display: none; }
+
   /* Navbar: allow wrapping and spacing */
   .navbar-inner { flex-wrap: wrap; row-gap: 8px; }
   .navlinks { flex-wrap: wrap; gap: 10px; }
   .brand { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .navbar .navlinks a { padding: 10px 12px; border-radius: 10px; }
 
   /* Services grid: stack vertically */
   .services .services-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -1004,18 +1053,25 @@ input, textarea {
   /* Hero text sizing */
   .hero h1 { font-size: 30px; }
   .hero p { font-size: 14px; }
+  .hero .form-actions { gap: 10px; }
+  .hero .form-actions .btn { height: 44px; min-width: 0; flex: 1; }
 
   /* Cards spacing */
   .card { padding: 16px; }
 
   /* Buttons */
-  .btn, .btn-primary, .btn-secondary { padding: 10px 12px; font-size: 14px; }
+  .btn, .btn-primary, .btn-secondary { padding: 12px 14px; font-size: 15px; height: 44px; }
 
-  /* Images */
-  .about-image img { height: auto; max-height: 320px; }
+  /* Swipeable Our Services cards (app-like) */
+  .our-services-grid { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+  .our-service-card { scroll-snap-align: start; }
 
-  /* Headline band */
-  .headline-title { font-size: 24px; }
+  /* Transport gallery: keep auto-pan (no horizontal scroll) */
+  .transport-gallery .tg-slider { overflow: hidden; }
+  .transport-gallery .tg-item { scroll-snap-align: unset; }
+
+  /* Footer safe-area space */
+  .footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 
 /* Why Choose Us section */
@@ -1136,13 +1192,28 @@ input, textarea {
   width: 100vw;
   margin-left: calc(-50vw + 50%);
 }
-.our-services .container { position: relative; overflow: visible; }
+.our-services .container { position: relative; overflow: hidden; }
 .our-services .truck-track {
   position: relative;
   height: 140px; /* taller lane so full vehicle is visible */
   margin: 0 auto 24px;
   max-width: 1200px;
   overflow: hidden;
+}
+.our-services .truck-track::before {
+  /* moving dashed road stripe */
+  content: "";
+  position: absolute;
+  left: -20%; right: -20%;
+  bottom: 18px;
+  height: 4px;
+  background: repeating-linear-gradient(90deg,
+    rgba(2,6,23,0.06) 0 36px,
+    rgba(2,6,23,0.22) 36px 64px
+  );
+  border-radius: 2px;
+  transform: translateZ(0);
+  animation: road-move 1.2s linear infinite;
 }
 .our-services .truck-track::after {
   /* subtle baseline */
@@ -1162,12 +1233,22 @@ input, textarea {
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
   animation: truck-drive 10s linear infinite;
 }
+/* Drive left->right with subtle suspension bounce and tilt */
 @keyframes truck-drive {
-  0% { transform: translateX(calc(-1 * var(--truck-w))); }
-  100% { transform: translateX(calc(100vw + var(--truck-w))); }
+  0%   { transform: translateX(calc(-1 * var(--truck-w))) translateY(0) rotate(0deg); }
+  12.5%{ transform: translateX(calc( 12.5vw - var(--truck-w))) translateY(-1px) rotate(-0.3deg); }
+  25%  { transform: translateX(calc( 25vw - var(--truck-w))) translateY(0.5px) rotate(0.2deg); }
+  37.5%{ transform: translateX(calc( 37.5vw - var(--truck-w))) translateY(-1.2px) rotate(-0.25deg); }
+  50%  { transform: translateX(calc( 50vw - var(--truck-w))) translateY(0.6px) rotate(0.15deg); }
+  62.5%{ transform: translateX(calc( 62.5vw - var(--truck-w))) translateY(-1px) rotate(-0.2deg); }
+  75%  { transform: translateX(calc( 75vw - var(--truck-w))) translateY(0.4px) rotate(0.1deg); }
+  87.5%{ transform: translateX(calc( 87.5vw - var(--truck-w))) translateY(-0.8px) rotate(-0.15deg); }
+  100% { transform: translateX(calc(100vw + var(--truck-w))) translateY(0) rotate(0deg); }
 }
+@keyframes road-move { to { transform: translateX(-64px); } }
 @media (prefers-reduced-motion: reduce) {
   .our-services .truck { animation: none; }
+  .our-services .truck-track::before { animation: none; }
 }
 @media (max-width: 600px) {
   .our-services .truck { --truck-w: 180px; bottom: 4px; }
@@ -1179,6 +1260,19 @@ input, textarea {
   animation: wheel-spin 1.2s linear infinite; 
 }
 @keyframes wheel-spin { to { transform: rotate(360deg); } }
+
+/* Headlight glow/flicker */
+.our-services .truck circle[r='3'] {
+  fill: #fde68a;
+  filter: drop-shadow(0 0 6px rgba(253, 230, 138, 0.9)) drop-shadow(0 0 16px rgba(253, 230, 138, 0.5));
+  animation: headlight 1.4s ease-in-out infinite;
+}
+@keyframes headlight {
+  0%, 100% { opacity: 0.9; }
+  40% { opacity: 1; }
+  55% { opacity: 0.75; }
+  70% { opacity: 1; }
+}
 
 /* Animated plane that flies upward across the cards */
 .our-services .plane {
