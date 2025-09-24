@@ -34,10 +34,32 @@
     .nav-item.active .nav-link .nav-icon {
         transform: scale(1.1);
     }
+    /* Add Customer modal: compact grid to fit without scrolling on desktop */
+    .add-customer-form { margin-top: 2px; }
+    .acf-section { margin: 6px 0 10px; }
+    .acf-title { font-weight: 800; font-size: 14px; color: #e5e7eb; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid #1f2937; }
+    .acf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+    .acf-field { display: grid; gap: 4px; }
+    .acf-field label { color: #94a3b8; font-size: 12px; }
+    .acf-field input, .acf-field select, .acf-field textarea { padding: 8px 10px; border-radius: 8px; border: 1px solid #334155; background:#0f172a; color:#e5e7eb; }
+    .acf-col-span-2 { grid-column: 1 / -1; }
+    .acf-actions { display:flex; justify-content:flex-end; gap:10px; padding-top: 8px; border-top: 1px solid #1f2937; margin-top: 6px; }
+    @media (max-width: 720px) { .acf-grid { grid-template-columns: 1fr; } }
+    @media (min-width: 1024px) {
+      /* 3 columns on desktop to reduce height */
+      .acf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; }
+      /* prevent full-width spans on desktop so content fits */
+      .acf-col-span-2 { grid-column: auto; }
+      /* widen modal a bit and compact padding */
+      .modal .modal-content { max-width: 1024px; }
+      .modal .modal-body { padding: 12px; }
+    }
     /* Full-width layout overrides for Users page */
     .users-page .dashboard-main { padding: 0 !important; }
     .users-page .dashboard-content { padding: 12px 12px !important; }
     .users-page .users-table-container { width: 100% !important; max-width: none !important; }
+    .users-page .users-table { width: 100% !important; table-layout: fixed !important; }
+    .users-page .users-header { padding-right: 8px !important; }
     .users-page .users-table { width: 100% !important; table-layout: fixed !important; }
     .users-page .users-header { padding-right: 8px !important; }
     .users-page .pagination-container { padding-right: 8px !important; }
@@ -347,56 +369,78 @@
                 <button class="modal-close" onclick="closeAddCustomerModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="addCustomerForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>First Name *</label>
-                            <input type="text" name="first_name" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Last Name *</label>
-                            <input type="text" name="last_name" required />
-                        </div>
-                        <div class="form-group full">
-                            <label>Email *</label>
-                            <input type="email" name="email" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="text" name="phone" />
-                        </div>
-                        <div class="form-group full">
-                            <label>Address</label>
-                            <input type="text" name="address" />
-                        </div>
-                        <div class="form-group">
-                            <label>City</label>
-                            <input type="text" name="city" />
-                        </div>
-                        <div class="form-group">
-                            <label>Province</label>
-                            <input type="text" name="state" />
-                        </div>
-                        <div class="form-group">
-                            <label>Postal Code</label>
-                            <input type="text" name="postal_code" />
-                        </div>
-                        <div class="form-group">
-                            <label>Country</label>
-                            <input type="text" name="country" />
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select name="is_active">
-                                <option value="true" selected>Active</option>
-                                <option value="false">Inactive</option>
-                            </select>
-                        </div>
+                <form id="addCustomerForm" class="add-customer-form" novalidate>
+                  <div class="acf-section">
+                    <div class="acf-title">Basic Information</div>
+                    <div class="acf-grid">
+                      <div class="acf-field">
+                        <label>First Name *</label>
+                        <input type="text" name="first_name" placeholder="e.g., John" required />
+                      </div>
+                      <div class="acf-field">
+                        <label>Last Name *</label>
+                        <input type="text" name="last_name" placeholder="e.g., Doe" required />
+                      </div>
+                      <div class="acf-field acf-col-span-2">
+                        <label>Email *</label>
+                        <input type="email" name="email" placeholder="name@example.com" required />
+                      </div>
                     </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeAddCustomerModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+                  </div>
+
+                  <div class="acf-section">
+                    <div class="acf-title">Contact</div>
+                    <div class="acf-grid">
+                      <div class="acf-field acf-col-span-2">
+                        <label>Phone</label>
+                        <input type="text" name="phone" placeholder="+94 7X XXX XXXX" />
+                      </div>
                     </div>
+                  </div>
+
+                  <div class="acf-section">
+                    <div class="acf-title">Address</div>
+                    <div class="acf-grid">
+                      <div class="acf-field acf-col-span-2">
+                        <label>Address</label>
+                        <input type="text" name="address" placeholder="Street address" />
+                      </div>
+                      <div class="acf-field">
+                        <label>City</label>
+                        <input type="text" name="city" placeholder="City" />
+                      </div>
+                      <div class="acf-field">
+                        <label>Province</label>
+                        <input type="text" name="state" placeholder="Province/State" />
+                      </div>
+                      <div class="acf-field">
+                        <label>Postal Code</label>
+                        <input type="text" name="postal_code" placeholder="Postal code" />
+                      </div>
+                      <div class="acf-field">
+                        <label>Country</label>
+                        <input type="text" name="country" placeholder="Country" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="acf-section">
+                    <div class="acf-title">Status</div>
+                    <div class="acf-grid">
+                      <div class="acf-field acf-col-span-2">
+                        <label>Status</label>
+                        <select name="is_active">
+                          <option value="true" selected>Active</option>
+                          <option value="false">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="acf-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCustomerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+                  </div>
                 </form>
             </div>
         </div>
@@ -471,8 +515,10 @@ function viewCustomer(customerId) {
     const modal = document.getElementById('customerModal');
     const modalBody = document.getElementById('customerModalBody');
     if (!modal || !modalBody) return;
-    modal.style.display = 'block';
-    modalBody.innerHTML = '<div class="loading">Loading customer summary...</div>';
+    // Center the modal using global .modal.show flex behavior
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modalBody.innerHTML = '<div class="loading">Loading customer details...</div>';
     fetch(`/api/customers/${customerId}`)
         .then(r => r.json())
         .then(data => {
@@ -488,23 +534,30 @@ function viewCustomer(customerId) {
             const fullName = c.full_name || `${first} ${last}`.trim();
             const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || (fullName.charAt(0).toUpperCase() || 'C');
             const phone = c.phone || 'Not provided';
-            const addr = c.full_address || [c.address, c.city, c.state, c.postal_code, c.country].filter(Boolean).join(', ') || 'Not provided';
-            const createdDate = c.created_date || '';
-            const createdTime = c.created_time || '';
+            const addr1 = c.address || '';
+            const city = c.city || '';
+            const state = c.state || '';
+            const postal = c.postal_code || '';
+            const country = c.country || '';
             const statusBadge = c.is_active ? '<span class="status-badge active">Active</span>' : '<span class="status-badge inactive">Inactive</span>';
+            // Build a read-only grid similar to Add form
             modalBody.innerHTML = `
                 <div class="customer-detail-card">
-                  <div class="customer-header" style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                  <div class="customer-header" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
                     <div class="customer-avatar-large" style="width:48px;height:48px;border-radius:50%;background:#374151;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">${initials}</div>
-                    <div style="flex:1;">
-                      <h3 style="margin:0 0 4px;">${fullName} <small style="color:#94a3b8;">#${c.id || ''}</small></h3>
-                      ${statusBadge}
+                    <div style="flex:1; min-width:0;">
+                      <h3 style="margin:0 0 6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${fullName} <small style="color:#94a3b8; font-weight:600;">#${c.id || ''}</small> ${statusBadge}</h3>
                     </div>
                   </div>
-                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Email:</span> <span class="detail-value">${c.email || 'Not provided'}</span></div>
-                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Phone:</span> <span class="detail-value">${phone}</span></div>
-                  <div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Address:</span> <span class="detail-value">${addr}</span></div>
-                  ${(createdDate||createdTime)?`<div class="detail-row"><span class="detail-label" style="color:#94a3b8;">Registered:</span> <span class="detail-value">${createdDate} ${createdTime}</span></div>`:''}
+                  <div class="acf-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px;">
+                    <div class="acf-field"><label>Email</label><input value="${c.email || ''}" readonly /></div>
+                    <div class="acf-field"><label>Phone</label><input value="${phone}" readonly /></div>
+                    <div class="acf-field acf-col-span-2"><label>Address</label><input value="${addr1}" readonly /></div>
+                    <div class="acf-field"><label>City</label><input value="${city}" readonly /></div>
+                    <div class="acf-field"><label>Province</label><input value="${state}" readonly /></div>
+                    <div class="acf-field"><label>Postal Code</label><input value="${postal}" readonly /></div>
+                    <div class="acf-field"><label>Country</label><input value="${country}" readonly /></div>
+                  </div>
                 </div>`;
         })
         .catch(err => {
@@ -515,7 +568,7 @@ function viewCustomer(customerId) {
 
 function closeModal() {
     const modal = document.getElementById('customerModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) { modal.classList.remove('show'); modal.style.display = 'none'; }
 }
 
 // Close Add Customer modal helper
@@ -713,6 +766,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDateTime();
     setInterval(updateDateTime, 1000);
     
+    // Cache frequently used DOM refs early
+    const statusSaveBtn = document.getElementById('statusSaveBtn');
+
     // Load notifications
     loadNotificationsList();
     setInterval(loadNotificationsList, 30000);
@@ -1005,7 +1061,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const addCustomerModal = document.getElementById('addCustomerModal');
     const addCustomerForm = document.getElementById('addCustomerForm');
     const saveBtn = document.getElementById('saveCustomerBtn');
-    const statusSaveBtn = document.getElementById('statusSaveBtn');
 
     if (openAddBtn) {
         openAddBtn.addEventListener('click', () => {

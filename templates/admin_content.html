@@ -29,10 +29,12 @@
     .form-grid label{ display:flex; flex-direction:column; font-size:14px; gap:6px; }
     .form-grid input, .form-grid textarea{ padding:8px; border:1px solid #334155; background:#0f172a; color:#e5e7eb; border-radius:6px; font-size:14px; }
     .row-inline{ flex-direction:row !important; align-items:center; gap:8px !important; }
-    .notification{ position: fixed; right: 16px; bottom: 16px; background:#111827; color:#fff; padding:10px 12px; border-radius:8px; opacity:0; transform: translateY(8px); transition: all .2s ease; }
+    .notification{ position: fixed; right: 16px; top: 16px; max-width: 360px; background:#111827; color:#fff; padding:10px 12px; border-radius:8px; opacity:0; transform: translateY(-8px); transition: all .2s ease; z-index: 2000; box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
     .notification.show{ opacity:1; transform: translateY(0); }
     .notification.success{ background:#065f46; }
     .notification.error{ background:#991b1b; }
+    .inline-form{ display:none; margin-bottom:12px; padding:12px; border:1px dashed #334155; border-radius:8px; background:#0b1220; }
+    .inline-form .form-actions{ display:flex; gap:8px; margin-top:8px; }
   </style>
 </head>
 <body class="dashboard-body">
@@ -134,6 +136,30 @@
               <h2>Services</h2>
               <button id="addServiceBtn" class="btn btn-primary">Add Service</button>
             </div>
+            <div id="serviceFormBox" class="inline-form">
+              <div class="form-grid">
+                <label>Title<input id="svcTitleInline" placeholder="Title" /></label>
+                <label>Description<textarea id="svcDescInline" placeholder="Description"></textarea></label>
+                <label>Icon
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="svcIconInline" placeholder="e.g., ✈️ or image URL" />
+                    <input id="svcIconFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Image URL
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="svcImgInline" placeholder="https://... (optional)" />
+                    <input id="svcImgFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Display Order<input id="svcOrderInline" type="number" value="0" /></label>
+                <label class="row-inline"><input id="svcActiveInline" type="checkbox" checked /> Active</label>
+              </div>
+              <div class="form-actions">
+                <button id="svcCancelInline" class="btn">Cancel</button>
+                <button id="svcSaveInline" class="btn btn-primary">Save Service</button>
+              </div>
+            </div>
             <div id="servicesList" class="admin-list">
               <div class="loading">Loading services…</div>
             </div>
@@ -143,6 +169,24 @@
             <div class="section-header">
               <h2>Features</h2>
               <button id="addFeatureBtn" class="btn btn-primary">Add Feature</button>
+            </div>
+            <div id="featureFormBox" class="inline-form">
+              <div class="form-grid">
+                <label>Title<input id="fTitleInline" placeholder="Title" /></label>
+                <label>Description<textarea id="fDescInline" placeholder="Description"></textarea></label>
+                <label>Icon
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="fIconInline" placeholder="e.g., ✅ or image URL" />
+                    <input id="fIconFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Display Order<input id="fOrderInline" type="number" value="0" /></label>
+                <label class="row-inline"><input id="fActiveInline" type="checkbox" checked /> Active</label>
+              </div>
+              <div class="form-actions">
+                <button id="fCancelInline" class="btn">Cancel</button>
+                <button id="fSaveInline" class="btn btn-primary">Save Feature</button>
+              </div>
             </div>
             <div id="featuresList" class="admin-list">
               <div class="loading">Loading features…</div>
@@ -390,6 +434,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         display_order: Number(dlg.querySelector('#svcOrder').value||0),
         active: dlg.querySelector('#svcActive').checked
       };
+      if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
       try{
         // Handle uploads if files selected
         const iconFile = dlg.querySelector('#svcIconFile')?.files?.[0];
@@ -515,6 +560,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         display_order: Number(dlg.querySelector('#fOrder').value||0),
         active: dlg.querySelector('#fActive').checked
       };
+      if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
       try{
         // If an icon file is provided, upload and use its URL as icon value
         const iconFile = dlg.querySelector('#fIconFile')?.files?.[0];
@@ -529,9 +575,88 @@ document.addEventListener('DOMContentLoaded', ()=>{
     };
   }
 
-  // Bindings
-  document.getElementById('addServiceBtn').addEventListener('click', ()=> openServiceEditor());
-  document.getElementById('addFeatureBtn').addEventListener('click', ()=> openFeatureEditor());
+  // Inline form helpers
+  function show(el){ if (el) { el.style.display = 'block'; el.scrollIntoView({behavior:'smooth', block:'center'}); } }
+  function hide(el){ if (el) el.style.display = 'none'; }
+
+  // Bindings for Add buttons to show inline forms
+  const serviceFormBox = document.getElementById('serviceFormBox');
+  const featureFormBox = document.getElementById('featureFormBox');
+  document.getElementById('addServiceBtn').addEventListener('click', ()=> {
+    // reset fields
+    serviceFormBox.querySelector('#svcTitleInline').value = '';
+    serviceFormBox.querySelector('#svcDescInline').value = '';
+    serviceFormBox.querySelector('#svcIconInline').value = '';
+    serviceFormBox.querySelector('#svcImgInline').value = '';
+    serviceFormBox.querySelector('#svcOrderInline').value = 0;
+    serviceFormBox.querySelector('#svcActiveInline').checked = true;
+    serviceFormBox.querySelector('#svcIconFileInline').value = '';
+    serviceFormBox.querySelector('#svcImgFileInline').value = '';
+    show(serviceFormBox);
+  });
+  document.getElementById('addFeatureBtn').addEventListener('click', ()=> {
+    featureFormBox.querySelector('#fTitleInline').value = '';
+    featureFormBox.querySelector('#fDescInline').value = '';
+    featureFormBox.querySelector('#fIconInline').value = '';
+    featureFormBox.querySelector('#fOrderInline').value = 0;
+    featureFormBox.querySelector('#fActiveInline').checked = true;
+    featureFormBox.querySelector('#fIconFileInline').value = '';
+    show(featureFormBox);
+  });
+
+  // Inline form cancel
+  document.getElementById('svcCancelInline').addEventListener('click', ()=> hide(serviceFormBox));
+  document.getElementById('fCancelInline').addEventListener('click', ()=> hide(featureFormBox));
+
+  // Inline form save handlers
+  document.getElementById('svcSaveInline').addEventListener('click', async ()=>{
+    const payload = {
+      title: serviceFormBox.querySelector('#svcTitleInline').value.trim(),
+      description: serviceFormBox.querySelector('#svcDescInline').value.trim(),
+      icon: serviceFormBox.querySelector('#svcIconInline').value.trim(),
+      image_url: serviceFormBox.querySelector('#svcImgInline').value.trim(),
+      display_order: Number(serviceFormBox.querySelector('#svcOrderInline').value||0),
+      active: serviceFormBox.querySelector('#svcActiveInline').checked
+    };
+    if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+    try{
+      const iconFile = serviceFormBox.querySelector('#svcIconFileInline')?.files?.[0];
+      const imgFile  = serviceFormBox.querySelector('#svcImgFileInline')?.files?.[0];
+      if (iconFile) {
+        const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','services');
+        const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+        if (j && j.success && j.url) { payload.icon = j.url; }
+      }
+      if (imgFile) {
+        const fd2 = new FormData(); fd2.append('file', imgFile); fd2.append('folder','services');
+        const r2 = await fetch('/api/upload', { method:'POST', body: fd2 }); const j2 = await r2.json();
+        if (j2 && j2.success && j2.url) { payload.image_url = j2.url; }
+      }
+      await createService(payload);
+      hide(serviceFormBox);
+    }catch(e){ toast(e.message || 'Error','error'); }
+  });
+
+  document.getElementById('fSaveInline').addEventListener('click', async ()=>{
+    const payload = {
+      title: featureFormBox.querySelector('#fTitleInline').value.trim(),
+      description: featureFormBox.querySelector('#fDescInline').value.trim(),
+      icon: featureFormBox.querySelector('#fIconInline').value.trim(),
+      display_order: Number(featureFormBox.querySelector('#fOrderInline').value||0),
+      active: featureFormBox.querySelector('#fActiveInline').checked
+    };
+    if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+    try{
+      const iconFile = featureFormBox.querySelector('#fIconFileInline')?.files?.[0];
+      if (iconFile) {
+        const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','features');
+        const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+        if (j && j.success && j.url) { payload.icon = j.url; }
+      }
+      await createFeature(payload);
+      hide(featureFormBox);
+    }catch(e){ toast(e.message || 'Error','error'); }
+  });
 
   // Initial load
   loadServices();

@@ -1399,10 +1399,11 @@ def create_app():
 
     @app.route('/users')
     def users():
-        """Users management page"""
+        """Users management page (shows all customers by default)."""
         search = request.args.get('search', '').strip()
         page = request.args.get('page', 1, type=int)
         per_page_param = (request.args.get('per_page') or '').lower()
+        status = (request.args.get('status') or '').strip().lower()
         allowed_page_sizes = {'5': 5, '25': 25, '50': 50, '100': 100}
         if per_page_param == 'all':
             per_page = 10**9  # effectively all on one page
@@ -1410,10 +1411,14 @@ def create_app():
             per_page = allowed_page_sizes[per_page_param]
         else:
             per_page = 10
-        
-        # Only show approved (active) customers
-        query = Customer.query.filter_by(is_active=True)
-        
+
+        # Show all customers by default; allow optional status filtering
+        query = Customer.query
+        if status == 'active':
+            query = query.filter_by(is_active=True)
+        elif status == 'inactive':
+            query = query.filter_by(is_active=False)
+
         if search:
             search_filter = f"%{search}%"
             query = query.filter(
@@ -1425,12 +1430,12 @@ def create_app():
                     Customer.city.ilike(search_filter)
                 )
             )
-        
+
         customers = query.order_by(Customer.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
-        
-        return render_template('users.html', customers=customers, search=search, per_page=per_page_param or str(per_page))
+
+        return render_template('users.html', customers=customers, search=search, per_page=per_page_param or str(per_page), status=status)
 
     @app.route('/shipments')
     def shipments():
