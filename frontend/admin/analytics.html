@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin | Analytics</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <style>
+    .layout{min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
+    .content{padding:16px;margin-left:260px}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main class="content">
+  <div id="topbar"></div>
+  <section class="card">
+    <h2>Analytics (Static)</h2>
+    <div class="grid cards">
+      <div class="card"><h3>Weekly Shipments</h3><p class="muted">Placeholder chart area</p></div>
+      <div class="card"><h3>Top Routes</h3><p class="muted">Placeholder list area</p></div>
+      <div class="card"><h3>Delivery SLA</h3><p class="muted">Placeholder KPI area</p></div>
+    </div>
+    <p style="margin-top:12px"><a class="btn btn-outline" href="/Parcel/backend/admin/dashboard.php">Open Live Dashboard</a></p>
+  </section>
+  </main>
+</div>
+<script src="/Parcel/js/admin.js"></script>
+</body>
+</html>

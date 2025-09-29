@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer Registration</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+</head>
+<body>
+<header class="navbar">
+  <div class="container">
+    <div class="brand">Parcel Transport</div>
+    <nav>
+      <a href="/Parcel/frontend/index.html">Home</a>
+      <a href="/Parcel/frontend/track.html">Track</a>
+      <a href="/Parcel/frontend/customer/book.html">Book</a>
+      <a href="/Parcel/frontend/customer/register.html" class="active">Register</a>
+      <a href="/Parcel/frontend/auth/login.html">Admin</a>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="card">
+    <h2>Create Customer Account</h2>
+    <form method="post" action="/Parcel/backend/customer_register.php">
+      <div class="grid">
+        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+        <input type="text" name="phone" placeholder="Phone (optional)">
+        <input type="text" name="address" placeholder="Address (optional)">
+        <input type="text" name="city" placeholder="City (optional)">
+        <input type="text" name="state" placeholder="State (optional)">
+        <input type="text" name="country" placeholder="Country (optional)">
+        <input type="text" name="pincode" placeholder="Pincode (optional)">
+      </div>
+      <button class="btn" type="submit">Register</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

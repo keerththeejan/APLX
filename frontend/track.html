@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Track Shipment</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+</head>
+<body>
+<header class="navbar">
+  <div class="container">
+    <div class="brand">Parcel Transport</div>
+    <nav>
+      <a href="/Parcel/frontend/index.html">Home</a>
+      <a href="/Parcel/frontend/track.html" class="active">Track</a>
+      <a href="/Parcel/frontend/customer/book.html">Book</a>
+      <a href="/Parcel/frontend/auth/login.html">Admin</a>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="card">
+    <h2>Track Shipment</h2>
+    <form method="get" action="/Parcel/backend/track_result.php">
+      <input type="text" name="tn" placeholder="Enter Tracking Number" required>
+      <button class="btn" type="submit">Track</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

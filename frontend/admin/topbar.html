@@ -1,0 +1,20 @@
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="hamburger" id="toggleSidebar" title="Toggle sidebar">≡</button>
+    <h1 id="pageTitle">Dashboard</h1>
+  </div>
+  <div class="right" style="position:relative">
+    <div class="clock" id="lk-clock">Loading...</div>
+    <div class="icon-btn notif" id="notifBtn" title="Notifications">🔔</div>
+    <div class="icon-btn" id="profileBtn" title="Admin Profile">👤</div>
+    <div class="dropdown" id="notifMenu">
+      <div class="item"><div class="title">No new notifications</div><div class="sub">You're up to date</div></div>
+      <div class="item"><a class="btn btn-sm" href="/Parcel/backend/admin/shipments.php">View All</a></div>
+    </div>
+    <div class="dropdown" id="profileMenu">
+      <div class="item"><div class="title">Admin</div><div class="sub">admin@parcel.local</div></div>
+      <div class="item"><a class="btn btn-sm" href="/Parcel/backend/admin/profile.php">Open Profile</a></div>
+      <div class="item"><a class="btn btn-sm btn-outline" href="/Parcel/backend/auth_logout.php">Logout</a></div>
+    </div>
+  </div>
+</div>

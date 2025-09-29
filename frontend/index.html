@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parcel Transport - Home</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <style>
+    .landing{padding:24px 0}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center}
+    .hero h1{font-size:38px;margin:0 0 10px 0}
+    .hero p{color:var(--muted);margin:0 0 16px 0}
+    .hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+    .hero-figure{position:relative}
+    .hero-figure img{width:100%;height:auto;border-radius:16px;border:1px solid var(--border);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .badges{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .badge{background:#0b1220;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:20px}
+    .feature{padding:14px;border:1px solid var(--border);border-radius:12px;background:#0b1220}
+    .feature .icon{font-size:20px}
+    @media (max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container">
+      <div class="brand">Parcel Transport</div>
+      <button id="themeToggle" class="theme-toggle" title="Toggle theme">☀️/🌙</button>
+      <nav>
+        <a href="/Parcel/frontend/index.html" class="active">Home</a>
+        <a href="/Parcel/frontend/track.html">Track</a>
+        <a href="/Parcel/frontend/customer/book.html">Book</a>
+        <a href="/Parcel/frontend/auth/login.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+  <div class="spotlight-layer" id="spotlight"></div>
+  <main>
+    <!-- Top contact strip like in design -->
+    <div class="container" style="display:flex;gap:12px;justify-content:space-between;padding:8px 0;color:var(--muted);font-size:12px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <span>📍 55 Main Street, 2nd block, Malborne, Australia</span>
+        <span>✉️ support@example.com</span>
+        <span>✉️ contact@gmail.com</span>
+        <span>📞 734 H, Bryan Burlington, NC 27215</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span>English ▾</span>
+        <a href="#" aria-label="Twitter">🐦</a>
+        <a href="#" aria-label="Instagram">📷</a>
+        <a href="#" aria-label="YouTube">▶️</a>
+      </div>
+    </div>
+
+    <!-- Hero full with slideshow -->
+    <div class="container-hero hero-wrap full-bleed">
+      <section class="hero hero-full" style="background-image:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop');">
+        <div class="slideshow" aria-hidden="true">
+          <img class="active" src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="" />
+          <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1600&auto=format&fit=crop" alt="" />
+          <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop" alt="" />
+          <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600&auto=format&fit=crop" alt="" />
+        </div>
+        <span class="eyebrow">Safe Transportation &amp; Logistics</span>
+        <h1>Adaptable coordinated factors<br/>Quick Conveyance</h1>
+        <p>Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.</p>
+        <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
+          <a class="btn btn-primary" href="/Parcel/frontend/customer/register.html" style="text-decoration:none;">Get Started</a>
+          <a class="btn btn-secondary" href="#contact" style="text-decoration:none;">Learn More</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Services strip (icons 1..4) -->
+    <section class="services">
+      <div class="services-grid">
+        <div class="service-card reveal reveal-card stagger-1"><div class="service-icon">🏬</div><div class="service-title">Warehouse Facility</div><div class="service-desc">Secure storage for every shipment.</div></div>
+        <div class="service-card reveal reveal-card stagger-2"><div class="service-icon">📈</div><div class="service-title">Cost Effective Pricing</div><div class="service-desc">Optimized routes keep costs low.</div></div>
+        <div class="service-card reveal reveal-card stagger-3"><div class="service-icon">✈️</div><div class="service-title">Air Freight Facility</div><div class="service-desc">Fast domestic and international.</div></div>
+        <div class="service-card reveal reveal-card stagger-1"><div class="service-icon">🧱</div><div class="service-title">Container Delivery</div><div class="service-desc">Door‑to‑door container moves.</div></div>
+      </div>
+    </section>
+
+    <!-- Transport system + secure packaging section with two feature bullets -->
+    <section class="about-us">
+      <div class="container">
+        <div class="about-content">
+          <div class="about-image reveal stagger-1">
+            <img src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop" alt="Containers and Truck" />
+          </div>
+          <div class="about-text">
+            <div class="about-eyebrow reveal reveal-left stagger-2">Safe Transportation &amp; Logistics</div>
+            <h2 class="reveal reveal-up stagger-2">Modern transport system &amp; secure packaging</h2>
+            <p class="reveal reveal-right stagger-3">We combine real‑time visibility with secure handling to move your freight quickly and safely.</p>
+            <div class="features-grid">
+              <div class="feature-item reveal reveal-left stagger-1"><div class="feature-icon">🏬</div><div class="feature-content"><h4>Air Freight Transportation</h4><p>Fast air cargo across regions.</p></div></div>
+              <div class="feature-item reveal reveal-right stagger-2"><div class="feature-icon">🚢</div><div class="feature-content"><h4>Ocean Freight Transportation</h4><p>Cost‑effective global lanes.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why best in business (center image with four bullets) -->
+    <section class="why-choose-us">
+      <div class="container">
+        <div class="why-choose-header">
+          <h2>Why we are considered the best in business</h2>
+          <p>Decentralized trade, direct transport, high flexibility and secure delivery.</p>
+        </div>
+        <div class="our-services-grid">
+          <div class="our-service-card reveal reveal-card stagger-1"><div class="our-service-content"><h3>Decentralized Trade</h3><p class="muted">Streamlined hubs maximize speed.</p></div></div>
+          <div class="our-service-card reveal reveal-card stagger-2"><div class="our-service-content"><h3>Highly Flexible</h3><p class="muted">Adaptable capacity and routes.</p></div></div>
+          <div class="our-service-card reveal reveal-card stagger-3"><div class="our-service-content"><h3>Direct Transport</h3><p class="muted">Fewer touches, faster delivery.</p></div></div>
+          <div class="our-service-card reveal reveal-card stagger-1"><div class="our-service-content"><h3>Secure Delivery</h3><p class="muted">Tamper‑evident packaging, QA.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact + Quote form side by side -->
+    <section id="contact" class="contact-quote-section reveal">
+      <div class="contact-quote-container">
+        <div class="contact-info reveal stagger-1">
+          <h2>Need Help With Your Shipping?</h2>
+          <p>Our team is here to help you. Contact us for a free quote.</p>
+          <div class="contact-methods">
+            <div class="contact-method"><div class="contact-icon">📞</div><div class="contact-details"><h4>Call Us Anytime</h4><p>+94 21 492 7799</p></div></div>
+            <div class="contact-method"><div class="contact-icon">✉️</div><div class="contact-details"><h4>Email Us</h4><p>info@stgfl.com</p></div></div>
+            <div class="contact-method"><div class="contact-icon">📍</div><div class="contact-details"><h4>Visit Us</h4><p>Ariviyal Nagar, Kilinochchi, Sri Lanka</p></div></div>
+          </div>
+        </div>
+        <div class="quote-form reveal stagger-2">
+          <h2>Get A Free Quote</h2>
+          <p>Fill out the form and our team will get back to you.</p>
+          <form id="homeQuoteForm" class="quote-form-container">
+            <div class="form-row">
+              <input id="hqName" name="name" type="text" placeholder="Your Name" class="form-input" required>
+              <input id="hqEmail" name="email" type="email" placeholder="Your Email" class="form-input" required>
+            </div>
+            <input id="hqSubject" name="subject" type="text" placeholder="Subject" class="form-input full-width" required>
+            <select id="hqService" name="service" class="form-input full-width" required>
+              <option value="">Select Service</option>
+              <option value="air-freight">Air Freight</option>
+              <option value="ocean-freight">Ocean Freight</option>
+              <option value="land-transport">Land Transport</option>
+            </select>
+            <textarea id="hqMessage" name="message" placeholder="Your Message" class="form-input full-width message-input" rows="4" required></textarea>
+            <button id="hqSubmit" type="submit" class="send-message-btn">Send Message</button>
+          </form>
+          <div id="homeQuoteStatus" class="inline-status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section class="location-map-section">
+      <div class="map-bg" aria-hidden="true" style="background-image:url('https://staticmap.openstreetmap.de/staticmap.php?center=46.8797,-110.3626&zoom=4&size=1600x900&maptype=mapnik&format=png');"></div>
+      <div class="container">
+        <div class="map-header"><h2>Our Location</h2><p>Helena-Lewis and Clark National Forest (demo)</p></div>
+        <div class="map-container">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10955627.203!2d-127.8!3d47.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sHelena-Lewis%20and%20Clark%20National%20Forest!5e0!3m2!1sen!2sus!4v1600000000000" width="100%" height="260" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="container">© 2025 Parcel Transport</div>
+  </footer>
+  <script>
+  // Services interactive grid
+  (function() { const grid=document.querySelector('.services-grid'); if(!grid) return; const cards=[...grid.querySelectorAll('.service-card')]; let selected=null; function toggle(){ if(selected===this){ this.classList.remove('selected'); this.setAttribute('aria-selected','false'); grid.classList.remove('dim-others'); selected=null; return;} cards.forEach(c=>{c.classList.remove('selected'); c.setAttribute('aria-selected','false');}); this.classList.add('selected'); this.setAttribute('aria-selected','true'); grid.classList.add('dim-others'); selected=this; } cards.forEach(card=>{ card.setAttribute('tabindex','0'); card.setAttribute('role','button'); card.addEventListener('click',toggle); card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle.call(card);} }); }); })();
+  // Transport gallery (not on this variant)
+  // Hero cross-fade
+  (function(){ const slideshow=document.querySelector('.hero .slideshow'); if(!slideshow) return; const slides=[...slideshow.querySelectorAll('img')]; if(slides.length<=1) return; let idx=0; let timer=null; function show(i){ slides.forEach((img,k)=>img.classList.toggle('active', k===i)); } function next(){ idx=(idx+1)%slides.length; show(idx);} function start(){ if(!timer) timer=setInterval(next,5000);} function stop(){ if(timer){ clearInterval(timer); timer=null; } } show(0); start(); slideshow.addEventListener('mouseenter', stop); slideshow.addEventListener('mouseleave', start); document.addEventListener('visibilitychange', ()=>{ document.hidden ? stop() : start(); }); })();
+  // Reveal on scroll
+  (function(){ const sels=['.services .service-card','.about-us .about-image','.about-us .about-text','.about-us .feature-item','.why-choose-us .our-services-grid > *','.contact-quote-section .contact-info','.contact-quote-section .quote-form','.location-map-section .map-header *']; sels.forEach(sel=>{ document.querySelectorAll(sel).forEach(el=>{ el.classList.add('reveal','reveal-replay'); }); }); const els=document.querySelectorAll('.reveal'); if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('reveal-visible')); return;} const io=new IntersectionObserver((entries)=>{ entries.forEach(entry=>{ const el=entry.target; if(entry.isIntersecting){ el.classList.add('reveal-visible'); } else if(el.classList.contains('reveal-replay')){ el.classList.remove('reveal-visible'); } }); }, {rootMargin:'0px 0px -15% 0px', threshold:0.1}); els.forEach(el=>io.observe(el)); })();
+
+  // Theme toggle + persist
+  (function(){
+    const btn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    function setTheme(t){ document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); }
+    btn?.addEventListener('click', ()=>{
+      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(cur === 'light' ? 'dark' : 'light');
+    });
+  })();
+
+  // Mouse spotlight
+  (function(){
+    const layer = document.getElementById('spotlight');
+    if (!layer) return;
+    const textSel = 'p, h1, h2, h3, h4, h5, h6, a, span, li, label, small, strong, em, .service-title, .service-desc, .feature-content, .why-choose-header, .our-service-content, .contact-info, .map-header, .brand, nav a, .btn, .eyebrow, .footer';
+    window.addEventListener('mousemove', (e)=>{
+      layer.style.setProperty('--mx', e.clientX + 'px');
+      layer.style.setProperty('--my', e.clientY + 'px');
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const isText = !!(el && (el.matches(textSel) || el.closest(textSel)));
+      document.body.classList.toggle('text-spot', isText);
+    }, { passive: true });
+    window.addEventListener('mouseleave', ()=>{ document.body.classList.remove('text-spot'); });
+  })();
+  </script>
+</body>
+</html>

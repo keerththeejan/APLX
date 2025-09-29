@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin | Profile</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <style>
+    .layout{min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
+    .side-header{display:flex;align-items:center;gap:10px;padding:16px;border-bottom:1px solid var(--border)}
+    .side-header .logo{font-size:22px}
+    .side-header .app{font-weight:700}
+    .sidebar nav{display:flex;flex-direction:column;padding:8px}
+    .sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin:2px 8px;color:var(--muted);text-decoration:none}
+    .sidebar nav a.active, .sidebar nav a:hover{background:#0f172a;color:var(--text)}
+    .side-user{display:flex;gap:10px;align-items:center;padding:14px;border-top:1px solid var(--border)}
+    .side-user .avatar{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#111827}
+    .content{padding:16px;margin-left:260px}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main class="content">
+  <section class="card">
+    <h2>Admin Profile</h2>
+    <div class="grid">
+      <input type="text" placeholder="Name" value="Admin" disabled>
+      <input type="email" placeholder="Email" value="admin@parcel.local" disabled>
+      <input type="password" placeholder="Change Password (use backend UI)">
+    </div>
+    <p class="muted" style="margin-top:8px">Profile changes can be implemented in backend later.</p>
+  </section>
+  </main>
+</div>
+<script>
+  fetch('/Parcel/frontend/admin/sidebar.html').then(r=>r.text()).then(html=>{
+    const host=document.getElementById('sidebar'); if(host) host.outerHTML=html;
+  });
+</script>
+</body>
+</html>

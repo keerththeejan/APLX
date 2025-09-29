@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin | Settings</title>
+  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <style>
+    .layout{min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
+    .content{padding:16px;margin-left:260px}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main class="content">
+  <div id="topbar"></div>
+  <section class="card">
+    <h2>Settings (Static)</h2>
+    <div class="grid">
+      <input type="text" placeholder="Company Name" value="Parcel Transport">
+      <input type="text" placeholder="Support Email" value="support@parcel.local">
+      <input type="text" placeholder="Phone" value="+91-00000-00000">
+      <input type="text" placeholder="Address" value="Chennai, TN">
+    </div>
+    <p class="muted" style="margin-top:8px">These settings are placeholders. Use backend pages for real changes later.</p>
+  </section>
+  </main>
+</div>
+<script src="/Parcel/js/admin.js"></script>
+</body>
+</html>
