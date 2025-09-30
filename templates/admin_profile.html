@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <style>
+    .profile-page { padding: 24px; }
+    .profile-card { background:#0f172a; border:1px solid #1f2937; border-radius:12px; padding:16px; max-width:720px; margin:0 auto; }
+    .profile-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .profile-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .profile-grid .full { grid-column: 1 / -1; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { color:#cbd5e1; font-size:14px; }
+    .form-group input, .form-group textarea { background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:8px; padding:10px; outline:none; }
+    .form-actions { display:flex; align-items:center; gap:12px; margin-top:12px; }
+    .status { color:#9ca3af; font-size:12px; }
+    .inline-msg { font-size:14px; }
+    .inline-msg.success { color:#16a34a; }
+    .inline-msg.error { color:#ef4444; }
+    .admin-identity { display:flex; align-items:center; gap:12px; }
+    .admin-avatar { width:42px; height:42px; border-radius:50%; background:#16a34a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; }
+    .admin-meta { display:flex; flex-direction:column; }
+    .admin-meta .admin-name { color:#e5e7eb; font-weight:600; }
+    .admin-meta .admin-email { color:#9ca3af; font-size:13px; }
+    .password-wrapper { position:relative; }
+    .toggle-visibility { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; opacity:0.8; }
+  </style>
+</head>
+<body class="dashboard-body">
+  <div class="profile-page">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="admin-identity">
+          <div class="admin-avatar" id="adminAvatar">A</div>
+          <div class="admin-meta">
+            <div class="admin-name" id="adminNameHeading">{{ admin.name }}</div>
+            <div class="admin-email" id="adminEmailHeading">{{ admin.email }}</div>
+          </div>
+        </div>
+        <a class="back-link" href="{{ url_for('dashboard') }}">← Back</a>
+      </div>
+      <div class="status">Last updated: <span id="lastUpdated">{{ admin.updated_at }}</span></div>
+      <form id="adminForm" onsubmit="return false;">
+        <div class="profile-grid">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" value="{{ admin.name }}" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" value="{{ admin.email }}" />
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="text" value="{{ admin.phone }}" />
+          </div>
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input id="company" name="company" type="text" value="{{ admin.company }}" />
+          </div>
+          <div class="form-group full">
+            <label for="address">Address</label>
+            <textarea id="address" name="address" rows="3">{{ admin.address }}</textarea>
+          </div>
+          <div class="form-group full">
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+              <input id="password" name="password" type="password" value="" placeholder="Enter new password (leave blank to keep current)" />
+              <span class="toggle-visibility" id="togglePwd" title="Show/Hide">👁️</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="saveBtn" class="btn" type="button">Save Changes</button>
+          <span id="msg" class="inline-msg" role="alert" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('adminForm');
+    const btn = document.getElementById('saveBtn');
+    const msg = document.getElementById('msg');
+    const lastUpdated = document.getElementById('lastUpdated');
+    const nameHeading = document.getElementById('adminNameHeading');
+    const emailHeading = document.getElementById('adminEmailHeading');
+    const avatar = document.getElementById('adminAvatar');
+
+    async function saveProfile() {
+      msg.textContent = '';
+      msg.className = 'inline-msg';
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Saving...';
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        company: document.getElementById('company').value.trim(),
+        address: document.getElementById('address').value.trim(),
+      };
+      const passwordVal = document.getElementById('password').value;
+      if (passwordVal && passwordVal.trim().length > 0) {
+        payload.password = passwordVal.trim();
+      }
+      try {
+        const res = await fetch("{{ url_for('api_update_admin_profile') }}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to save');
+        }
+        // Update UI with returned values immediately
+        document.getElementById('name').value = data.admin.name || '';
+        document.getElementById('email').value = data.admin.email || '';
+        document.getElementById('phone').value = data.admin.phone || '';
+        document.getElementById('company').value = data.admin.company || '';
+        document.getElementById('address').value = data.admin.address || '';
+        document.getElementById('password').value = '';
+        lastUpdated.textContent = data.admin.updated_at || '';
+        // Reflect in header
+        if (nameHeading) nameHeading.textContent = data.admin.name || '';
+        if (emailHeading) emailHeading.textContent = data.admin.email || '';
+        if (avatar) {
+          const n = (data.admin.name || '').trim();
+          avatar.textContent = n ? n[0].toUpperCase() : 'A';
+        }
+        msg.textContent = 'Profile updated successfully';
+        msg.className = 'inline-msg success';
+      } catch (e) {
+        msg.textContent = e.message || 'Something went wrong';
+        msg.className = 'inline-msg error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    btn.addEventListener('click', saveProfile);
+
+    // Password visibility toggle
+    const togglePwd = document.getElementById('togglePwd');
+    const pwdField = document.getElementById('password');
+    if (togglePwd && pwdField) {
+      togglePwd.addEventListener('click', () => {
+        const type = pwdField.getAttribute('type') === 'password' ? 'text' : 'password';
+        pwdField.setAttribute('type', type);
+      });
+    }
+  </script>
+</body>
+</html>

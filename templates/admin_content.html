@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Content Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    .admin-content-page{ padding: 12px 0 32px; }
+    .admin-section{ margin: 24px 0; background:#0f172a; border:1px solid #1f2937; border-radius:8px; padding:16px; }
+    .section-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .admin-list .row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px; border:1px solid #1f2937; border-radius:8px; margin-bottom:10px; background:#0b1220; }
+    .row-main{ display:flex; gap:12px; flex:1; }
+    .row-col.wide{ flex:1; }
+    .row-title{ font-weight:600; margin-bottom:4px; color:#e5e7eb; }
+    .row-desc{ color:#9ca3af; font-size:14px; margin-bottom:4px; }
+    .row-meta{ color:#94a3b8; font-size:12px; }
+    .row-actions{ display:flex; gap:8px; }
+    .btn{ background:#1f2937; border:1px solid #334155; padding:6px 10px; border-radius:6px; cursor:pointer; color:#e5e7eb; }
+    .btn:hover{ filter: brightness(1.05); }
+    .btn-primary{ background:#2563eb; color:#fff; border-color:#1d4ed8; }
+    .btn-primary:hover{ background:#1d4ed8; }
+    .btn-danger{ background:#ef4444; color:#fff; border-color:#dc2626; }
+    .btn-small{ padding:4px 8px; font-size:12px; }
+    .loading, .empty{ color:#9ca3af; font-size:14px; padding:6px 2px; }
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    .modal{ background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; width: min(560px, 92vw); padding:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
+    .form-grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+    .form-grid label{ display:flex; flex-direction:column; font-size:14px; gap:6px; }
+    .form-grid input, .form-grid textarea{ padding:8px; border:1px solid #334155; background:#0f172a; color:#e5e7eb; border-radius:6px; font-size:14px; }
+    .row-inline{ flex-direction:row !important; align-items:center; gap:8px !important; }
+    .notification{ position: fixed; right: 16px; top: 16px; max-width: 360px; background:#111827; color:#fff; padding:10px 12px; border-radius:8px; opacity:0; transform: translateY(-8px); transition: all .2s ease; z-index: 2000; box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
+    .notification.show{ opacity:1; transform: translateY(0); }
+    .notification.success{ background:#065f46; }
+    .notification.error{ background:#991b1b; }
+    .inline-form{ display:none; margin-bottom:12px; padding:12px; border:1px dashed #334155; border-radius:8px; background:#0b1220; }
+    .inline-form .form-actions{ display:flex; gap:8px; margin-top:8px; }
+  </style>
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">🚚</span>
+          <span class="logo-text">Admin Panel</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="{{ url_for('dashboard') }}" class="nav-link"><span class="nav-icon">📊</span><span class="nav-text">Dashboard</span></a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('users') }}" class="nav-link"><span class="nav-icon">👥</span><span class="nav-text">Users</span></a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('shipments') }}" class="nav-link"><span class="nav-icon">📦</span><span class="nav-text">Shipments</span></a>
+          </li>
+          <li class="nav-item active">
+            <a href="{{ url_for('admin_content_manager') }}" class="nav-link"><span class="nav-icon">🧩</span><span class="nav-text">Content</span></a>
+          </li>
+          <li class="nav-item"><a href="{{ url_for('bookings') }}" class="nav-link"><span class="nav-icon">🎫</span><span class="nav-text">Bookings</span></a></li>
+
+          <li class="nav-item"><a href="{{ url_for('analytics_page') }}" class="nav-link"><span class="nav-icon">📈</span><span class="nav-text">Analytics</span></a></li>
+          <li class="nav-item"><a href="{{ url_for('settings') }}" class="nav-link"><span class="nav-icon">⚙️</span><span class="nav-text">Settings</span></a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="profileAvatar">A</div>
+          <div class="user-info">
+            <div class="user-name" id="profileName">Admin</div>
+            <div class="user-role"><span id="profileEmail">Administrator</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><span></span><span></span><span></span></button>
+          <h1>Content</h1>
+        </div>
+        <div class="header-right">
+          <div class="datetime-display">
+            <span id="current-date"></span>
+            <span id="current-time"></span>
+            <span id="current-day"></span>
+          </div>
+          <div class="header-actions">
+            <div class="notification-dropdown">
+              <button class="notification-btn" id="notificationBtn">🔔<span class="notification-badge" id="notificationBadge" style="display:none;">0</span></button>
+              <div class="notification-menu" id="notificationMenu">
+                <div class="notification-header">
+                  <h3>Notifications</h3>
+                  <button class="mark-all-read-btn" id="markAllReadBtn">Mark all as read</button>
+                </div>
+                <div class="notification-list" id="notificationList">
+                  <div class="loading-notifications">Loading notifications...</div>
+                </div>
+                <div class="notification-footer">
+                  <button class="view-all-btn">View All Notifications</button>
+                </div>
+              </div>
+            </div>
+            <div class="profile-dropdown">
+              <button class="profile-btn" id="profileBtn">👤</button>
+              <div class="profile-menu" id="profileMenu">
+                <div class="profile-header">
+                  <div class="profile-avatar-large" id="profileAvatar">A</div>
+                  <div class="profile-info">
+                    <h3 id="profileName">Administrator</h3>
+                    <p id="profileEmail">admin@company.com</p>
+                  </div>
+                </div>
+                <div class="profile-actions">
+                  <a class="btn" href="{{ url_for('admin_profile') }}">Edit Profile</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="admin-content-page">
+          <h1>Homepage Content Manager</h1>
+          <p>Manage the Services and Features displayed on the homepage.</p>
+
+          <section class="admin-section">
+            <div class="section-header">
+              <h2>Services</h2>
+              <button id="addServiceBtn" class="btn btn-primary">Add Service</button>
+            </div>
+            <div id="serviceFormBox" class="inline-form">
+              <div class="form-grid">
+                <label>Title<input id="svcTitleInline" placeholder="Title" /></label>
+                <label>Description<textarea id="svcDescInline" placeholder="Description"></textarea></label>
+                <label>Icon
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="svcIconInline" placeholder="e.g., ✈️ or image URL" />
+                    <input id="svcIconFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Image URL
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="svcImgInline" placeholder="https://... (optional)" />
+                    <input id="svcImgFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Display Order<input id="svcOrderInline" type="number" value="0" /></label>
+                <label class="row-inline"><input id="svcActiveInline" type="checkbox" checked /> Active</label>
+              </div>
+              <div class="form-actions">
+                <button id="svcCancelInline" class="btn">Cancel</button>
+                <button id="svcSaveInline" class="btn btn-primary">Save Service</button>
+              </div>
+            </div>
+            <div id="servicesList" class="admin-list">
+              <div class="loading">Loading services…</div>
+            </div>
+          </section>
+
+          <section class="admin-section">
+            <div class="section-header">
+              <h2>Features</h2>
+              <button id="addFeatureBtn" class="btn btn-primary">Add Feature</button>
+            </div>
+            <div id="featureFormBox" class="inline-form">
+              <div class="form-grid">
+                <label>Title<input id="fTitleInline" placeholder="Title" /></label>
+                <label>Description<textarea id="fDescInline" placeholder="Description"></textarea></label>
+                <label>Icon
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input id="fIconInline" placeholder="e.g., ✅ or image URL" />
+                    <input id="fIconFileInline" type="file" accept="image/*" />
+                  </div>
+                </label>
+                <label>Display Order<input id="fOrderInline" type="number" value="0" /></label>
+                <label class="row-inline"><input id="fActiveInline" type="checkbox" checked /> Active</label>
+              </div>
+              <div class="form-actions">
+                <button id="fCancelInline" class="btn">Cancel</button>
+                <button id="fSaveInline" class="btn btn-primary">Save Feature</button>
+              </div>
+            </div>
+            <div id="featuresList" class="admin-list">
+              <div class="loading">Loading features…</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+// Sidebar toggle
+function toggleSidebar(){
+  const sidebar = document.querySelector('.dashboard-sidebar');
+  const main = document.querySelector('.dashboard-main');
+  sidebar.classList.toggle('collapsed');
+  main.classList.toggle('expanded');
+}
+function updateDateTime(){
+  const now = new Date();
+  const dateOptions = { year:'numeric', month:'long', day:'numeric' };
+  const timeOptions = { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
+  const dayOptions = { weekday:'long' };
+  document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', dateOptions);
+  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', timeOptions);
+  document.getElementById('current-day').textContent = now.toLocaleDateString('en-US', dayOptions);
+}
+
+function updateNotificationBadge(count){
+  const badge = document.getElementById('notificationBadge');
+  if (!badge) return;
+  if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'block'; }
+  else { badge.style.display = 'none'; }
+}
+
+async function loadNotifications(){
+  try {
+    const res = await fetch('/api/notifications');
+    const data = await res.json();
+    updateNotificationBadge(data.unread_count || 0);
+  } catch(e){ console.warn('notifications load failed', e); }
+}
+
+function toggleProfileMenu(){
+  const menu = document.getElementById('profileMenu');
+  if (menu) menu.classList.toggle('show');
+}
+
+async function loadAdminProfile(){
+  try {
+    const res = await fetch('/api/admin/profile');
+    const data = await res.json();
+    if (data && (data.name !== undefined)){
+      const name = (data.name || '').trim() || 'Admin';
+      const email = data.email || '';
+      const nameEl = document.getElementById('profileName');
+      const emailEl = document.getElementById('profileEmail');
+      const avatarEl = document.getElementById('profileAvatar');
+      if (nameEl) nameEl.textContent = name;
+      if (emailEl) emailEl.textContent = email;
+      if (avatarEl) avatarEl.textContent = name ? name[0].toUpperCase() : 'A';
+    }
+  } catch(e){ console.warn('admin profile load failed', e); }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
+
+  // time
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+
+  // notifications
+  const notificationBtn = document.getElementById('notificationBtn');
+  const notificationMenu = document.getElementById('notificationMenu');
+  const markAllReadBtn = document.getElementById('markAllReadBtn');
+  const viewAllBtn = document.querySelector('.notification-footer .view-all-btn');
+  if (notificationBtn && notificationMenu) {
+    notificationBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const isVisible = notificationMenu.classList.contains('show');
+      if (!isVisible) { await loadNotifications(); }
+      notificationMenu.classList.toggle('show');
+    });
+  }
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try { await fetch('/api/notifications/mark-all-read', { method:'POST' }); loadNotifications(); } catch {}
+    });
+  }
+  if (viewAllBtn) { viewAllBtn.addEventListener('click', () => { window.location.href = '/notifications'; }); }
+
+  // profile dropdown
+  const profileBtn = document.getElementById('profileBtn');
+  const profileMenu = document.getElementById('profileMenu');
+  if (profileBtn && profileMenu) {
+    profileBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleProfileMenu(); });
+  }
+  document.addEventListener('click', (e) => {
+    if (profileMenu && profileBtn && !profileMenu.contains(e.target) && !profileBtn.contains(e.target))
+      profileMenu.classList.remove('show');
+    if (notificationMenu && notificationBtn && !notificationMenu.contains(e.target) && !notificationBtn.contains(e.target))
+      notificationMenu.classList.remove('show');
+  });
+
+  // load profile + notifications badge initially
+  loadAdminProfile();
+  loadNotifications();
+});
+
+(function(){
+  // Utilities
+  function el(html){ const t = document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild }
+  function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
+  function toast(msg, type){
+    const n = el(`<div class="notification ${type||'info'}">${esc(msg)}</div>`);
+    document.body.appendChild(n);
+    setTimeout(()=>n.classList.add('show'), 20);
+    setTimeout(()=>{ n.classList.remove('show'); setTimeout(()=>n.remove(), 300); }, 2500);
+  }
+
+  // Services
+  const servicesList = document.getElementById('servicesList');
+  const featuresList = document.getElementById('featuresList');
+
+  async function loadServices(){
+    servicesList.innerHTML = '<div class="loading">Loading services…</div>';
+    const res = await fetch('/api/home/services');
+    const data = await res.json();
+    const items = data.items || [];
+    if(items.length === 0){ servicesList.innerHTML = '<div class="empty">No services yet</div>'; return; }
+    const frag = document.createDocumentFragment();
+    items.forEach(s=> frag.appendChild(renderServiceRow(s)) );
+    servicesList.innerHTML='';
+    servicesList.appendChild(frag);
+  }
+
+  function renderServiceRow(s){
+    const row = el(`
+      <div class="row" data-id="${s.id}">
+        <div class="row-main">
+          <div class="row-col wide">
+            <div class="row-title">${esc(s.title)}</div>
+            <div class="row-desc">${esc(s.description)}</div>
+            <div class="row-meta">Icon: ${esc(s.icon||'')} | Image: ${esc(s.image_url||'')} | Order: ${esc(s.display_order)} | Active: ${s.active? 'Yes':'No'}</div>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-small" data-act="edit">Edit</button>
+          <button class="btn btn-small" data-act="toggle">${s.active? 'Disable':'Enable'}</button>
+          <button class="btn btn-small btn-danger" data-act="delete">Delete</button>
+        </div>
+      </div>
+    `);
+    row.querySelector('[data-act="edit"]').addEventListener('click', ()=> openServiceEditor(s));
+    row.querySelector('[data-act="toggle"]').addEventListener('click', ()=> updateService(s.id, { active: !s.active }));
+    row.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteService(s.id));
+    return row;
+  }
+
+  async function createService(payload){
+    const res = await fetch('/api/home/services', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to create'); }
+    toast('Service added','success');
+    await loadServices();
+  }
+  async function updateService(id, payload){
+    const res = await fetch(`/api/home/services/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to update'); }
+    toast('Service updated','success');
+    await loadServices();
+  }
+  async function deleteService(id){
+    if(!confirm('Delete this service?')) return;
+    const res = await fetch(`/api/home/services/${id}`, { method:'DELETE' });
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to delete'); }
+    toast('Service deleted','success');
+    await loadServices();
+  }
+
+  function openServiceEditor(s){
+    const isNew = !s;
+    s = s || { title:'', description:'', icon:'', image_url:'', display_order:0, active:true };
+    const dlg = el(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <h3>${isNew? 'Add':'Edit'} Service</h3>
+          <div class="form-grid">
+            <label>Title<input id="svcTitle" value="${esc(s.title)}" /></label>
+            <label>Description<textarea id="svcDesc">${esc(s.description)}</textarea></label>
+            <label>Icon (emoji or upload)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="svcIcon" value="${esc(s.icon||'')}" placeholder="e.g., ✈️" />
+                <input id="svcIconFile" type="file" accept="image/*" />
+                <small style="color:#94a3b8;">If you upload, icon field will be set to the uploaded image URL</small>
+              </div>
+            </label>
+            <label>Image (browse or paste URL)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="svcImg" value="${esc(s.image_url||'')}" placeholder="https://..." />
+                <input id="svcImgFile" type="file" accept="image/*" />
+              </div>
+            </label>
+            <label>Display Order<input id="svcOrder" type="number" value="${Number(s.display_order)||0}" /></label>
+            <label class="row-inline"><input id="svcActive" type="checkbox" ${s.active? 'checked':''}/> Active</label>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="svcCancel">Cancel</button>
+            <button class="btn btn-primary" id="svcSave">Save</button>
+          </div>
+        </div>
+      </div>
+    `);
+    document.body.appendChild(dlg);
+    dlg.querySelector('#svcCancel').onclick = ()=> dlg.remove();
+    // Quick search handlers
+    const svcIconSearch = dlg.querySelector('#svcIconSearch');
+    const svcImgSearch  = dlg.querySelector('#svcImgSearch');
+    const titleInput    = dlg.querySelector('#svcTitle');
+    if (svcIconSearch) {
+      svcIconSearch.onclick = ()=>{
+        const q = encodeURIComponent((titleInput.value || 'app icon').trim());
+        // Open icons search (Icons8)
+        window.open(`https://icons8.com/icons/set/${q}`, '_blank');
+      };
+    }
+    if (svcImgSearch) {
+      svcImgSearch.onclick = ()=>{
+        const q = encodeURIComponent((titleInput.value || 'service').trim());
+        // Open Google Images search
+        window.open(`https://www.google.com/search?tbm=isch&q=${q}`, '_blank');
+      };
+    }
+    dlg.querySelector('#svcSave').onclick = async ()=>{
+      const payload = {
+        title: dlg.querySelector('#svcTitle').value.trim(),
+        description: dlg.querySelector('#svcDesc').value.trim(),
+        icon: dlg.querySelector('#svcIcon').value.trim(),
+        image_url: dlg.querySelector('#svcImg').value.trim(),
+        display_order: Number(dlg.querySelector('#svcOrder').value||0),
+        active: dlg.querySelector('#svcActive').checked
+      };
+      if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+      try{
+        // Handle uploads if files selected
+        const iconFile = dlg.querySelector('#svcIconFile')?.files?.[0];
+        const imgFile  = dlg.querySelector('#svcImgFile')?.files?.[0];
+        if (iconFile) {
+          const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','services');
+          const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+          if (j && j.success && j.url) { payload.icon = j.url; }
+        }
+        if (imgFile) {
+          const fd2 = new FormData(); fd2.append('file', imgFile); fd2.append('folder','services');
+          const r2 = await fetch('/api/upload', { method:'POST', body: fd2 }); const j2 = await r2.json();
+          if (j2 && j2.success && j2.url) { payload.image_url = j2.url; }
+        }
+        if(isNew) await createService(payload); else await updateService(s.id, payload);
+        dlg.remove();
+      }catch(e){ toast(e.message || 'Error','error'); }
+    };
+  }
+
+  // Features
+  async function loadFeatures(){
+    featuresList.innerHTML = '<div class="loading">Loading features…</div>';
+    const res = await fetch('/api/home/features');
+    const data = await res.json();
+    const items = data.items || [];
+    if(items.length === 0){ featuresList.innerHTML = '<div class="empty">No features yet</div>'; return; }
+    const frag = document.createDocumentFragment();
+    items.forEach(f=> frag.appendChild(renderFeatureRow(f)) );
+    featuresList.innerHTML='';
+    featuresList.appendChild(frag);
+  }
+
+  function renderFeatureRow(f){
+    const row = el(`
+      <div class="row" data-id="${f.id}">
+        <div class="row-main">
+          <div class="row-col wide">
+            <div class="row-title">${esc(f.title)}</div>
+            <div class="row-desc">${esc(f.description)}</div>
+            <div class="row-meta">Icon: ${esc(f.icon||'')} | Order: ${esc(f.display_order)} | Active: ${f.active? 'Yes':'No'}</div>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-small" data-act="edit">Edit</button>
+          <button class="btn btn-small" data-act="toggle">${f.active? 'Disable':'Enable'}</button>
+          <button class="btn btn-small btn-danger" data-act="delete">Delete</button>
+        </div>
+      </div>
+    `);
+    row.querySelector('[data-act="edit"]').addEventListener('click', ()=> openFeatureEditor(f));
+    row.querySelector('[data-act="toggle"]').addEventListener('click', ()=> updateFeature(f.id, { active: !f.active }));
+    row.querySelector('[data-act="delete"]').addEventListener('click', ()=> deleteFeature(f.id));
+    return row;
+  }
+
+  async function createFeature(payload){
+    const res = await fetch('/api/home/features', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to create'); }
+    toast('Feature added','success');
+    await loadFeatures();
+  }
+  async function updateFeature(id, payload){
+    const res = await fetch(`/api/home/features/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to update'); }
+    toast('Feature updated','success');
+    await loadFeatures();
+  }
+  async function deleteFeature(id){
+    if(!confirm('Delete this feature?')) return;
+    const res = await fetch(`/api/home/features/${id}`, { method:'DELETE' });
+    const data = await res.json();
+    if(!res.ok || !data.success){ throw new Error(data.error || 'Failed to delete'); }
+    toast('Feature deleted','success');
+    await loadFeatures();
+  }
+
+  function openFeatureEditor(f){
+    const isNew = !f;
+    f = f || { title:'', description:'', icon:'', display_order:0, active:true };
+    const dlg = el(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <h3>${isNew? 'Add':'Edit'} Feature</h3>
+          <div class="form-grid">
+            <label>Title<input id="fTitle" value="${esc(f.title)}" /></label>
+            <label>Description<textarea id="fDesc">${esc(f.description)}</textarea></label>
+            <label>Icon (emoji or upload)
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input id="fIcon" value="${esc(f.icon||'')}" placeholder="e.g., ✅" />
+                <input id="fIconFile" type="file" accept="image/*" />
+                <small style="color:#94a3b8;">If you upload, icon field will be set to the uploaded image URL</small>
+              </div>
+            </label>
+            <label>Display Order<input id="fOrder" type="number" value="${Number(f.display_order)||0}" /></label>
+            <label class="row-inline"><input id="fActive" type="checkbox" ${f.active? 'checked':''}/> Active</label>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="fCancel">Cancel</button>
+            <button class="btn btn-primary" id="fSave">Save</button>
+          </div>
+        </div>
+      </div>
+    `);
+    document.body.appendChild(dlg);
+    dlg.querySelector('#fCancel').onclick = ()=> dlg.remove();
+    // Quick search handler for feature icon
+    const fIconSearch = dlg.querySelector('#fIconSearch');
+    const fTitleInput = dlg.querySelector('#fTitle');
+    if (fIconSearch) {
+      fIconSearch.onclick = ()=>{
+        const q = encodeURIComponent((fTitleInput.value || 'feature icon').trim());
+        window.open(`https://icons8.com/icons/set/${q}`, '_blank');
+      };
+    }
+    dlg.querySelector('#fSave').onclick = async ()=>{
+      const payload = {
+        title: dlg.querySelector('#fTitle').value.trim(),
+        description: dlg.querySelector('#fDesc').value.trim(),
+        icon: dlg.querySelector('#fIcon').value.trim(),
+        display_order: Number(dlg.querySelector('#fOrder').value||0),
+        active: dlg.querySelector('#fActive').checked
+      };
+      if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+      try{
+        // If an icon file is provided, upload and use its URL as icon value
+        const iconFile = dlg.querySelector('#fIconFile')?.files?.[0];
+        if (iconFile) {
+          const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','features');
+          const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+          if (j && j.success && j.url) { payload.icon = j.url; }
+        }
+        if(isNew) await createFeature(payload); else await updateFeature(f.id, payload);
+        dlg.remove();
+      }catch(e){ toast(e.message || 'Error','error'); }
+    };
+  }
+
+  // Inline form helpers
+  function show(el){ if (el) { el.style.display = 'block'; el.scrollIntoView({behavior:'smooth', block:'center'}); } }
+  function hide(el){ if (el) el.style.display = 'none'; }
+
+  // Bindings for Add buttons to show inline forms
+  const serviceFormBox = document.getElementById('serviceFormBox');
+  const featureFormBox = document.getElementById('featureFormBox');
+  document.getElementById('addServiceBtn').addEventListener('click', ()=> {
+    // reset fields
+    serviceFormBox.querySelector('#svcTitleInline').value = '';
+    serviceFormBox.querySelector('#svcDescInline').value = '';
+    serviceFormBox.querySelector('#svcIconInline').value = '';
+    serviceFormBox.querySelector('#svcImgInline').value = '';
+    serviceFormBox.querySelector('#svcOrderInline').value = 0;
+    serviceFormBox.querySelector('#svcActiveInline').checked = true;
+    serviceFormBox.querySelector('#svcIconFileInline').value = '';
+    serviceFormBox.querySelector('#svcImgFileInline').value = '';
+    show(serviceFormBox);
+  });
+  document.getElementById('addFeatureBtn').addEventListener('click', ()=> {
+    featureFormBox.querySelector('#fTitleInline').value = '';
+    featureFormBox.querySelector('#fDescInline').value = '';
+    featureFormBox.querySelector('#fIconInline').value = '';
+    featureFormBox.querySelector('#fOrderInline').value = 0;
+    featureFormBox.querySelector('#fActiveInline').checked = true;
+    featureFormBox.querySelector('#fIconFileInline').value = '';
+    show(featureFormBox);
+  });
+
+  // Inline form cancel
+  document.getElementById('svcCancelInline').addEventListener('click', ()=> hide(serviceFormBox));
+  document.getElementById('fCancelInline').addEventListener('click', ()=> hide(featureFormBox));
+
+  // Inline form save handlers
+  document.getElementById('svcSaveInline').addEventListener('click', async ()=>{
+    const payload = {
+      title: serviceFormBox.querySelector('#svcTitleInline').value.trim(),
+      description: serviceFormBox.querySelector('#svcDescInline').value.trim(),
+      icon: serviceFormBox.querySelector('#svcIconInline').value.trim(),
+      image_url: serviceFormBox.querySelector('#svcImgInline').value.trim(),
+      display_order: Number(serviceFormBox.querySelector('#svcOrderInline').value||0),
+      active: serviceFormBox.querySelector('#svcActiveInline').checked
+    };
+    if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+    try{
+      const iconFile = serviceFormBox.querySelector('#svcIconFileInline')?.files?.[0];
+      const imgFile  = serviceFormBox.querySelector('#svcImgFileInline')?.files?.[0];
+      if (iconFile) {
+        const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','services');
+        const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+        if (j && j.success && j.url) { payload.icon = j.url; }
+      }
+      if (imgFile) {
+        const fd2 = new FormData(); fd2.append('file', imgFile); fd2.append('folder','services');
+        const r2 = await fetch('/api/upload', { method:'POST', body: fd2 }); const j2 = await r2.json();
+        if (j2 && j2.success && j2.url) { payload.image_url = j2.url; }
+      }
+      await createService(payload);
+      hide(serviceFormBox);
+    }catch(e){ toast(e.message || 'Error','error'); }
+  });
+
+  document.getElementById('fSaveInline').addEventListener('click', async ()=>{
+    const payload = {
+      title: featureFormBox.querySelector('#fTitleInline').value.trim(),
+      description: featureFormBox.querySelector('#fDescInline').value.trim(),
+      icon: featureFormBox.querySelector('#fIconInline').value.trim(),
+      display_order: Number(featureFormBox.querySelector('#fOrderInline').value||0),
+      active: featureFormBox.querySelector('#fActiveInline').checked
+    };
+    if (!payload.title || !payload.description){ toast('Title and description are required','error'); return; }
+    try{
+      const iconFile = featureFormBox.querySelector('#fIconFileInline')?.files?.[0];
+      if (iconFile) {
+        const fd = new FormData(); fd.append('file', iconFile); fd.append('folder','features');
+        const r = await fetch('/api/upload', { method:'POST', body: fd }); const j = await r.json();
+        if (j && j.success && j.url) { payload.icon = j.url; }
+      }
+      await createFeature(payload);
+      hide(featureFormBox);
+    }catch(e){ toast(e.message || 'Error','error'); }
+  });
+
+  // Initial load
+  loadServices();
+  loadFeatures();
+})();
+</script>
+</body>
+</html>
