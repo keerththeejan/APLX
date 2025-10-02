@@ -27,10 +27,10 @@
       <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
       <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
       <nav>
-        <a href="index.html" class="active">Home</a>
-        <a href="track.html">Track</a>
-        <a href="customer/book.html">Book</a>
-        <a href="auth/login.html">Admin</a>
+        <a href="http://localhost/APLX/Parcel/frontend/index.html" class="active">Home</a>
+        <a href="http://localhost/APLX/Parcel/frontend/track.html">Track</a>
+        <a href="http://localhost/APLX/Parcel/frontend/customer/book.html">Book</a>
+        <a href="http://localhost/APLX/Parcel/frontend/auth/login.html">Admin</a>
       </nav>
     </div>
   </header>
@@ -56,8 +56,8 @@
           <a class="btn btn-secondary" href="#contact" style="text-decoration:none;">Learn More</a>
         </div>
       </section>
-    </div>
 
+  
     <!-- Services strip (icons 1..4) -->
     <section class="services" id="services">
       <div class="container">
@@ -86,6 +86,51 @@
       </div>
     </section>
 
+<!-- Services Tabs (left list + right image with red overlay) -->
+    <section class="services-tabs" id="servicesTabs">
+      <div class="container">
+        <div class="st-grid">
+          <aside class="st-left" role="tablist" aria-label="Services">
+            <button class="st-item active" role="tab" aria-selected="true" data-img="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" data-bullets='["Fast Delivery","Safety","Good Package","Privacy"]'>
+              <span class="st-icon">🛫</span>
+              <span class="st-text">Air Transportation</span>
+            </button>
+            <button class="st-item" role="tab" aria-selected="false" data-img="images/truck-moving-shipping-container-min-1024x683.jpeg" data-bullets='["On-time","Tracking","Cost Effective","Secure"]'>
+              <span class="st-icon">🚆</span>
+              <span class="st-text">Train Transportation</span>
+            </button>
+            <button class="st-item" role="tab" aria-selected="false" data-img="images/premium_photo-1661962420310-d3be75c8921c.jpg" data-bullets='["Worldwide","Bulk Cargo","Insured","Reliable"]'>
+              <span class="st-icon">🚢</span>
+              <span class="st-text">Cargo Ship Freight</span>
+            </button>
+            <button class="st-item" role="tab" aria-selected="false" data-img="images/iStock-1024024568-scaled.jpg" data-bullets='["Climate Control","Inventory","Security","Compliance"]'>
+              <span class="st-icon">🛳️</span>
+              <span class="st-text">Maritime Transportation</span>
+            </button>
+            <button class="st-item" role="tab" aria-selected="false" data-img="images/COLOURBOX35652344.jpg" data-bullets='["Express","Priority Handling","Live Support","Customs Help"]'>
+              <span class="st-icon">🛩️</span>
+              <span class="st-text">Flight Transportation</span>
+            </button>
+          </aside>
+          <div class="st-right">
+            <div class="st-media">
+              <img id="stImage" src="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" alt="Service preview">
+              <div class="st-overlay">
+                <div class="st-badge">🚚</div>
+                <ul id="stBullets" class="st-bullets">
+                  <li>Fast Delivery</li>
+                  <li>Safety</li>
+                  <li>Good Package</li>
+                  <li>Privacy</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    </div>
+
     <!-- Transport system + secure packaging section with two feature bullets -->
     <section class="about-us">
       <div class="container">
@@ -105,7 +150,7 @@
         </div>
       </div>
     </section>
-
+    
     <!-- Why best in business (center image with two-left, two-right feature list) -->
     <section class="why-choose-us">
       <div class="container">
@@ -217,13 +262,200 @@
       </div>
     </section>
 
+    <!-- Stats hero (image left, title + metrics right) -->
+    <section class="stats-hero">
+      <div class="container">
+        <div class="stats-hero-grid">
+          <div class="stats-hero-image">
+            <img src="https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=1600&auto=format&fit=crop" alt="Cargo ship at sea">
+          </div>
+          <div class="stats-hero-content">
+            <h2>We Provide Full Assistance in Freight &amp; Warehousing</h2>
+            <p>Comprehensive ocean, air, and land freight backed by modern warehousing. Track, optimize, and scale with confidence.</p>
+            <div class="stats-cards">
+              <div class="stat-card stat-red">
+                <div class="stat-number">35+</div>
+                <div class="stat-label">Countries Represented</div>
+              </div>
+              <div class="stat-card stat-navy">
+                <div class="stat-number">853+</div>
+                <div class="stat-label">Projects completed</div>
+              </div>
+              <div class="stat-card stat-yellow">
+                <div class="stat-number">35+</div>
+                <div class="stat-label">Total Revenue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Auto-scrolling gallery (10 images) -->
+    <section class="transport-gallery">
+      <div class="container">
+        <div class="tg-slider">
+          <div class="tg-track" style="--tg-duration:24s; --tg-shift:-2400px;">
+            <!-- 10 cards -->
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>25</strong><small>Dec</small></span>
+              <img src="images/truck-moving-shipping-container-min-1024x683.jpeg" alt="Truck at dock">
+              <span class="tag-pill">Transport</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>20</strong><small>Dec</small></span>
+              <img src="images/premium_photo-1661962420310-d3be75c8921c.jpg" alt="Cargo ships">
+              <span class="tag-pill">Transport</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>30</strong><small>Dec</small></span>
+              <img src="images/premium_photo-1661932015882-c35eee885897.jpg" alt="Port container ship">
+              <span class="tag-pill">Transport</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>05</strong><small>Jan</small></span>
+              <img src="images/iStock-1024024568-scaled.jpg" alt="Warehouse pallets">
+              <span class="tag-pill">Warehouse</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>12</strong><small>Jan</small></span>
+              <img src="images/pngtree-truck-delivering-packages-across-a-3d-world-map-picture-image_3756058.jpg" alt="Truck highway">
+              <span class="tag-pill">Logistics</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>18</strong><small>Jan</small></span>
+              <img src="images/COLOURBOX35652344.jpg" alt="Forklift loading">
+              <span class="tag-pill">Warehouse</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>24</strong><small>Jan</small></span>
+              <img src="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" alt="Cargo containers">
+              <span class="tag-pill">Shipping</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>01</strong><small>Feb</small></span>
+              <img src="images/premium_photo-1661962420310-d3be75c8921c.jpg" alt="Air freight">
+              <span class="tag-pill">Air</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>06</strong><small>Feb</small></span>
+              <img src="images/iStock-1024024568-scaled.jpg" alt="Warehouse aisle">
+              <span class="tag-pill">Warehouse</span>
+            </article>
+            <article class="tg-item news-card">
+              <span class="date-badge"><strong>14</strong><small>Feb</small></span>
+              <img src="images/truck-moving-shipping-container-min-1024x683.jpeg" alt="Port cranes">
+              <span class="tag-pill">Transport</span>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Help + Quote (two column) -->
+    <section class="help-quote">
+      <div class="hq-wrap">
+        <!-- Left: Help info -->
+        <div class="hq-left">
+          <div class="hq-left-inner">
+            <h2>Need Help With Your Shipping?</h2>
+            <p>Our team is here to help you with all your logistics needs. Contact us today for a free quote.</p>
+            <div class="hq-card">
+              <div class="hq-card-icon">📞</div>
+              <div>
+                <div class="hq-card-title">Call Us Anytime</div>
+                <div class="hq-card-sub">+94 21 492 7799</div>
+              </div>
+            </div>
+            <div class="hq-card">
+              <div class="hq-card-icon">✉️</div>
+              <div>
+                <div class="hq-card-title">Email Us</div>
+                <div class="hq-card-sub">info@slgti.com</div>
+              </div>
+            </div>
+            <div class="hq-card">
+              <div class="hq-card-icon">📍</div>
+              <div>
+                <div class="hq-card-title">Visit Us</div>
+                <div class="hq-card-sub">Ariviyal Nagar, Kilinochchi, Sri Lanka</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Quote form -->
+        <div class="hq-right">
+          <div class="hq-right-inner">
+            <h2>Get A Free Quote</h2>
+            <p>Fill out the form below and our team will get back to you as soon as possible.</p>
+            <form id="quickQuoteForm" class="hq-form">
+              <div class="hq-row two">
+                <input name="name" type="text" placeholder="Your Name" required>
+                <input name="email" type="email" placeholder="Your Email" required>
+              </div>
+              <div class="hq-row">
+                <input name="subject" type="text" placeholder="Subject" required>
+              </div>
+              <div class="hq-row">
+                <select name="service" required>
+                  <option value="">Select Service</option>
+                  <option>Air Freight</option>
+                  <option>Ocean Freight</option>
+                  <option>Land Transport</option>
+                  <option>Warehousing</option>
+                </select>
+              </div>
+              <div class="hq-row">
+                <textarea name="message" rows="4" placeholder="Your Message"></textarea>
+              </div>
+              <button type="submit" class="hq-submit">Send Message</button>
+            </form>
+            <div id="quickQuoteStatus" class="inline-status" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Map -->
     <section class="location-map-section">
-      <div class="map-bg" aria-hidden="true" style="background-image:url('https://staticmap.openstreetmap.de/staticmap.php?center=46.8797,-110.3626&zoom=4&size=1600x900&maptype=mapnik&format=png');"></div>
+      <div class="map-bg" aria-hidden="true" style="background-image:url('https://staticmap.openstreetmap.de/staticmap.php?center=9.6574,80.1628&zoom=12&size=1600x900&maptype=mapnik&format=png');"></div>
       <div class="container">
-        <div class="map-header"><h2>Our Location</h2><p>Helena-Lewis and Clark National Forest (demo)</p></div>
+        <div class="map-header">
+          <h2>Find Us Here</h2>
+          <p>Visit our office location in Kilinochchi, Sri Lanka</p>
+        </div>
         <div class="map-container">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10955627.203!2d-127.8!3d47.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sHelena-Lewis%20and%20Clark%20National%20Forest!5e0!3m2!1sen!2sus!4v1600000000000" width="100%" height="260" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127317.59409384069!2d80.04778896986493!3d9.664430939428727!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3afe53c9c5a7a7c5%3A0x9b2b9a5f7b0d1d0!2sAriviyal%20Nagar!5e0!3m2!1sen!2slk!4v1700000000000" width="100%" height="320" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+        <!-- Contact info cards below the map -->
+        <div class="contact-info-cards">
+          <div class="contact-card">
+            <div class="contact-icon">📍</div>
+            <div>
+              <h4>Address</h4>
+              <p>Ariviyal Nagar, Kilinochchi, Sri Lanka</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon">🕒</div>
+            <div>
+              <h4>Business Hours</h4>
+              <ul>
+                <li>Mon - Fri: 8:30 AM - 4:15 PM</li>
+                <li>Sat: 9:00 AM - 2:00 PM</li>
+                <li>Sun: Closed</li>
+              </ul>
+            </div>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon">📞</div>
+            <div>
+              <h4>Contact</h4>
+              <p>Phone: <a href="tel:+94214927799">+94 21 492 7799</a><br/>Email: <a href="mailto:info@slgti.com">info@slgti.com</a></p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -285,9 +517,61 @@
   <script>
   // Services interactive grid
   (function() { const grid=document.querySelector('.services-grid'); if(!grid) return; const cards=[...grid.querySelectorAll('.service-card')]; let selected=null; function toggle(){ if(selected===this){ this.classList.remove('selected'); this.setAttribute('aria-selected','false'); grid.classList.remove('dim-others'); selected=null; return;} cards.forEach(c=>{c.classList.remove('selected'); c.setAttribute('aria-selected','false');}); this.classList.add('selected'); this.setAttribute('aria-selected','true'); grid.classList.add('dim-others'); selected=this; } cards.forEach(card=>{ card.setAttribute('tabindex','0'); card.setAttribute('role','button'); card.addEventListener('click',toggle); card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle.call(card);} }); }); })();
-  // Transport gallery (not on this variant)
+  // Transport gallery: seamless continuous scroll and safety when few/no images
+  (function(){
+    const track = document.querySelector('.transport-gallery .tg-track');
+    if (!track) return;
+    const slider = track.closest('.tg-slider');
+    const items = Array.from(track.children);
+    // If no images or only one, do not animate
+    if (!items.length || items.length === 1) { track.style.animation = 'none'; return; }
+
+    const getGap = () => parseFloat(getComputedStyle(track).gap || '0');
+    const totalWidth = () => Array.from(track.children).reduce((w, el) => w + el.getBoundingClientRect().width, 0) + (track.children.length - 1) * getGap();
+
+    function setup(){
+      // Clone items until we have at least ~2x slider width for seamless loop
+      const base = Array.from(items);
+      let guard = 0;
+      let target = (slider?.getBoundingClientRect().width || 800) * 2 + 100;
+      while (totalWidth() < target && guard < 30) {
+        base.forEach(el => {
+          const clone = el.cloneNode(true);
+          clone.setAttribute('aria-hidden','true');
+          track.appendChild(clone);
+        });
+        guard += base.length;
+      }
+      // Shift equals half of the track so clones align when looping
+      const shift = -Math.round(totalWidth() / 2);
+      track.style.setProperty('--tg-shift', shift + 'px');
+      // Speed ~120px/sec
+      const speed = 120;
+      const duration = Math.abs(shift) / speed;
+      track.style.setProperty('--tg-duration', duration + 's');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        track.style.animation = 'none';
+      }
+    }
+    // Wait for layout
+    if (document.readyState === 'complete') setup(); else window.addEventListener('load', setup);
+  })();
   // Hero cross-fade
-  (function(){ const slideshow=document.querySelector('.hero .slideshow'); if(!slideshow) return; const slides=[...slideshow.querySelectorAll('img')]; if(slides.length<=1) return; let idx=0; let timer=null; function show(i){ slides.forEach((img,k)=>img.classList.toggle('active', k===i)); } function next(){ idx=(idx+1)%slides.length; show(idx);} function start(){ if(!timer) timer=setInterval(next,5000);} function stop(){ if(timer){ clearInterval(timer); timer=null; } } show(0); start(); slideshow.addEventListener('mouseenter', stop); slideshow.addEventListener('mouseleave', start); document.addEventListener('visibilitychange', ()=>{ document.hidden ? stop() : start(); }); })();
+  (function(){
+    const slideshow = document.querySelector('.hero .slideshow');
+    if (!slideshow) return;
+    const slides = [...slideshow.querySelectorAll('img')];
+    if (slides.length <= 1) return;
+    let idx = 0;
+    function show(i){
+      slides.forEach((img, k) => img.classList.toggle('active', k === i));
+    }
+    show(0);
+    setInterval(()=>{
+      idx = (idx + 1) % slides.length;
+      show(idx);
+    }, 5000);
+  })();
   // Reveal on scroll
   (function(){ const sels=['.services .service-card','.about-us .about-image','.about-us .about-text','.about-us .feature-item','.why-choose-us .our-services-grid > *','.contact-quote-section .contact-info','.contact-quote-section .quote-form','.location-map-section .map-header *']; sels.forEach(sel=>{ document.querySelectorAll(sel).forEach(el=>{ el.classList.add('reveal','reveal-replay'); }); }); const els=document.querySelectorAll('.reveal'); if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('reveal-visible')); return;} const io=new IntersectionObserver((entries)=>{ entries.forEach(entry=>{ const el=entry.target; if(entry.isIntersecting){ el.classList.add('reveal-visible'); } else if(el.classList.contains('reveal-replay')){ el.classList.remove('reveal-visible'); } }); }, {rootMargin:'0px 0px -15% 0px', threshold:0.1}); els.forEach(el=>io.observe(el)); })();
 
@@ -312,6 +596,35 @@
     });
   })();
 
+  // Services Tabs logic (hover to activate)
+  (function(){
+    const root = document.getElementById('servicesTabs');
+    if (!root) return;
+    const items = root.querySelectorAll('.st-item');
+    const imgEl = document.getElementById('stImage');
+    const bulletsEl = document.getElementById('stBullets');
+
+    function activate(btn){
+      items.forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      const url = btn.getAttribute('data-img');
+      const bullets = JSON.parse(btn.getAttribute('data-bullets')||'[]');
+      if (url && imgEl) imgEl.src = url;
+      if (bulletsEl){ bulletsEl.innerHTML = bullets.map(t => `<li>✓ ${t}</li>`).join(''); }
+    }
+
+    items.forEach(btn=>{
+      btn.addEventListener('mouseenter', ()=> activate(btn));
+      btn.addEventListener('focus', ()=> activate(btn));
+      btn.addEventListener('click', ()=> activate(btn));
+    });
+
+    // Initialize first/active
+    const initial = root.querySelector('.st-item.active') || items[0];
+    if (initial) activate(initial);
+  })();
+
   // Mouse spotlight
   (function(){
     const layer = document.getElementById('spotlight');
@@ -325,6 +638,40 @@
       document.body.classList.toggle('text-spot', isText);
     }, { passive: true });
     window.addEventListener('mouseleave', ()=>{ document.body.classList.remove('text-spot'); });
+  })();
+  </script>
+  <!-- Mobile Track Modal -->
+  <div id="trackModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">Track Shipment</h3>
+        <button class="modal-close" id="trackModalClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form method="get" action="/Parcel/backend/track_result.php">
+          <div class="track-form-row">
+            <input type="text" name="tn" placeholder="Enter Tracking Number" required>
+            <button class="btn" type="submit">Track</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // Mobile-only: open Track modal instead of navigating
+  (function(){
+    const mq = window.matchMedia('(max-width: 640px)');
+    const navLink = document.querySelector('.navbar nav a[href$="/track.html"], .navbar nav a[href$="track.html"]');
+    const modal = document.getElementById('trackModal');
+    const closeBtn = document.getElementById('trackModalClose');
+    if (!navLink || !modal) return;
+    function open(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+    function close(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+    navLink.addEventListener('click', (e)=>{ if (mq.matches){ e.preventDefault(); open(); } });
+    closeBtn?.addEventListener('click', close);
+    modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
+    window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') close(); });
   })();
   </script>
 </body>

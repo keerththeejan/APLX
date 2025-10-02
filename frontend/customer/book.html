@@ -3,36 +3,120 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Book Shipment</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <title>Parcel Transport - Book</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .booking-page{ position:relative; padding:40px 0; min-height:calc(100vh - 80px); display:flex; align-items:center; }
+    .booking-page .container{ display:flex; justify-content:center; }
+    .booking-page::before{ content:""; position:absolute; inset:0; pointer-events:none;
+      background:url('../images/3d-characters-with-boxes-van-removebg-preview.png') center/cover no-repeat;
+      opacity:.12; filter:saturate(.9); }
+    .booking-card{ position:relative; border:1px solid var(--border); border-radius:8px; padding:22px; box-shadow:0 10px 24px rgba(0,0,0,.25); width:100%; max-width:980px; }
+    .booking-close{ position:absolute; top:10px; right:10px; background:#0f172a; color:#fff; border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:700; line-height:1; }
+    .booking-close:hover{ filter:brightness(1.05); }
+    [data-theme="light"] .booking-close{ background:#111827; color:#fff; }
+    /* Theme-specific card colors */
+    [data-theme="dark"] .booking-card{ background:#0a2a33; border-color:#09303a; }
+    [data-theme="light"] .booking-card{ background:#e6eeff; border-color:#c9dafd; }
+    .booking-card h2{ margin:0 0 12px 0; font-size:clamp(22px,3vw,28px); font-weight:800; color:var(--text); }
+    .booking-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .booking-grid input, .booking-grid select, .booking-grid textarea{ width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); }
+    /* Inputs light theme */
+    [data-theme="light"] .booking-grid input,
+    [data-theme="light"] .booking-grid select,
+    [data-theme="light"] .booking-grid textarea{ background:#ffffff; color:#0b1220; border-color:#c7d7ff; }
+    [data-theme="light"] .booking-grid input:focus,
+    [data-theme="light"] .booking-grid select:focus,
+    [data-theme="light"] .booking-grid textarea:focus{ outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.25); }
+    /* Inputs dark theme */
+    [data-theme="dark"] .booking-grid input,
+    [data-theme="dark"] .booking-grid select,
+    [data-theme="dark"] .booking-grid textarea{ background:#0f1a33; color:#e2f3f6; border-color:#253049; }
+    [data-theme="dark"] .booking-grid input::placeholder,
+    [data-theme="dark"] .booking-grid textarea::placeholder{ color:#9fb4c0; }
+    [data-theme="dark"] .booking-grid input:focus,
+    [data-theme="dark"] .booking-grid select:focus,
+    [data-theme="dark"] .booking-grid textarea:focus{ outline:none; border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.25); }
+    .booking-actions{ display:flex; gap:10px; margin-top:14px; }
+    .btn-primary{ background:#2563eb; color:#fff; border:1px solid #1d4ed8; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
+    .btn-secondary{ background:transparent; color:var(--text); border:1px solid var(--border); padding:10px 14px; border-radius:10px; cursor:pointer; }
+    @media (max-width: 900px){ .booking-grid{ grid-template-columns:1fr; } }
+  </style>
+  <link rel="icon" href="#">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Book your parcel shipment with Parcel Transport">
 </head>
 <body>
-<header class="navbar">
-  <div class="container">
-    <div class="brand">Parcel Transport</div>
-    <nav>
-      <a href="/Parcel/frontend/index.html">Home</a>
-      <a href="/Parcel/frontend/track.html">Track</a>
-      <a href="/Parcel/frontend/customer/book.html" class="active">Book</a>
-      <a href="/Parcel/frontend/auth/login.html">Admin</a>
-    </nav>
-  </div>
-</header>
-<main class="container">
-  <section class="card">
-    <h2>Book Shipment</h2>
-    <form method="post" action="/Parcel/backend/book_submit.php">
-      <div class="grid">
-        <input type="text" name="sender_name" placeholder="Sender Name" required>
-        <input type="text" name="receiver_name" placeholder="Receiver Name" required>
-        <input type="text" name="origin" placeholder="Origin City" required>
-        <input type="text" name="destination" placeholder="Destination City" required>
-        <input type="number" step="0.01" name="weight" placeholder="Weight (kg)" required>
-        <input type="number" step="0.01" name="price" placeholder="Price (optional)">
+  <header class="navbar">
+    <div class="container">
+      <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
+      <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="../track.html">Track</a>
+        <a href="./book.html" class="active">Book</a>
+        <a href="../auth/login.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="booking-page">
+      <div class="container">
+        <div class="booking-card" id="bookingCard">
+          <button type="button" class="booking-close" id="closeBooking" aria-label="Close form">✕</button>
+          <h2>Book Parcel</h2>
+          <form method="post" action="../../backend/book_submit.php">
+            <div class="booking-grid">
+              <input type="text" name="sender_name" placeholder="Sender Name" required>
+              <input type="tel" name="sender_phone" placeholder="Sender Phone" required>
+              <input type="text" name="receiver_name" placeholder="Receiver Name" required>
+              <input type="tel" name="receiver_phone" placeholder="Receiver Phone" required>
+              <input type="text" name="origin" placeholder="Origin City" required>
+              <input type="text" name="destination" placeholder="Destination City" required>
+              <input type="number" step="0.01" name="weight" placeholder="Weight (kg)" required>
+              <input type="number" step="0.01" name="price" placeholder="Price (optional)">
+            </div>
+            <div class="booking-actions">
+              <button class="btn-primary" type="submit">Book</button>
+              <button class="btn-secondary" type="reset">Clear</button>
+            </div>
+          </form>
+        </div>
       </div>
-      <button class="btn" type="submit">Create Booking</button>
-    </form>
-  </section>
-</main>
+    </section>
+  </main>
+
+  <script>
+  // Theme toggle + persist (same as index)
+  (function(){
+    const btn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    function updateVisual(){
+      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      if (btn) {
+        btn.textContent = cur === 'light' ? '☀️' : '🌙';
+        btn.setAttribute('aria-pressed', String(cur !== 'light'));
+        btn.setAttribute('aria-label', cur === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+      }
+    }
+    function setTheme(t){ document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); updateVisual(); }
+    updateVisual();
+    btn?.addEventListener('click', ()=>{
+      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(cur === 'light' ? 'dark' : 'light');
+    });
+  })();
+  </script>
+  <script>
+  // Close booking card: navigate to home page
+  (function(){
+    const btn = document.getElementById('closeBooking');
+    if(btn){
+      btn.addEventListener('click', ()=>{ window.location.href = '../index.html'; });
+    }
+  })();
+  </script>
 </body>
 </html>
