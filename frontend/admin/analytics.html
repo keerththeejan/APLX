@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Analytics</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -17,16 +17,67 @@
   <main class="content">
   <div id="topbar"></div>
   <section class="card">
-    <h2>Analytics (Static)</h2>
-    <div class="grid cards">
-      <div class="card"><h3>Weekly Shipments</h3><p class="muted">Placeholder chart area</p></div>
-      <div class="card"><h3>Top Routes</h3><p class="muted">Placeholder list area</p></div>
-      <div class="card"><h3>Delivery SLA</h3><p class="muted">Placeholder KPI area</p></div>
+    <h2>Analytics</h2>
+    <div class="grid cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      <div class="card">
+        <h3>Weekly Shipments</h3>
+        <ul id="anlWeekly" class="activity-list" style="margin-top:8px"></ul>
+      </div>
+      <div class="card">
+        <h3>Top Routes</h3>
+        <ul id="anlRoutes" class="activity-list" style="margin-top:8px"></ul>
+      </div>
+      <div class="card">
+        <h3>Delivery SLA</h3>
+        <div id="anlSla" style="margin-top:8px" class="muted">Loading...</div>
+      </div>
     </div>
-    <p style="margin-top:12px"><a class="btn btn-outline" href="/Parcel/backend/admin/dashboard.php">Open Live Dashboard</a></p>
+    <p style="margin-top:12px"><a class="btn btn-outline" href="/APLX/Parcel/backend/admin/dashboard.php">Open Live Dashboard</a></p>
   </section>
   </main>
 </div>
-<script src="/Parcel/js/admin.js"></script>
+<script src="/APLX/Parcel/js/admin.js"></script>
+<script>
+(function(){
+  function fmt(n){ return new Intl.NumberFormat('en-LK').format(Number(n||0)); }
+  function li(text, sub){ return `<li><div class="desc"><strong>${text}</strong>${sub?` — <span class='muted'>${sub}</span>`:''}</div></li>`; }
+  async function load(){
+    try{
+      const res = await fetch('/APLX/Parcel/backend/admin/analytics.php?api=1', { cache:'no-store' });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      // Weekly
+      const weekly = Array.isArray(data.by_day)? data.by_day: [];
+      const weeklyEl = document.getElementById('anlWeekly');
+      if (weeklyEl){
+        weeklyEl.innerHTML = weekly.length
+          ? weekly.map(r=> li(r.d, fmt(r.c))).join('')
+          : '<li class="muted">No data</li>';
+      }
+      // Routes
+      const routes = Array.isArray(data.top_routes)? data.top_routes: [];
+      const routesEl = document.getElementById('anlRoutes');
+      if (routesEl){
+        routesEl.innerHTML = routes.length
+          ? routes.map(r=> li(r.route, fmt(r.count))).join('')
+          : '<li class="muted">No data</li>';
+      }
+      // SLA
+      const slaEl = document.getElementById('anlSla');
+      if (slaEl){
+        const sla = data.sla||{};
+        const avg = Number(sla.avg_hours||0).toFixed(1);
+        const pct = Number(sla.pct_within_72h||0).toFixed(1);
+        slaEl.classList.remove('muted');
+        slaEl.innerHTML = `Delivered: <strong>${fmt(sla.delivered_count||0)}</strong><br>Average Hours: <strong>${avg}h</strong><br>Within 72h: <strong>${pct}%</strong>`;
+      }
+    }catch(err){
+      console.error('Analytics load failed', err);
+      const s=document.getElementById('anlSla'); if(s) s.textContent='Failed to load';
+    }
+  }
+  load();
+})();
+</script>
 </body>
 </html>

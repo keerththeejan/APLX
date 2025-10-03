@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   phone VARCHAR(30) NULL,
+  company VARCHAR(120) NULL,
   address VARCHAR(255) NULL,
   city VARCHAR(80) NULL,
   state VARCHAR(80) NULL,

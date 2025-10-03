@@ -1,6 +1,61 @@
 <?php
 require_once __DIR__ . '/../init.php';
 require_admin();
+
+// API mode: respond with JSON for frontend usage when api=1
+if (isset($_GET['api']) && $_GET['api'] == '1') {
+    header('Content-Type: application/json');
+    try {
+        $page  = max(1, (int)($_GET['page'] ?? 1));
+        $limit = min(100, max(1, (int)($_GET['limit'] ?? 10)));
+        $offset = ($page - 1) * $limit;
+        $search = trim($_GET['search'] ?? '');
+
+        $where = '';
+        $params = [];
+        $types = '';
+        if ($search !== '') {
+            $where = " WHERE tracking_number LIKE ? OR receiver_name LIKE ? OR origin LIKE ? OR destination LIKE ?";
+            $like = "%{$search}%";
+            $params = [$like, $like, $like, $like];
+            $types  = 'ssss';
+        }
+
+        $sqlTotal = "SELECT COUNT(*) AS c FROM shipments" . $where;
+        $stmt = $conn->prepare($sqlTotal);
+        if ($types) { $stmt->bind_param($types, ...$params); }
+        $stmt->execute();
+        $resTotal = $stmt->get_result();
+        $total = (int)($resTotal->fetch_assoc()['c'] ?? 0);
+        $stmt->close();
+
+        $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC LIMIT ? OFFSET ?";
+        $stmt = $conn->prepare($sql);
+        if ($types) {
+            $types2 = $types . 'ii';
+            $stmt->bind_param($types2, ...array_merge($params, [$limit, $offset]));
+        } else {
+            $stmt->bind_param('ii', $limit, $offset);
+        }
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        echo json_encode([
+            'ok' => true,
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'items' => $rows,
+        ]);
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'Failed to load shipments']);
+    }
+    exit;
+}
+
+// Default HTML page
 $search = trim($_GET['q'] ?? '');
 $sql = 'SELECT * FROM shipments';
 if ($search !== '') {

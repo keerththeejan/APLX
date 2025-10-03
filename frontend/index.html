@@ -29,8 +29,8 @@
       <nav>
         <a href="http://localhost/APLX/Parcel/frontend/index.html" class="active">Home</a>
         <a href="http://localhost/APLX/Parcel/frontend/track.html">Track</a>
-        <a href="http://localhost/APLX/Parcel/frontend/customer/book.html">Book</a>
-        <a href="http://localhost/APLX/Parcel/frontend/auth/login.html">Admin</a>
+        <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
+        <a href="http://localhost/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
       </nav>
     </div>
   </header>
@@ -556,6 +556,16 @@
     // Wait for layout
     if (document.readyState === 'complete') setup(); else window.addEventListener('load', setup);
   })();
+
+  // Dynamic Book link based on registration success
+  (function(){
+    const book = document.getElementById('navBook');
+    if (!book) return;
+    const ok = localStorage.getItem('reg_ok') === '1';
+    book.href = ok
+      ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
+      : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+  })();
   // Hero cross-fade
   (function(){
     const slideshow = document.querySelector('.hero .slideshow');
@@ -648,7 +658,7 @@
         <button class="modal-close" id="trackModalClose" type="button" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
-        <form method="get" action="/Parcel/backend/track_result.php">
+        <form method="get" action="/APLX/Parcel/backend/track_result.php">
           <div class="track-form-row">
             <input type="text" name="tn" placeholder="Enter Tracking Number" required>
             <button class="btn" type="submit">Track</button>

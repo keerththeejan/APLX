@@ -13,11 +13,11 @@ $stmt->execute();
 $userRow = $stmt->get_result()->fetch_assoc();
 
 // Load profile (may not exist yet)
-$stmt = $conn->prepare('SELECT phone, address, city, state, country, pincode FROM user_profiles WHERE user_id = ?');
+$stmt = $conn->prepare('SELECT phone, company, address, city, state, country, pincode, updated_at FROM user_profiles WHERE user_id = ?');
 $stmt->bind_param('i', $uid);
 $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc() ?: [
-    'phone' => '', 'address' => '', 'city' => '', 'state' => '', 'country' => '', 'pincode' => ''
+    'phone' => '', 'company' => '', 'address' => '', 'city' => '', 'state' => '', 'country' => '', 'pincode' => '', 'updated_at' => null
 ];
 
 // Handle profile save
@@ -25,6 +25,7 @@ if (($_POST['action'] ?? '') === 'save_profile') {
     csrf_check();
     $name = trim($_POST['name'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $company = trim($_POST['company'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $city = trim($_POST['city'] ?? '');
     $state = trim($_POST['state'] ?? '');
@@ -40,9 +41,9 @@ if (($_POST['action'] ?? '') === 'save_profile') {
         $stmt->execute();
 
         // Upsert user_profiles
-        $stmt = $conn->prepare('INSERT INTO user_profiles (user_id, phone, address, city, state, country, pincode) VALUES (?,?,?,?,?,?,?)
-                                ON DUPLICATE KEY UPDATE phone=VALUES(phone), address=VALUES(address), city=VALUES(city), state=VALUES(state), country=VALUES(country), pincode=VALUES(pincode)');
-        $stmt->bind_param('issssss', $uid, $phone, $address, $city, $state, $country, $pincode);
+        $stmt = $conn->prepare('INSERT INTO user_profiles (user_id, phone, company, address, city, state, country, pincode) VALUES (?,?,?,?,?,?,?,?)
+                                ON DUPLICATE KEY UPDATE phone=VALUES(phone), company=VALUES(company), address=VALUES(address), city=VALUES(city), state=VALUES(state), country=VALUES(country), pincode=VALUES(pincode)');
+        $stmt->bind_param('isssssss', $uid, $phone, $company, $address, $city, $state, $country, $pincode);
         $stmt->execute();
 
         $msg = 'Profile saved.';
@@ -52,7 +53,7 @@ if (($_POST['action'] ?? '') === 'save_profile') {
         $stmt->bind_param('i', $uid);
         $stmt->execute();
         $userRow = $stmt->get_result()->fetch_assoc();
-        $stmt = $conn->prepare('SELECT phone, address, city, state, country, pincode FROM user_profiles WHERE user_id = ?');
+        $stmt = $conn->prepare('SELECT phone, company, address, city, state, country, pincode, updated_at FROM user_profiles WHERE user_id = ?');
         $stmt->bind_param('i', $uid);
         $stmt->execute();
         $profile = $stmt->get_result()->fetch_assoc() ?: $profile;
@@ -91,6 +92,11 @@ if (($_POST['action'] ?? '') === 'change_password') {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Profile</title>
   <link rel="stylesheet" href="/Parcel/css/style.css">
+  <style>
+    .profile-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .profile-avatar{width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#16a34a;color:#04110a;font-weight:800;font-size:22px}
+    .profile-meta small{color:var(--muted)}
+  </style>
 </head>
 <body>
 <header class="navbar">
@@ -110,7 +116,14 @@ if (($_POST['action'] ?? '') === 'change_password') {
 </header>
 <main class="container">
   <section class="card">
-    <h2>Admin Profile</h2>
+    <div class="profile-header">
+      <div class="profile-avatar"><?php echo strtoupper(substr($userRow['name'] ?? 'A', 0, 1)); ?></div>
+      <div class="profile-meta">
+        <div class="big" style="line-height:1"><?php echo h($userRow['name'] ?? ''); ?></div>
+        <div><?php echo h($userRow['email'] ?? ''); ?></div>
+        <small>Last updated: <?php echo h($profile['updated_at'] ?? '—'); ?></small>
+      </div>
+    </div>
     <?php if ($msg): ?><p class="notice"><?php echo h($msg); ?></p><?php endif; ?>
     <?php if ($err): ?><p class="error"><?php echo h($err); ?></p><?php endif; ?>
     <form method="post">
@@ -121,6 +134,7 @@ if (($_POST['action'] ?? '') === 'change_password') {
         <input type="email" value="<?php echo h($userRow['email'] ?? ''); ?>" disabled>
         <input type="text" value="Role: <?php echo h($u['role']); ?>" disabled>
         <input type="text" name="phone" placeholder="Phone" value="<?php echo h($profile['phone']); ?>">
+        <input type="text" name="company" placeholder="Company" value="<?php echo h($profile['company']); ?>">
         <input type="text" name="address" placeholder="Address" value="<?php echo h($profile['address']); ?>">
         <input type="text" name="city" placeholder="City" value="<?php echo h($profile['city']); ?>">
         <input type="text" name="state" placeholder="State" value="<?php echo h($profile['state']); ?>">

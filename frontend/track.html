@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Track Shipment</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
   <style>
     .track-page{ position:relative; padding:48px 0; min-height:calc(100vh - 80px); display:flex; align-items:center; }
     .track-page .container{ display:flex; justify-content:center; }
@@ -29,8 +29,8 @@
     <nav>
       <a href="http://localhost/APLX/Parcel/frontend/index.html">Home</a>
       <a href="http://localhost/APLX/Parcel/frontend/track.html" class="active">Track</a>
-      <a href="http://localhost/APLX/Parcel/frontend/customer/book.html">Book</a>
-      <a href="http://localhost/APLX/Parcel/frontend/auth/login.html">Admin</a>
+      <a href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Flogin.html%3Fstay%3D1">Book</a>
+      <a href="http://localhost/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -40,7 +40,7 @@
       <div class="track-card" id="trackCard">
         <button type="button" class="track-close" id="closeTrack" aria-label="Close form">✕</button>
         <h2>Track Shipment</h2>
-        <form method="get" action="/Parcel/backend/track_result.php">
+        <form method="get" action="/APLX/Parcel/backend/track_result.php">
           <div class="track-form-row">
             <input type="text" name="tn" placeholder="Enter Tracking Number" required>
             <button class="btn" type="submit">Track</button>
@@ -76,7 +76,7 @@
 // Close track card -> go home
 (function(){
   const btn = document.getElementById('closeTrack');
-  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = 'index.html'; }); }
+  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/Parcel/frontend/index.html'; }); }
 })();
 </script>
 </body>

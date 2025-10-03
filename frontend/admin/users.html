@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin | Users</title>
+  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <style>
+    .content{padding:16px;margin-left:260px}
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 0 12px 0}
+    .searchbox{display:flex;gap:8px;align-items:center}
+    .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111}
+    table.data{width:100%;border-collapse:separate;border-spacing:0 8px}
+    table.data th{color:var(--muted);text-align:left;padding:8px 10px}
+    table.data td{background:#0b1220;border:1px solid var(--border);padding:10px;border-left:none;border-right:none}
+    table.data tr{border-radius:10px}
+    .actions{display:flex;gap:8px}
+    .btn-icon{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;cursor:pointer;color:#fff;font-size:18px;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+    .btn-icon:focus{outline:2px solid #93c5fd; outline-offset:2px}
+    .btn-icon.view{background:#16a34a}
+    .btn-icon.view:hover{background:#15803d}
+    .btn-icon.edit{background:#3b82f6}
+    .btn-icon.edit:hover{background:#2563eb}
+    .btn-icon.del{background:#ef4444}
+    .btn-icon.del:hover{background:#dc2626}
+    .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main class="content">
+    <div id="topbar"></div>
+
+    <div class="toolbar">
+      <h2>Users</h2>
+      <div class="searchbox">
+        <input id="q" type="search" placeholder="Search by name or email" />
+        <button class="btn" id="btnSearch">Search</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table class="data">
+        <thead>
+          <tr>
+            <th style="width:80px">ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th style="width:120px">Role</th>
+            <th style="width:160px">Created</th>
+            <th style="width:200px">Action</th>
+          </tr>
+        </thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+      <div class="pager">
+        <button class="btn btn-sm" id="prevPg">Prev</button>
+        <span id="pgInfo" class="muted">–</span>
+        <button class="btn btn-sm" id="nextPg">Next</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- View/Edit Modal -->
+<div id="userModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-panel" style="max-width:640px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="userModalTitle">User</h3>
+      <button class="modal-close" id="userModalClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="userForm" class="form-grid">
+        <input type="hidden" name="id" id="f_id" />
+        <div class="form-row two">
+          <input type="text" name="name" id="f_name" placeholder="Full Name" required />
+          <input type="email" name="email" id="f_email" placeholder="Email" required />
+        </div>
+        <div class="form-row two">
+          <select name="role" id="f_role" required>
+            <option value="customer">Customer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <input type="password" name="password" id="f_password" placeholder="New Password (optional)" />
+        </div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn btn-secondary" id="userCancel">Cancel</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+      <div id="userStatus" class="inline-status" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/APLX/Parcel/js/admin.js"></script>
+<script>
+(function(){
+  const tbody = document.getElementById('usersTbody');
+  const q = document.getElementById('q');
+  const btnSearch = document.getElementById('btnSearch');
+  const prevPg = document.getElementById('prevPg');
+  const nextPg = document.getElementById('nextPg');
+  const pgInfo = document.getElementById('pgInfo');
+  let page = 1, limit = 10, total = 0;
+
+  async function load(){
+    const params = new URLSearchParams({ page, limit, search: q.value.trim() });
+    const res = await fetch('/APLX/Parcel/backend/admin/users.php?' + params.toString());
+    const data = await res.json();
+    total = data.total || 0;
+    renderRows(data.items||[]);
+    const maxPg = Math.max(1, Math.ceil(total/limit));
+    pgInfo.textContent = `Page ${page} / ${maxPg} — ${total} users`;
+    prevPg.disabled = page<=1; nextPg.disabled = page>=maxPg;
+  }
+
+  function renderRows(items){
+    tbody.innerHTML = items.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td>${escapeHtml(u.name||'')}</td>
+        <td>${escapeHtml(u.email||'')}</td>
+        <td>${escapeHtml(u.role||'')}</td>
+        <td>${escapeHtml(u.created_at||'')}</td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon view" data-id="${u.id}" data-act="view" title="View" aria-label="View">👁</button>
+            <button class="btn-icon edit" data-id="${u.id}" data-act="edit" title="Edit" aria-label="Edit">✏️</button>
+            <button class="btn-icon del" data-id="${u.id}" data-act="del" title="Delete" aria-label="Delete">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+
+  btnSearch.addEventListener('click', ()=>{ page=1; load(); });
+  q.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); }});
+  prevPg.addEventListener('click', ()=>{ if(page>1){ page--; load(); }});
+  nextPg.addEventListener('click', ()=>{ page++; load(); });
+
+  tbody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const act = btn.getAttribute('data-act');
+    if (act==='view' || act==='edit') {
+      openUserModal(id, act==='edit');
+    } else if (act==='del') {
+      if (confirm('Delete this user?')){
+        const res = await fetch('/APLX/Parcel/backend/admin/user_delete.php?id='+encodeURIComponent(id));
+        const ok = res.ok;
+        if (ok) load(); else alert('Delete failed');
+      }
+    }
+  });
+
+  // Modal
+  const modal = document.getElementById('userModal');
+  const closeBtn = document.getElementById('userModalClose');
+  const cancelBtn = document.getElementById('userCancel');
+  const form = document.getElementById('userForm');
+  const statusEl = document.getElementById('userStatus');
+  const titleEl = document.getElementById('userModalTitle');
+  async function openUserModal(id, editable){
+    statusEl.textContent = '';
+    titleEl.textContent = editable? 'Edit User' : 'View User';
+    form.reset();
+    for (const el of form.elements) el.disabled = !editable && el.name!=='id';
+    const res = await fetch('/APLX/Parcel/backend/admin/users.php?id='+encodeURIComponent(id));
+    const data = await res.json();
+    const u = data.item || {};
+    document.getElementById('f_id').value = u.id||'';
+    document.getElementById('f_name').value = u.name||'';
+    document.getElementById('f_email').value = u.email||'';
+    document.getElementById('f_role').value = u.role||'customer';
+    openModal();
+  }
+  function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    statusEl.textContent = 'Saving...';
+    const fd = new FormData(form);
+    const res = await fetch('/APLX/Parcel/backend/admin/users.php', { method:'POST', body: fd });
+    if (res.ok) { statusEl.textContent = 'Saved'; closeModal(); load(); } else { statusEl.textContent = 'Save failed'; }
+  });
+
+  // First load
+  load();
+})();
+</script>
+</body>
+</html>

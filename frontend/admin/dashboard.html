@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Dashboard</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
   <style>
     /* Fixed sidebar layout */
     .layout{min-height:100vh}
@@ -24,6 +24,10 @@
     .clock{background:#0b1220;border:1px solid var(--border);padding:8px 12px;border-radius:12px;color:var(--muted);font-size:12px;text-align:right;min-width:180px}
     .icon-btn{background:#0b1220;border:1px solid var(--border);padding:8px 10px;border-radius:10px;cursor:pointer}
     .icon-btn:hover{background:#111827}
+    /* Hamburger: simple white lines on transparent background */
+    .hamburger{background:transparent;border:2px solid transparent;color:#ffffff;padding:10px;border-radius:10px;box-shadow:none;font-size:26px;line-height:1;cursor:pointer;transition:border-color .15s ease, filter .15s ease}
+    .hamburger:hover{background:transparent;filter:brightness(1.1);border-color:#22c55e}
+    .hamburger:focus{outline:none;border-color:#22c55e}
     .notif{position:relative}
     .notif::after{content:"2";position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:999px;padding:2px 6px;font-size:10px;line-height:1}
     .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
@@ -41,18 +45,18 @@
   <main class="content">
     <div id="topbar"></div>
     <section class="stat-grid">
-      <div class="card stat"><div class="stat-title">TOTAL USERS</div><div class="stat-value">—</div></div>
-      <div class="card stat"><div class="stat-title">TOTAL SHIPMENTS</div><div class="stat-value">—</div></div>
-      <div class="card stat"><div class="stat-title">ACTIVE BOOKINGS</div><div class="stat-value">—</div></div>
-      <div class="card stat"><div class="stat-title">REVENUE</div><div class="stat-value">LKR 0.00</div></div>
+      <div class="card stat"><div class="stat-title">TOTAL USERS</div><div class="stat-value" id="statUsers">—</div></div>
+      <div class="card stat"><div class="stat-title">TOTAL SHIPMENTS</div><div class="stat-value" id="statShipments">—</div></div>
+      <div class="card stat"><div class="stat-title">ACTIVE BOOKINGS</div><div class="stat-value" id="statActive">—</div></div>
+      <div class="card stat"><div class="stat-title">REVENUE</div><div class="stat-value" id="statRevenue">LKR 0.00</div></div>
     </section>
     <section class="card">
       <h2>Quick Actions</h2>
       <div class="qa-buttons">
-        <a class="btn" href="/Parcel/backend/admin/booking.php">Add New Booking</a>
-        <a class="btn" href="/Parcel/backend/admin/shipments.php">Manage Shipments</a>
-        <a class="btn" href="/Parcel/backend/admin/analytics.php">View Reports</a>
-        <a class="btn" href="/Parcel/backend/admin/settings.php">System Settings</a>
+        <a class="btn" href="/APLX/Parcel/backend/admin/booking.php">Add New Booking</a>
+        <a class="btn" href="/APLX/Parcel/backend/admin/shipments.php">Manage Shipments</a>
+        <a class="btn" href="/APLX/Parcel/backend/admin/analytics.php">View Reports</a>
+        <a class="btn" href="/APLX/Parcel/backend/admin/settings.php">System Settings</a>
       </div>
     </section>
     <section class="card">
@@ -66,11 +70,40 @@
           <div class="time">2025-09-25 13:25:27</div>
           <div class="desc"><strong>Booked</strong> — New shipment from Aravinthan to Srithevi. AWB: PRCL58662683</div>
         </li>
-        <li class="muted">For live data, open <a class="btn btn-sm btn-outline" href="/Parcel/backend/admin/dashboard.php">Live Dashboard</a></li>
+        <li class="muted">For live data, open <a class="btn btn-sm btn-outline" href="/APLX/Parcel/backend/admin/dashboard.php">Live Dashboard</a></li>
       </ul>
     </section>
   </main>
 </div>
-<script src="/Parcel/js/admin.js"></script>
+<script src="/APLX/Parcel/js/admin.js"></script>
+<script>
+// Dynamic admin stats
+(function(){
+  async function loadStats(){
+    try{
+      const res = await fetch('/APLX/Parcel/backend/admin/stats_api.php', { cache:'no-store' });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error('Bad payload');
+      const n = (x)=> new Intl.NumberFormat('en-LK').format(Number(x||0));
+      const c = (x)=> 'LKR ' + new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(x||0));
+      const eUsers = document.getElementById('statUsers');
+      const eShip = document.getElementById('statShipments');
+      const eAct  = document.getElementById('statActive');
+      const eRev  = document.getElementById('statRevenue');
+      if (eUsers) eUsers.textContent = n(data.total_users);
+      if (eShip) eShip.textContent = n(data.total_shipments);
+      if (eAct)  eAct.textContent  = n(data.active_bookings);
+      if (eRev)  eRev.textContent  = c(data.revenue);
+    }catch(err){
+      // leave placeholders; optionally log
+      console.error('Failed to load stats', err);
+    }
+  }
+  loadStats();
+  // refresh every 60s
+  setInterval(loadStats, 60000);
+})();
+</script>
 </body>
 </html>
