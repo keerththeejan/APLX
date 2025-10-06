@@ -17,11 +17,17 @@
   <main class="content">
   <div id="topbar"></div>
   <section class="card">
-    <h2>Shipments (Static View)</h2>
-    <form method="get" class="inline" action="#">
-      <input type="text" name="q" placeholder="Search by tracking, receiver, city">
-      <button class="btn" type="submit">Search</button>
-      <a class="btn btn-outline" style="margin-left:8px" href="/APLX/Parcel/backend/admin/shipments.php">Open Live</a>
+    <h2>Shipments (Live)</h2>
+    <form method="get" class="inline" action="#" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <input type="text" name="q" placeholder="Search..." style="flex:1; min-width:220px; height:30px; padding:4px 8px; border-radius:8px">
+      <label class="muted" for="pgSize" style="margin-left:6px">Rows:</label>
+      <select id="pgSize" style="min-width:72px; height:30px; padding:2px 6px; border-radius:8px">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="all">All</option>
+      </select>
+      <button class="btn" type="submit" style="height:30px; padding:4px 10px; border-radius:8px">Search</button>
     </form>
     <div class="table-responsive" style="margin-top:12px">
       <table>
@@ -51,18 +57,27 @@
 <script src="/APLX/Parcel/js/admin.js"></script>
 <script>
 (function(){
-  const form = document.querySelector('form.inline');
+  const form  = document.querySelector('form.inline');
   const input = form?.querySelector('input[name="q"]');
+  const size  = document.getElementById('pgSize');
   const tbody = document.getElementById('shipTbody');
-  const prevPg = document.getElementById('prevPg');
-  const nextPg = document.getElementById('nextPg');
-  const pgInfo = document.getElementById('pgInfo');
-  let page=1, limit=10, total=0;
+  const prevPg= document.getElementById('prevPg');
+  const nextPg= document.getElementById('nextPg');
+  const pgInfo= document.getElementById('pgInfo');
+  let page=1, limit=10, total=0, showAll=false;
+
+  function currentLimit(){
+    const v = (size?.value||'10');
+    showAll = (v === 'all');
+    return showAll ? 100 : parseInt(v,10)||10; // limit is ignored by API when all=1
+  }
 
   async function load(){
     if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="6" class="muted">Loading...</td></tr>';
+    limit = currentLimit();
     const params = new URLSearchParams({ page:String(page), limit:String(limit), search:(input?.value||'').trim() });
+    if (showAll) params.set('all','1');
     const res = await fetch('/APLX/Parcel/backend/admin/shipments.php?api=1&'+params.toString());
     if(!res.ok){ tbody.innerHTML = '<tr><td colspan="6" class="muted">Failed to load</td></tr>'; return; }
     const data = await res.json();
@@ -81,16 +96,17 @@
         </tr>
       `).join('');
     }
-    const maxPg = Math.max(1, Math.ceil(total/limit));
-    if(pgInfo) pgInfo.textContent = `Page ${page} / ${maxPg} — ${total} rows`;
-    if(prevPg) prevPg.disabled = page<=1;
-    if(nextPg) nextPg.disabled = page>=maxPg;
+    const maxPg = showAll ? 1 : Math.max(1, Math.ceil(total/limit));
+    if(pgInfo) pgInfo.textContent = showAll ? `${total} rows` : `Page ${page} / ${maxPg} — ${total} rows`;
+    if(prevPg) prevPg.disabled = showAll || page<=1;
+    if(nextPg) nextPg.disabled = showAll || page>=maxPg;
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
   form?.addEventListener('submit', (e)=>{ e.preventDefault(); page=1; load(); });
   input?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); }});
+  size?.addEventListener('change', ()=>{ page=1; load(); });
   prevPg?.addEventListener('click', ()=>{ if(page>1){ page--; load(); }});
   nextPg?.addEventListener('click', ()=>{ page++; load(); });
 

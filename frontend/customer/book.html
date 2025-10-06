@@ -55,7 +55,7 @@
         <a href="../index.html">Home</a>
         <a href="../track.html">Track</a>
         <a href="./book.html" class="active">Book</a>
-        <a href="../login.html">Login</a>
+        <a href="../login.html?stay=1" title="Login" aria-label="Login">👤</a>
       </nav>
     </div>
   </header>
@@ -87,6 +87,17 @@
     </section>
   </main>
 
+  <script>
+  // Auth guard: require customer login to view this page
+  (function(){
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
+    const role = localStorage.getItem('userRole') || '';
+    if (!(isLoggedIn && role === 'customer')) {
+      window.location.replace('http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html');
+      return;
+    }
+  })();
+  </script>
   <script>
   // Theme toggle + persist (same as index)
   (function(){

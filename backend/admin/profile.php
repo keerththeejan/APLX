@@ -20,10 +20,11 @@ $profile = $stmt->get_result()->fetch_assoc() ?: [
     'phone' => '', 'company' => '', 'address' => '', 'city' => '', 'state' => '', 'country' => '', 'pincode' => '', 'updated_at' => null
 ];
 
-// Handle profile save
+// Handle profile save (name, email, profile fields)
 if (($_POST['action'] ?? '') === 'save_profile') {
     csrf_check();
     $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $company = trim($_POST['company'] ?? '');
     $address = trim($_POST['address'] ?? '');
@@ -32,12 +33,12 @@ if (($_POST['action'] ?? '') === 'save_profile') {
     $country = trim($_POST['country'] ?? '');
     $pincode = trim($_POST['pincode'] ?? '');
 
-    if ($name === '') {
-        $err = 'Name is required.';
+    if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $err = 'Valid name and email are required.';
     } else {
-        // Update users.name
-        $stmt = $conn->prepare('UPDATE users SET name=? WHERE id=?');
-        $stmt->bind_param('si', $name, $uid);
+        // Update users name + email
+        $stmt = $conn->prepare('UPDATE users SET name=?, email=? WHERE id=?');
+        $stmt->bind_param('ssi', $name, $email, $uid);
         $stmt->execute();
 
         // Upsert user_profiles
@@ -69,18 +70,28 @@ if (($_POST['action'] ?? '') === 'change_password') {
     if ($new !== $confirm) {
         $err = 'New password and confirmation do not match.';
     } else {
-        $stmt = $conn->prepare('SELECT password_hash FROM users WHERE id = ?');
-        $stmt->bind_param('i', $uid);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        if (!$row || !password_verify($current, $row['password_hash'])) {
-            $err = 'Current password is incorrect.';
-        } else {
+        $isAdmin = strtolower($u['role'] ?? '') === 'admin';
+        if ($isAdmin && $current === '') {
+            // Allow admin to set new password without current
             $hash = password_hash($new, PASSWORD_DEFAULT);
             $stmt = $conn->prepare('UPDATE users SET password_hash=? WHERE id=?');
             $stmt->bind_param('si', $hash, $uid);
             $stmt->execute();
             $msg = 'Password updated successfully.';
+        } else {
+            $stmt = $conn->prepare('SELECT password_hash FROM users WHERE id = ?');
+            $stmt->bind_param('i', $uid);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            if (!$row || !password_verify($current, $row['password_hash'])) {
+                $err = 'Current password is incorrect.';
+            } else {
+                $hash = password_hash($new, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare('UPDATE users SET password_hash=? WHERE id=?');
+                $stmt->bind_param('si', $hash, $uid);
+                $stmt->execute();
+                $msg = 'Password updated successfully.';
+            }
         }
     }
 }

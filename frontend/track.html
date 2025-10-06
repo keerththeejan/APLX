@@ -29,8 +29,8 @@
     <nav>
       <a href="http://localhost/APLX/Parcel/frontend/index.html">Home</a>
       <a href="http://localhost/APLX/Parcel/frontend/track.html" class="active">Track</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Flogin.html%3Fstay%3D1">Book</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
+      <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
+      <a href="http://localhost/APLX/Parcel/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -43,13 +43,25 @@
         <form method="get" action="/APLX/Parcel/backend/track_result.php">
           <div class="track-form-row">
             <input type="text" name="tn" placeholder="Enter Tracking Number" required>
-            <button class="btn" type="submit">Track</button>
           </div>
         </form>
       </div>
     </div>
   </section>
-  </main>
+</main>
+<script>
+// Dynamic Book link: require customer login
+(function(){
+  const book = document.getElementById('navBook');
+  if (!book) return;
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
+  const role = localStorage.getItem('userRole') || 'customer';
+  const loggedCustomer = isLoggedIn && role === 'customer';
+  book.href = loggedCustomer
+    ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
+    : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+})();
+</script>
 <script>
 // Theme toggle + persist (same as index)
 (function(){

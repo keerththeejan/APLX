@@ -20,4 +20,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Company / Support details (used in emails and UI)
+// You may later persist and load these from DB; for now they are constants here.
+$COMPANY_NAME   = 'Parcel Transport';
+// Outgoing sender for system emails
+$SUPPORT_EMAIL  = 'saravanyaa1@gmail.com';
+$SUPPORT_PHONE  = '+91-00000-00000';
+$SUPPORT_ADDRESS= 'Chennai, TN';
+$BOOKING_EMAIL  = 'booking@parcel.local';
+
 ?>

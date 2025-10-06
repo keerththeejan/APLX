@@ -6,8 +6,11 @@ require_admin();
 if (isset($_GET['api']) && $_GET['api'] == '1') {
     header('Content-Type: application/json');
     try {
-        $page  = max(1, (int)($_GET['page'] ?? 1));
-        $limit = min(100, max(1, (int)($_GET['limit'] ?? 10)));
+        $page   = max(1, (int)($_GET['page'] ?? 1));
+        $limit  = max(1, (int)($_GET['limit'] ?? 10));
+        $all    = isset($_GET['all']) && $_GET['all'] == '1';
+        // Keep a sane upper bound unless 'all' is requested
+        if (!$all) { $limit = min(100, $limit); }
         $offset = ($page - 1) * $limit;
         $search = trim($_GET['search'] ?? '');
 
@@ -29,17 +32,29 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
         $total = (int)($resTotal->fetch_assoc()['c'] ?? 0);
         $stmt->close();
 
-        $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC LIMIT ? OFFSET ?";
-        $stmt = $conn->prepare($sql);
-        if ($types) {
-            $types2 = $types . 'ii';
-            $stmt->bind_param($types2, ...array_merge($params, [$limit, $offset]));
+        if ($all) {
+            // Return all matching rows (no pagination)
+            $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC";
+            $stmt = $conn->prepare($sql);
+            if ($types) { $stmt->bind_param($types, ...$params); }
+            $stmt->execute();
+            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            $limit = $total > 0 ? $total : count($rows);
+            $page = 1;
         } else {
-            $stmt->bind_param('ii', $limit, $offset);
+            $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC LIMIT ? OFFSET ?";
+            $stmt = $conn->prepare($sql);
+            if ($types) {
+                $types2 = $types . 'ii';
+                $stmt->bind_param($types2, ...array_merge($params, [$limit, $offset]));
+            } else {
+                $stmt->bind_param('ii', $limit, $offset);
+            }
+            $stmt->execute();
+            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
         }
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
 
         echo json_encode([
             'ok' => true,

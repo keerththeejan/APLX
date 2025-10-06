@@ -17,27 +17,97 @@
     .side-user{display:flex;gap:10px;align-items:center;padding:14px;border-top:1px solid var(--border)}
     .side-user .avatar{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#111827}
     .content{padding:16px;margin-left:260px}
+    /* Spacing for profile form */
+    .form-grid .form-row{ margin-bottom: 20px; }
+    .form-grid .form-row.two{ display:flex; gap:20px; }
+    .form-grid .form-row.two > *{ flex:1; }
+    .form-grid label{ display:block; margin-bottom:8px; color:var(--muted); font-size:12px; }
+    .form-grid .form-actions{ margin-top: 16px; }
   </style>
 </head>
 <body>
 <div class="layout">
   <aside id="sidebar"></aside>
   <main class="content">
-  <section class="card">
-    <h2>Admin Profile</h2>
-    <div class="grid">
-      <input type="text" placeholder="Name" value="Admin" disabled>
-      <input type="email" placeholder="Email" value="admin@parcel.local" disabled>
-      <input type="password" placeholder="Change Password (use backend UI)">
-    </div>
-    <p class="muted" style="margin-top:8px">Profile changes can be implemented in backend later.</p>
-  </section>
+    <section class="card">
+      <h2>Admin Profile</h2>
+      <p class="muted">Update your details. Password change is optional.</p>
+      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/Parcel/backend/admin/profile_update.php">
+        <div class="form-row">
+          <label for="pf_name">Full Name</label>
+          <input id="pf_name" type="text" name="name" placeholder="Full Name" required>
+        </div>
+        <div class="form-row two">
+          <div style="flex:1">
+            <label for="pf_email">Email</label>
+            <input id="pf_email" type="email" name="email" placeholder="Email" required>
+          </div>
+          <div style="flex:1">
+            <label for="pf_phone">Phone</label>
+            <input id="pf_phone" type="tel" name="phone" placeholder="Phone">
+          </div>
+        </div>
+        <div class="form-row two">
+          <div style="flex:1">
+            <label for="pf_pass">New Password</label>
+            <input id="pf_pass" type="password" name="password" placeholder="New Password">
+          </div>
+          <div style="flex:1">
+            <label for="pf_confirm">Confirm Password</label>
+            <input id="pf_confirm" type="password" name="confirm_password" placeholder="Confirm Password">
+          </div>
+        </div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <a class="btn btn-secondary" href="/APLX/Parcel/frontend/admin/dashboard.html">Cancel</a>
+          <button class="btn" type="submit">Save Changes</button>
+        </div>
+      </form>
+      <div id="adminProfileStatus" class="inline-status" aria-live="polite" style="margin-top:16px"></div>
+    </section>
   </main>
 </div>
 <script>
+  // Inject sidebar
   fetch('/APLX/Parcel/frontend/admin/sidebar.html').then(r=>r.text()).then(html=>{
     const host=document.getElementById('sidebar'); if(host) host.outerHTML=html;
   });
+
+  // Load current profile
+  (function(){
+    const form = document.getElementById('adminProfileForm');
+    const status = document.getElementById('adminProfileStatus');
+    function setStatus(msg, ok=true){ if(!status) return; status.textContent = msg; status.style.color = ok ? '#22c55e' : '#ef4444'; }
+    async function load(){
+      try{
+        const res = await fetch('/APLX/Parcel/backend/admin/profile_get.php', { cache:'no-store' });
+        const data = await res.json();
+        const it = data.item||{};
+        document.getElementById('pf_name').value = it.name||'';
+        document.getElementById('pf_email').value = it.email||'';
+        document.getElementById('pf_phone').value = it.phone||'';
+      }catch(e){ /* ignore */ }
+    }
+    load();
+
+    // Submit via fetch to stay on page
+    form?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      setStatus('Saving...', true);
+      try{
+        const fd = new FormData(form);
+        const res = await fetch('/APLX/Parcel/backend/admin/profile_update.php', { method:'POST', body: fd });
+        const data = await res.json();
+        if (data.ok){
+          setStatus('Saved successfully.', true);
+          // Clear password inputs
+          document.getElementById('pf_pass').value = '';
+          document.getElementById('pf_confirm').value = '';
+        } else {
+          setStatus(data.error||'Failed to save', false);
+        }
+      }catch(err){ setStatus('Failed to save', false); }
+    });
+  })();
 </script>
 </body>
 </html>

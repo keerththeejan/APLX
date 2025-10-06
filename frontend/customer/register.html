@@ -16,11 +16,22 @@
     [data-theme="light"] .register-card{ background:#eef4ff; border-color:#d6e3ff; }
     .register-card h2{ margin:0 0 12px 0; font-size:clamp(22px,3vw,28px); font-weight:800; color:var(--text); }
     .register-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
-    .register-grid input{ width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); background:#fff; color:#111; }
+    .register-grid input{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#fff; color:#111; font-size:14px; outline:none; transition:border-color .15s, box-shadow .15s; }
+    .register-grid input:focus{ border-color:#60a5fa; box-shadow:0 0 0 3px rgba(59,130,246,.25); }
+    .input-with-icon{ position:relative; }
+    .input-with-icon input{ padding-right:44px; }
+    .toggle-eye{ position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer; font-size:18px; line-height:1; color:#64748b; z-index:2; transition:color .15s; pointer-events:auto; }
+    .toggle-eye:hover{ color:#0ea5e9; }
+    .toggle-eye[aria-pressed="true"]{ color:#16a34a; }
+    .toggle-eye:focus{ outline:2px solid #60a5fa; border-radius:6px; }
     @media (max-width: 900px){ .register-grid{ grid-template-columns:1fr; } }
-    .reg-actions{ margin-top:14px; display:flex; gap:10px; }
-    .btn-primary{ background:#16a34a; color:#fff; border:1px solid #15803d; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
-    .register-close{ position:absolute; top:10px; right:10px; background:#0f172a; color:#fff; border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:700; line-height:1; }
+    .reg-actions{ margin-top:16px; display:flex; gap:12px; justify-content:flex-end; }
+    .btn{ padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:800; border:1px solid transparent; }
+    .btn-primary{ background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; border-color:#16a34a; box-shadow:0 6px 14px rgba(22,163,74,.25); }
+    .btn-primary:hover{ filter:brightness(1.05); }
+    .btn-danger{ background:#ef4444; color:#fff; border-color:#dc2626; box-shadow:0 6px 14px rgba(239,68,68,.25); }
+    .btn-danger:hover{ filter:brightness(1.05); }
+    .register-close{ position:absolute; top:10px; right:10px; background:#0f172a; color:#fff; border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:700; line-height:1; z-index:5; }
     [data-theme="light"] .register-close{ background:#111827; color:#fff; }
     .reg-status{ margin:10px 0 0 0; padding:10px 12px; border-radius:10px; font-weight:700; }
     .reg-ok{ background:#dcfce7; color:#065f46; border:1px solid #86efac; }
@@ -37,7 +48,7 @@
       <a href="http://localhost/APLX/Parcel/frontend/track.html">Track</a>
       <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
       <a href="http://localhost/APLX/Parcel/frontend/customer/register.html" class="active">Register</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
+      <a href="http://localhost/APLX/Parcel/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -52,18 +63,56 @@
           <div class="register-grid">
             <input type="text" name="name" placeholder="Full Name" required>
             <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
-            <input type="text" name="phone" placeholder="Phone (optional)">
-            <input type="text" name="address" placeholder="Address (optional)">
-            <input type="text" name="city" placeholder="City (optional)">
-            <input type="text" name="state" placeholder="State (optional)">
-            <input type="text" name="country" placeholder="Country (optional)">
-            <input type="text" name="pincode" placeholder="Pincode (optional)">
+            <div class="input-with-icon">
+              <input type="password" name="password" id="password" placeholder="Password" required>
+              <button type="button" id="togglePassword" class="toggle-eye" aria-label="Show/Hide Password" aria-pressed="false" title="Show/Hide Password">👁️</button>
+            </div>
+            <input type="text" name="phone" placeholder="Phone" required>
+            <input type="text" name="address" placeholder="Address" required>
+            <input type="text" name="district" list="districts" placeholder="District (searchable)" aria-label="District" required>
+            <input type="text" name="province" list="provinces" placeholder="Province (searchable)" aria-label="Province" required>
           </div>
+          <datalist id="provinces">
+            <option value="Western"></option>
+            <option value="Central"></option>
+            <option value="Southern"></option>
+            <option value="Northern"></option>
+            <option value="Eastern"></option>
+            <option value="North Western"></option>
+            <option value="North Central"></option>
+            <option value="Uva"></option>
+            <option value="Sabaragamuwa"></option>
+          </datalist>
+          <datalist id="districts">
+            <option value="Colombo"></option>
+            <option value="Gampaha"></option>
+            <option value="Kalutara"></option>
+            <option value="Kandy"></option>
+            <option value="Matale"></option>
+            <option value="Nuwara Eliya"></option>
+            <option value="Galle"></option>
+            <option value="Matara"></option>
+            <option value="Hambantota"></option>
+            <option value="Jaffna"></option>
+            <option value="Kilinochchi"></option>
+            <option value="Mannar"></option>
+            <option value="Vavuniya"></option>
+            <option value="Mullaitivu"></option>
+            <option value="Batticaloa"></option>
+            <option value="Ampara"></option>
+            <option value="Trincomalee"></option>
+            <option value="Kurunegala"></option>
+            <option value="Puttalam"></option>
+            <option value="Anuradhapura"></option>
+            <option value="Polonnaruwa"></option>
+            <option value="Badulla"></option>
+            <option value="Monaragala"></option>
+            <option value="Ratnapura"></option>
+            <option value="Kegalle"></option>
+          </datalist>
           <div class="reg-actions">
-            <button class="btn-primary" type="submit">Register</button>
-            <button class="btn-secondary" type="reset">Clear</button>
+            <button class="btn btn-primary" type="submit">Register</button>
+            <button class="btn btn-danger" type="reset">Clear</button>
           </div>
         </form>
         <div id="regStatus" class="reg-status" style="display:none"></div>
@@ -92,11 +141,61 @@
     setTheme(cur === 'light' ? 'dark' : 'light');
   });
 })();
+// Dynamic Book link: require customer login
+(function(){
+  const book = document.getElementById('navBook');
+  if (!book) return;
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
+  const role = localStorage.getItem('userRole') || 'customer';
+  const loggedCustomer = isLoggedIn && role === 'customer';
+  book.href = loggedCustomer
+    ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
+    : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+})();
+// Toggle password visibility
+(function(){
+  const input = document.getElementById('password');
+  const btn = document.getElementById('togglePassword');
+  if(!input || !btn) return;
+  // Keep focus on input; avoid form side-effects
+  const toggle = (e)=>{
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    const start = input.selectionStart, end = input.selectionEnd;
+    const isPassword = input.getAttribute('type') === 'password';
+    input.setAttribute('type', isPassword ? 'text' : 'password');
+    // Restore caret/selection and focus
+    input.focus();
+    try { if(start !== null && end !== null) input.setSelectionRange(start, end); } catch(_) {}
+    btn.setAttribute('aria-pressed', String(isPassword));
+    btn.textContent = isPassword ? '🙈' : '👁️';
+  };
+  btn.addEventListener('mousedown', (e)=>{ e.preventDefault(); });
+  btn.addEventListener('click', toggle);
+  btn.addEventListener('touchstart', toggle, {passive:false});
+})();
 // Close -> go home
 (function(){
-  const btn = document.getElementById('closeRegister');
-  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/Parcel/frontend/index.html'; }); }
+  const closeBtn = document.getElementById('closeRegister');
+  if(!closeBtn) return;
+  const goHome = (e)=>{ e.preventDefault(); e.stopPropagation(); window.location.assign('/APLX/Parcel/frontend/index.html'); };
+  closeBtn.addEventListener('click', goHome);
+  closeBtn.addEventListener('touchstart', goHome, {passive:false});
 })();
-</script>
-</body>
-</html>
+// Show registration status (success/error) from query params
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('status'); // 'ok' or 'error'
+  const msg = params.get('msg');
+  const box = document.getElementById('regStatus');
+  if (!box) return;
+  if (status && msg) {
+    box.textContent = msg;
+    box.classList.remove('reg-ok','reg-fail');
+    if (status === 'ok') box.classList.add('reg-ok');
+    else box.classList.add('reg-fail');
+    box.style.display = '';
+    // Clean the URL so message doesn't persist on refresh
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+})();

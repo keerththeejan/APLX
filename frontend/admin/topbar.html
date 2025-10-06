@@ -13,6 +13,54 @@
   }
   .hamburger:hover{ filter: brightness(1.1); }
   .hamburger:focus{ outline: none; box-shadow: 0 0 0 2px rgba(34,197,94,.35); }
+  /* Make topbar sticky across admin pages */
+  .topbar{
+    position: fixed; /* fixed so it doesn't move on scroll */
+    top: 0;
+    left: 260px; /* align with sidebar width */
+    right: 16px; /* match page padding */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: rgba(11, 18, 32, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: saturate(1.2) blur(6px);
+  }
+  [data-theme="light"] .topbar{ background: rgba(255,255,255,0.9); }
+  /* Prevent content from hiding under fixed topbar */
+  .content{ padding-top: 76px; }
+  /* Modal backdrop + panel centering */
+  .modal-backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 16px;
+  }
+  .modal-backdrop.open{ display: flex; }
+  .modal-panel{
+    width: 100%;
+    max-width: 520px;
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  [data-theme="light"] .modal-panel{ background:#ffffff; }
+  .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+  .modal-title{ margin:0; font-size:18px; }
+  .modal-close{ background:#111827; color:#fff; border:1px solid var(--border); border-radius:8px; padding:6px 10px; cursor:pointer; }
+  [data-theme="light"] .modal-close{ background:#111827; color:#fff; }
+  .modal-body{ padding:14px; }
+  .inline-status{ margin-top:8px; color:#22c55e; font-weight:600; }
 </style>
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
@@ -43,7 +91,7 @@
       <button class="modal-close" id="adminProfileClose" type="button" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/Parcel/backend/admin/profile.php">
+      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/Parcel/backend/admin/profile_update.php">
         <div class="form-row">
           <input type="text" name="name" placeholder="Full Name" required />
         </div>

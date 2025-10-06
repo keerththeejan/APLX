@@ -7,82 +7,67 @@ $error = '';
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
-$confirm = $_POST['confirm_password'] ?? '';
 $phone = trim($_POST['phone'] ?? '');
 $address = trim($_POST['address'] ?? '');
-$city = trim($_POST['city'] ?? '');
-$state = trim($_POST['state'] ?? '');
+$district = trim($_POST['district'] ?? '');
+$province = trim($_POST['province'] ?? '');
 $country = trim($_POST['country'] ?? '');
-$pincode = trim($_POST['pincode'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($name === '' || $email === '' || $password === '' || $confirm === '') {
-        $error = 'Please fill all required fields.';
+    // Require all form fields present on UI
+    if ($name === '' || $email === '' || $password === '' || $phone === '' || $address === '' || $district === '' || $province === '') {
+        $error = 'Please fill all required fields: name, email, password, phone, address, district, and province.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Invalid email address.';
-    } elseif ($password !== $confirm) {
-        $error = 'Passwords do not match.';
     } else {
-        // Check existing email
-        $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+        // Check existing email in customer table
+        $stmt = $conn->prepare('SELECT id FROM customer WHERE email = ? LIMIT 1');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         if ($stmt->get_result()->fetch_assoc()) {
             $error = 'Email already registered.';
         } else {
-            // Create user with role=customer
+            // Insert into customer table
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $role = 'customer';
-            $stmt = $conn->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?,?,?,?)');
-            $stmt->bind_param('ssss', $name, $email, $hash, $role);
-            $stmt->execute();
-            $user_id = $conn->insert_id;
-
-            // Insert into customers table
-            $stmt = $conn->prepare('INSERT INTO customers (user_id) VALUES (?)');
-            $stmt->bind_param('i', $user_id);
+            $stmt = $conn->prepare('INSERT INTO customer (name, email, password_hash, phone, address, district, province) VALUES (?,?,?,?,?,?,?)');
+            $stmt->bind_param('sssssss', $name, $email, $hash, $phone, $address, $district, $province);
             $stmt->execute();
 
-            // Create/update profile if optional fields provided
-            if ($phone || $address || $city || $state || $country || $pincode) {
-                $stmt = $conn->prepare('INSERT INTO user_profiles (user_id, phone, address, city, state, country, pincode) VALUES (?,?,?,?,?,?,?)');
-                $stmt->bind_param('issssss', $user_id, $phone, $address, $city, $state, $country, $pincode);
-                $stmt->execute();
-            }
+            // Send welcome + booking contact email
+            $company   = $COMPANY_NAME ?? 'Parcel Transport';
+            $support   = $SUPPORT_EMAIL ?? 'support@parcel.local';
+            $booking   = $BOOKING_EMAIL ?? 'booking@parcel.local';
+            $phoneNo   = $SUPPORT_PHONE ?? '';
+            $addr      = $SUPPORT_ADDRESS ?? '';
+            $bookUrl   = 'http://localhost/APLX/Parcel/frontend/customer/book.html';
+
+            $subject = 'Welcome to ' . $company . ' – Booking Details Inside';
+            $htmlBody = '<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#111">'
+                . '<h2 style="margin:0 0 12px">Welcome, ' . h($name) . '!</h2>'
+                . '<p>Thank you for registering with ' . h($company) . '.</p>'
+                . '<h3 style="margin:16px 0 8px">Booking Contact Details</h3>'
+                . '<ul>'
+                . '<li><strong>Email (Bookings):</strong> ' . h($booking) . '</li>'
+                . '<li><strong>Support Email:</strong> ' . h($support) . '</li>'
+                . ($phoneNo ? '<li><strong>Phone:</strong> ' . h($phoneNo) . '</li>' : '')
+                . ($addr ? '<li><strong>Address:</strong> ' . h($addr) . '</li>' : '')
+                . '</ul>'
+                . '<p>You can start a new booking here: <a href="' . h($bookUrl) . '">' . h($bookUrl) . '</a></p>'
+                . '<p style="margin-top:18px">Regards,<br>' . h($company) . '</p>'
+                . '</div>';
+
+            // Ignore failure silently in UI; optionally log in future
+            @send_mail($email, $subject, $htmlBody);
 
             $msg = 'Registration successful. You can now log in.';
         }
     }
+
+    // Redirect back to register form with status + message
+    $status = $error ? 'error' : ($msg ? 'ok' : 'error');
+    $text = $error ?: $msg ?: 'Unexpected error.';
+    $qs = http_build_query(['status' => $status, 'msg' => $text]);
+    header('Location: /APLX/Parcel/frontend/customer/register.html?' . $qs);
+    exit;
 }
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Customer Registration</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
-</head>
-<body>
-<header class="navbar">
-  <div class="container">
-    <div class="brand">Parcel Transport</div>
-    <nav>
-      <a href="/Parcel/frontend/index.html">Home</a>
-      <a href="/Parcel/frontend/track.html">Track</a>
-      <a href="/Parcel/frontend/customer/book.html">Book</a>
-      <a href="/Parcel/frontend/customer/register.html" class="active">Register</a>
-      <a href="/Parcel/frontend/auth/login.html">Admin</a>
-    </nav>
-  </div>
-</header>
-<main class="container">
-  <section class="card">
-    <h2>Customer Registration</h2>
-    <?php if ($msg): ?><p class="notice"><?php echo h($msg); ?></p><?php endif; ?>
-    <?php if ($error): ?><p class="error"><?php echo h($error); ?></p><?php endif; ?>
-    <p><a class="btn btn-outline" href="/Parcel/frontend/auth/login.html">Go to Login</a></p>
-  </section>
-</main>
-</body>
-</html>

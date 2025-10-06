@@ -9,24 +9,19 @@ try {
     $uid = (int)($u['id'] ?? 0);
     if (!$uid) throw new Exception('No user');
 
-    // Basics
-    $stmt = $conn->prepare('SELECT name, email FROM users WHERE id=?');
+    // Load from admin_profile table (single row per admin_id)
+    $stmt = $conn->prepare('SELECT name, email, phone FROM admin_profile WHERE admin_id=? LIMIT 1');
     $stmt->bind_param('i', $uid);
     $stmt->execute();
-    $rowUser = $stmt->get_result()->fetch_assoc() ?: [];
-
-    // Profile
-    $stmt = $conn->prepare('SELECT phone, company, address, city, state, country, pincode FROM user_profiles WHERE user_id=?');
-    $stmt->bind_param('i', $uid);
-    $stmt->execute();
-    $rowProf = $stmt->get_result()->fetch_assoc() ?: [];
+    $row = $stmt->get_result()->fetch_assoc() ?: [];
 
     echo json_encode([
         'ok' => true,
-        'item' => array_merge([
-            'name' => $rowUser['name'] ?? '',
-            'email' => $rowUser['email'] ?? ''
-        ], $rowProf)
+        'item' => [
+            'name' => $row['name'] ?? '',
+            'email' => $row['email'] ?? '',
+            'phone' => $row['phone'] ?? ''
+        ]
     ]);
 } catch (Throwable $e) {
     http_response_code(500);
