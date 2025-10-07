@@ -1,11 +1,26 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Simple admin auth guard using localStorage (server session can coexist)
+  (function adminGuard(){
+    try{
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
+      const role = localStorage.getItem('userRole') || '';
+      if (!isLoggedIn || role !== 'admin') {
+        const next = encodeURIComponent(window.location.pathname);
+        window.location.replace(`/APLX/Parcel/frontend/login.html?next=${next}`);
+        return; // stop further init on this page
+      }
+    }catch(_){ /* ignore */ }
+  })();
+  // While loading partials, hide layout to prevent flash/jumps
+  document.body.setAttribute('data-admin-loading','1');
+
   // Load partials
   Promise.all([
-    fetch('/APLX/Parcel/frontend/admin/sidebar.html').then(r => r.text()).then(html => {
+    fetch('/APLX/Parcel/frontend/admin/sidebar.html', { cache:'no-store' }).then(r => r.text()).then(html => {
       const host = document.getElementById('sidebar');
       if (host) host.outerHTML = html;
     }),
-    fetch('/APLX/Parcel/frontend/admin/topbar.html').then(r => r.text()).then(html => {
+    fetch('/APLX/Parcel/frontend/admin/topbar.html', { cache:'no-store' }).then(r => r.text()).then(html => {
       const host = document.getElementById('topbar');
       if (host) host.outerHTML = html;
     })
@@ -13,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // After both loaded, init behaviors
     initActiveAndTitle();
     initTopbarBehaviors();
+    // Reveal layout
+    document.body.removeAttribute('data-admin-loading');
   }).catch(console.error);
 
   function initActiveAndTitle() {
@@ -83,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifMenu = document.getElementById('notifMenu');
     const profileMenu = document.getElementById('profileMenu');
     function closeAll() { notifMenu?.classList.remove('open'); profileMenu?.classList.remove('open'); }
-    notifBtn?.addEventListener('click', (e) => { e.stopPropagation(); const o = notifMenu.classList.toggle('open'); if (o) profileMenu.classList.remove('open'); });
+    notifBtn?.addEventListener('click', (e) => { e.stopPropagation(); const o = notifMenu.classList.toggle('open'); if (o) profileMenu?.classList.remove('open'); });
     // Profile icon -> open modal form
     const profileModal = document.getElementById('adminProfileModal');
     const profileClose = document.getElementById('adminProfileClose');
@@ -145,6 +162,60 @@ document.addEventListener('DOMContentLoaded', () => {
         profileStatus.textContent = 'Failed to update profile';
       }
     });
+    // Notifications: View All -> open modal and fetch list
+    const notifViewAll = document.getElementById('notifViewAll');
+    const notifAllModal = document.getElementById('notifAllModal');
+    const notifAllClose = document.getElementById('notifAllClose');
+    const notifList = document.getElementById('notifList');
+
+    function openNotifModal(){
+      if (!notifAllModal) return;
+      closeAll();
+      notifAllModal.classList.add('open');
+      notifAllModal.setAttribute('aria-hidden','false');
+      document.body.style.overflow='hidden';
+      if (notifList) notifList.innerHTML = '<li class="muted">Loading...</li>';
+      loadNotifications();
+    }
+    function closeNotifModal(){
+      if (!notifAllModal) return;
+      notifAllModal.classList.remove('open');
+      notifAllModal.setAttribute('aria-hidden','true');
+      document.body.style.overflow='';
+    }
+    notifViewAll?.addEventListener('click', (e)=>{ e.stopPropagation(); openNotifModal(); });
+    notifAllClose?.addEventListener('click', closeNotifModal);
+    notifAllModal?.addEventListener('click', (e)=>{ if (e.target === notifAllModal) closeNotifModal(); });
+    window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeNotifModal(); });
+
+    async function loadNotifications(){
+      try{
+        // Preferred API endpoint; adjust if your backend differs
+        const res = await fetch('/APLX/Parcel/backend/admin/notifications.php?api=1', { cache:'no-store' });
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+        renderNotifications(items);
+      }catch(err){
+        if (notifList) notifList.innerHTML = '<li class="muted">Failed to load notifications</li>';
+      }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+    function renderNotifications(items){
+      if (!notifList) return;
+      if (!items.length){ notifList.innerHTML = '<li class="muted">No notifications</li>'; return; }
+      notifList.innerHTML = items.map((n)=>{
+        const title = escapeHtml(n.title || n.type || 'Notification');
+        const msg = escapeHtml(n.message || n.body || '');
+        const time = escapeHtml(n.created_at || n.time || '');
+        return `<li>
+          <div class="desc"><strong>${title}</strong>${msg?` — ${msg}`:''}</div>
+          <div class="time muted" style="font-size:12px">${time}</div>
+        </li>`;
+      }).join('');
+    }
+
     document.addEventListener('click', closeAll);
   }
 });

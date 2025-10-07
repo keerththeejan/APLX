@@ -68,17 +68,17 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="http://localhost/APLX/Parcel/frontend/index.html">Home</a>
-      <a href="http://localhost/APLX/Parcel/frontend/track.html" class="active">Track</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Flogin.html%3Fstay%3D1">Book</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
+      <a href="/APLX/Parcel/frontend/index.html">Home</a>
+      <a href="/APLX/Parcel/frontend/track.html" class="active">Track</a>
+      <a href="/APLX/Parcel/frontend/customer/book.html">Book</a>
+      <a href="/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
 <main class="container small login-card login-center">
   <div class="login-stage">
     <section class="card login-fixed-card">
-    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='http://localhost/APLX/Parcel/frontend/index.html'">✕</button>
+    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='/APLX/Parcel/frontend/index.html'">✕</button>
     <h2>Login</h2>
     <p class="muted">Choose role and enter credentials.</p>
     <div class="role-switch" role="tablist" aria-label="Select role">
@@ -126,9 +126,15 @@
   const params = new URLSearchParams(location.search);
   const next = params.get('next');
   const stay = params.get('stay') === '1';
+  // If next points to admin pages, default to admin role
+  if (next && /\/APLX\/Parcel\/frontend\/admin\//i.test(next)) {
+    role = 'admin';
+  }
   function setRole(r){ role = r; btnCust.classList.toggle('active', r==='customer'); btnCust.setAttribute('aria-selected', String(r==='customer')); btnAdmin.classList.toggle('active', r==='admin'); btnAdmin.setAttribute('aria-selected', String(r==='admin')); }
   btnCust?.addEventListener('click', ()=> setRole('customer'));
   btnAdmin?.addEventListener('click', ()=> setRole('admin'));
+  // Reflect initial role in UI
+  setRole(role);
   // Password toggle
   const passInput = document.getElementById('loginPass');
   const toggleBtn = document.getElementById('togglePass');
@@ -144,13 +150,26 @@
   form?.addEventListener('submit', (e)=>{
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
-    // Demo store
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userRole', role);
-    localStorage.setItem('isLoggedIn', '1');
+    // Determine role at submit time based on active tab (extra safety)
+    try{
+      const custActive = btnCust?.classList.contains('active');
+      const adminActive = btnAdmin?.classList.contains('active');
+      if (adminActive) role = 'admin'; else if (custActive) role = 'customer';
+    }catch(_){/* ignore */}
+    // Store session flags
+    try{
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('isLoggedIn', '1');
+    }catch(_){/* ignore */}
     // Redirect
     if (next && !stay) {
-      window.location.href = next;
+      // Ensure next is same-origin path only
+      try{
+        const u = new URL(next, window.location.origin);
+        if (u.origin === window.location.origin) window.location.href = u.pathname + u.search + u.hash;
+        else window.location.href = '/APLX/Parcel/frontend/index.html';
+      }catch(_){ window.location.href = '/APLX/Parcel/frontend/index.html'; }
       return;
     }
     if (!stay) {

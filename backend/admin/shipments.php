@@ -18,10 +18,10 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
         $params = [];
         $types = '';
         if ($search !== '') {
-            $where = " WHERE tracking_number LIKE ? OR receiver_name LIKE ? OR origin LIKE ? OR destination LIKE ?";
+            $where = " WHERE tracking_number LIKE ? OR receiver_name LIKE ? OR sender_name LIKE ? OR origin LIKE ? OR destination LIKE ?";
             $like = "%{$search}%";
-            $params = [$like, $like, $like, $like];
-            $types  = 'ssss';
+            $params = [$like, $like, $like, $like, $like];
+            $types  = 'sssss';
         }
 
         $sqlTotal = "SELECT COUNT(*) AS c FROM shipments" . $where;
@@ -34,7 +34,7 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
 
         if ($all) {
             // Return all matching rows (no pagination)
-            $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC";
+            $sql = "SELECT id, tracking_number, sender_name, receiver_name, origin, destination, weight, price, status, created_at, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC";
             $stmt = $conn->prepare($sql);
             if ($types) { $stmt->bind_param($types, ...$params); }
             $stmt->execute();
@@ -43,7 +43,7 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
             $limit = $total > 0 ? $total : count($rows);
             $page = 1;
         } else {
-            $sql = "SELECT id, tracking_number, receiver_name, origin, destination, status, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC LIMIT ? OFFSET ?";
+            $sql = "SELECT id, tracking_number, sender_name, receiver_name, origin, destination, weight, price, status, created_at, updated_at FROM shipments" . $where . " ORDER BY updated_at DESC LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($sql);
             if ($types) {
                 $types2 = $types . 'ii';
