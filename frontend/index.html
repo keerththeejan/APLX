@@ -27,10 +27,10 @@
       <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
       <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
       <nav>
-        <a href="http://localhost/APLX/Parcel/frontend/index.html" class="active">Home</a>
-        <a href="http://localhost/APLX/Parcel/frontend/track.html">Track</a>
-        <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
-        <a href="http://localhost/APLX/Parcel/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
+        <a href="/APLX/" class="active">Home</a>
+        <a href="track.html">Track</a>
+        <a id="navBook" href="login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
+        <a href="login.html?stay=1" title="Login" aria-label="Login"><span aria-hidden="true">👤</span> <span class="hide-sm">Login</span></a>
       </nav>
     </div>
   </header>
@@ -476,7 +476,7 @@
         <div class="footer-col">
           <div class="footer-title">Quick Links</div>
           <ul class="footer-links">
-            <li><a href="index.html">Home</a></li>
+            <li><a href="/APLX/">Home</a></li>
             <li><a href="#about">About Us</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="track.html">Track Shipment</a></li>
@@ -522,7 +522,7 @@
     const grid = document.getElementById('servicesGrid');
     if (!grid) return;
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
-    fetch('/APLX/Parcel/backend/services_list.php', { cache: 'no-store' })
+    fetch('/APLX/backend/services_list.php', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(data => {
         const items = (data && Array.isArray(data.items)) ? data.items.slice(0,4) : [];
@@ -539,24 +539,36 @@
       })
       .catch(()=>{});
   })();
-  // Transport gallery: seamless continuous scroll and safety when few/no images
+  // Transport gallery: fetch from backend, render, then enable seamless scroll
   (function(){
     const track = document.querySelector('.transport-gallery .tg-track');
     if (!track) return;
     const slider = track.closest('.tg-slider');
-    const items = Array.from(track.children);
-    // If no images or only one, do not animate
-    if (!items.length || items.length === 1) { track.style.animation = 'none'; return; }
 
-    const getGap = () => parseFloat(getComputedStyle(track).gap || '0');
-    const totalWidth = () => Array.from(track.children).reduce((w, el) => w + el.getBoundingClientRect().width, 0) + (track.children.length - 1) * getGap();
+    function buildItems(items){
+      function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+      if (!Array.isArray(items) || !items.length) return false;
+      track.innerHTML = items.map(it => {
+        const day = it.day ? String(it.day).padStart(2,'0') : '';
+        const month = it.month ? esc(String(it.month).slice(0,3)) : '';
+        const tag = it.tag ? esc(it.tag) : 'Transport';
+        const img = esc(it.image_url || '');
+        if (!img) return '';
+        const badge = (day||month) ? `<span class="date-badge"><strong>${day}</strong><small>${month}</small></span>` : '';
+        return `<article class="tg-item news-card">${badge}<img src="${img}" alt=""><span class="tag-pill">${tag}</span></article>`;
+      }).join('');
+      return !!track.children.length;
+    }
 
-    function setup(){
-      // Clone items until we have at least ~2x slider width for seamless loop
-      const base = Array.from(items);
+    function enableScroll(){
+      const getGap = () => parseFloat(getComputedStyle(track).gap || '0');
+      const totalWidth = () => Array.from(track.children).reduce((w, el) => w + el.getBoundingClientRect().width, 0) + (track.children.length - 1) * getGap();
+      const itemsNow = Array.from(track.children);
+      if (!itemsNow.length || itemsNow.length === 1) { track.style.animation = 'none'; return; }
+      const base = Array.from(itemsNow);
       let guard = 0;
       let target = (slider?.getBoundingClientRect().width || 800) * 2 + 100;
-      while (totalWidth() < target && guard < 30) {
+      while (totalWidth() < target && guard < 50) {
         base.forEach(el => {
           const clone = el.cloneNode(true);
           clone.setAttribute('aria-hidden','true');
@@ -564,19 +576,29 @@
         });
         guard += base.length;
       }
-      // Shift equals half of the track so clones align when looping
       const shift = -Math.round(totalWidth() / 2);
       track.style.setProperty('--tg-shift', shift + 'px');
-      // Speed ~120px/sec
-      const speed = 120;
+      const speed = 120; // px/sec
       const duration = Math.abs(shift) / speed;
       track.style.setProperty('--tg-duration', duration + 's');
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         track.style.animation = 'none';
       }
     }
-    // Wait for layout
-    if (document.readyState === 'complete') setup(); else window.addEventListener('load', setup);
+
+    function init(){ enableScroll(); }
+
+    // Try backend first, fallback to existing static markup
+    fetch('/APLX/backend/gallery_list.php', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => {
+        const ok = data && Array.isArray(data.items) && buildItems(data.items);
+        if (!ok) { /* keep static */ }
+      })
+      .catch(() => { /* keep static */ })
+      .finally(() => {
+        if (document.readyState === 'complete') init(); else window.addEventListener('load', init);
+      });
   })();
 
   // Dynamic Book link: require customer login
@@ -587,8 +609,8 @@
     const role = localStorage.getItem('userRole') || 'customer';
     const loggedCustomer = isLoggedIn && role === 'customer';
     book.href = loggedCustomer
-      ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
-      : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+      ? '/APLX/frontend/customer/book.html'
+      : '/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html';
   })();
   // Hero cross-fade
   (function(){

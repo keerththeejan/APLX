@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS admin_messages (
 CREATE TABLE IF NOT EXISTS `gallery` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `image_url` VARCHAR(512) NOT NULL,
-{{ ... }}
+  `tag` VARCHAR(60) DEFAULT NULL,
   `day` TINYINT UNSIGNED DEFAULT NULL,
   `month` VARCHAR(12) DEFAULT NULL,
   `sort_order` INT NOT NULL DEFAULT 0,
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS `gallery` (
 -- ('🏬', NULL, 'Warehousing', 'Secure storage & inventory.', 4);
 
   -- INSERT INTO gallery(image_url, tag, day, month, sort_order) VALUES
-  -- ('/APLX/Parcel/uploads/gallery/sample1.jpg', 'Transport', 25, 'Dec', 1),
-  -- ('/APLX/Parcel/uploads/gallery/sample2.jpg', 'Transport', 30, 'Dec', 2);
+  -- ('/APLX/uploads/gallery/sample1.jpg', 'Transport', 25, 'Dec', 1),
+  -- ('/APLX/uploads/gallery/sample2.jpg', 'Transport', 30, 'Dec', 2);
 
 -- Site contact details (single row). Admin editable, used in footer and contact cards
 CREATE TABLE IF NOT EXISTS `site_contact` (

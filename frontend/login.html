@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="../css/style.css">
   <style>
     :root{ --login-teal:#0b3640; --login-teal-dark:#09303a; --login-ink:#e2f3f6; --login-border:#0f2d35 }
     /* Page-level light background and center layout */
@@ -68,17 +68,17 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="/APLX/Parcel/frontend/index.html">Home</a>
-      <a href="/APLX/Parcel/frontend/track.html" class="active">Track</a>
-      <a href="/APLX/Parcel/frontend/customer/book.html">Book</a>
-      <a href="/APLX/Parcel/frontend/login.html" title="Login" aria-label="Login">👤</a>
+      <a href="index.html">Home</a>
+      <a href="track.html" class="active">Track</a>
+      <a href="customer/book.html">Book</a>
+      <a href="login.html" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
 <main class="container small login-card login-center">
   <div class="login-stage">
     <section class="card login-fixed-card">
-    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='/APLX/Parcel/frontend/index.html'">✕</button>
+    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='index.html'">✕</button>
     <h2>Login</h2>
     <p class="muted">Choose role and enter credentials.</p>
     <div class="role-switch" role="tablist" aria-label="Select role">
@@ -127,7 +127,7 @@
   const next = params.get('next');
   const stay = params.get('stay') === '1';
   // If next points to admin pages, default to admin role
-  if (next && /\/APLX\/Parcel\/frontend\/admin\//i.test(next)) {
+  if (next && /\/APLX\/frontend\/admin\//i.test(next)) {
     role = 'admin';
   }
   function setRole(r){ role = r; btnCust.classList.toggle('active', r==='customer'); btnCust.setAttribute('aria-selected', String(r==='customer')); btnAdmin.classList.toggle('active', r==='admin'); btnAdmin.setAttribute('aria-selected', String(r==='admin')); }
@@ -168,19 +168,19 @@
       try{
         const u = new URL(next, window.location.origin);
         if (u.origin === window.location.origin) window.location.href = u.pathname + u.search + u.hash;
-        else window.location.href = '/APLX/Parcel/frontend/index.html';
-      }catch(_){ window.location.href = '/APLX/Parcel/frontend/index.html'; }
+        else window.location.href = '/APLX/frontend/index.html';
+      }catch(_){ window.location.href = '/APLX/frontend/index.html'; }
       return;
     }
     if (!stay) {
-      if (role === 'admin') window.location.href = '/APLX/Parcel/frontend/admin/dashboard.html';
-      else window.location.href = '/APLX/Parcel/frontend/customer/book.html';
+      if (role === 'admin') window.location.href = '/APLX/frontend/admin/dashboard.html';
+      else window.location.href = '/APLX/frontend/customer/book.html';
     }
   });
   // Close button -> back to previous or home
   const closeBtn = document.getElementById('closeLogin');
   closeBtn?.addEventListener('click', ()=>{
-    window.location.href = 'http://localhost/APLX/Parcel/frontend/index.html';
+    window.location.href = 'index.html';
   });
   // If already logged in, fast-path
   const already = localStorage.getItem('isLoggedIn') === '1';
@@ -188,8 +188,8 @@
     const savedRole = localStorage.getItem('userRole') || 'customer';
     if (!stay) {
       if (next) { window.location.replace(next); }
-      else if (savedRole === 'admin') { window.location.replace('/APLX/Parcel/frontend/admin/dashboard.html'); }
-      else { window.location.replace('/APLX/Parcel/frontend/customer/book.html'); }
+      else if (savedRole === 'admin') { window.location.replace('/APLX/frontend/admin/dashboard.html'); }
+      else { window.location.replace('/APLX/frontend/customer/book.html'); }
     }
   }
 })();
