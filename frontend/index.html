@@ -61,7 +61,7 @@
     <!-- Services strip (icons 1..4) -->
     <section class="services" id="services">
       <div class="container">
-      <div class="services-grid">
+      <div class="services-grid" id="servicesGrid">
         <div class="service-card reveal reveal-card stagger-1">
           <div class="service-icon">✈️</div>
           <div class="service-title">Air Freight</div>
@@ -295,7 +295,7 @@
     <section class="transport-gallery">
       <div class="container">
         <div class="tg-slider">
-          <div class="tg-track" style="--tg-duration:24s; --tg-shift:-2400px;">
+          <div class="tg-track" id="tgTrack" style="--tg-duration:24s; --tg-shift:-2400px;">
             <!-- 10 cards -->
             <article class="tg-item news-card">
               <span class="date-badge"><strong>25</strong><small>Dec</small></span>
@@ -517,6 +517,28 @@
   <script>
   // Services interactive grid
   (function() { const grid=document.querySelector('.services-grid'); if(!grid) return; const cards=[...grid.querySelectorAll('.service-card')]; let selected=null; function toggle(){ if(selected===this){ this.classList.remove('selected'); this.setAttribute('aria-selected','false'); grid.classList.remove('dim-others'); selected=null; return;} cards.forEach(c=>{c.classList.remove('selected'); c.setAttribute('aria-selected','false');}); this.classList.add('selected'); this.setAttribute('aria-selected','true'); grid.classList.add('dim-others'); selected=this; } cards.forEach(card=>{ card.setAttribute('tabindex','0'); card.setAttribute('role','button'); card.addEventListener('click',toggle); card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle.call(card);} }); }); })();
+  // Dynamic Services: load from backend if available, fallback to static
+  (function(){
+    const grid = document.getElementById('servicesGrid');
+    if (!grid) return;
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+    fetch('/APLX/Parcel/backend/services_list.php', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => {
+        const items = (data && Array.isArray(data.items)) ? data.items.slice(0,4) : [];
+        if (!items.length) return; // keep static
+        grid.innerHTML = items.map((it,i)=>{
+          const icon = it.icon ? escapeHtml(it.icon) : '';
+          const title = escapeHtml(it.title);
+          const desc = escapeHtml(it.description);
+          const img = it.image_url ? `<img src="${escapeHtml(it.image_url)}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
+          const iconHtml = icon ? `<div class=\"service-icon\">${icon}</div>` : (img ? `<div class=\"service-icon\">${img}</div>` : '<div class="service-icon">⬢</div>');
+          const cls = 'service-card reveal reveal-card stagger-' + ((i%3)+1);
+          return `<div class="${cls}">${iconHtml}<div class="service-title">${title}</div><div class="service-desc">${desc}</div></div>`;
+        }).join('');
+      })
+      .catch(()=>{});
+  })();
   // Transport gallery: seamless continuous scroll and safety when few/no images
   (function(){
     const track = document.querySelector('.transport-gallery .tg-track');

@@ -11,10 +11,15 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
     $by_day = [];
     while ($r = $q1->fetch_assoc()) { $by_day[] = $r; }
 
-    // Status counts
-    $q2 = $conn->query("SELECT status, COUNT(*) AS c FROM shipments GROUP BY status");
+    // Weekly status counts (last 7 days)
+    $q2 = $conn->query("SELECT status, COUNT(*) AS c FROM shipments WHERE updated_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) GROUP BY status");
     $by_status = [];
     while ($r = $q2->fetch_assoc()) { $by_status[$r['status']] = (int)$r['c']; }
+
+    // Yearly by month (last 12 months inclusive by created_at)
+    $q4 = $conn->query("SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS c FROM shipments WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) GROUP BY ym ORDER BY ym ASC");
+    $year_by_month = [];
+    while ($r = $q4->fetch_assoc()) { $year_by_month[] = ['ym' => $r['ym'], 'c' => (int)$r['c']]; }
 
     // Top 5 routes
     $stmt = $conn->prepare("SELECT origin, destination, COUNT(*) AS c FROM shipments GROUP BY origin, destination ORDER BY c DESC LIMIT 5");
@@ -42,6 +47,7 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
       'ok' => true,
       'by_day' => $by_day,
       'by_status' => $by_status,
+      'year_by_month' => $year_by_month,
       'top_routes' => $top_routes,
       'sla' => [
         'delivered_count' => $count_del,

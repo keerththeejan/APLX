@@ -9,6 +9,12 @@
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
     .content{padding:16px;margin-left:260px}
+    .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+    .setting-card{background:var(--panel-bg, #0b1220);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+    .setting-card .icon{font-size:24px}
+    .setting-card h3{margin:0}
+    .setting-card p{margin:0;color:var(--muted)}
+    .setting-card .actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
@@ -17,14 +23,33 @@
   <main class="content">
   <div id="topbar"></div>
   <section class="card">
-    <h2>Settings (Static)</h2>
-    <div class="grid">
-      <input type="text" placeholder="Company Name" value="Parcel Transport">
-      <input type="text" placeholder="Support Email" value="support@parcel.local">
-      <input type="text" placeholder="Phone" value="+91-00000-00000">
-      <input type="text" placeholder="Address" value="Chennai, TN">
+    <h2>Settings</h2>
+    <div class="settings-grid">
+      <div class="setting-card">
+        <div class="icon">🧩</div>
+        <h3>Homepage Services</h3>
+        <p>Manage the four service cards shown on the homepage (title, description, image/icon, order).</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/Parcel/frontend/admin/services.html">Open Services</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">🖼️</div>
+        <h3>Gallery (Slider)</h3>
+        <p>Add, edit, reorder images for the auto-scrolling gallery with optional date badge and tag.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/Parcel/frontend/admin/gallery.html">Open Gallery</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">📞</div>
+        <h3>Contact Details</h3>
+        <p>Edit address, phone, email and opening hours used in the footer and contact info cards.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/Parcel/frontend/admin/contact.html">Open Contact</a>
+        </div>
+      </div>
     </div>
-    <p class="muted" style="margin-top:8px">These settings are placeholders. Use backend pages for real changes later.</p>
   </section>
   </main>
 </div>

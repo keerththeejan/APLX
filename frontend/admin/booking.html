@@ -20,8 +20,13 @@
   <aside id="sidebar"></aside>
   <main class="content">
   <div id="topbar"></div>
-  <section class="card">
+  <div class="toolbar" id="topActions" style="flex-direction:column;align-items:flex-start;gap:8px">
+    <h2 style="margin:0">Bookings</h2>
+    <div><button class="btn" id="btnAddBooking">Add Booking</button></div>
+  </div>
+  <section class="card" id="createCard" style="display:none; max-width:520px; margin:0 auto; position:relative">
     <h2>Create Booking</h2>
+    <button id="btnCloseCreateTop" class="modal-close" type="button" aria-label="Close" style="position:absolute; right:12px; top:12px">✕</button>
     <form id="bookForm" method="post" action="/APLX/Parcel/backend/book_submit.php">
       <div class="grid">
         <input type="text" name="sender_name" placeholder="Sender Name" required>
@@ -39,7 +44,7 @@
     </form>
   </section>
 
-  <div class="toolbar">
+  <div class="toolbar" id="recentToolbar">
     <h2 style="margin:0">Recent Bookings</h2>
     <div class="searchbox">
       <input id="q" type="search" placeholder="Search by tracking, receiver, city" />
@@ -47,7 +52,7 @@
     </div>
   </div>
 
-  <section class="card">
+  <section class="card" id="recentCard">
     <div class="table-responsive">
       <table class="data">
         <thead>
@@ -125,6 +130,23 @@
   q?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); } });
   prevPg?.addEventListener('click', ()=>{ if(page>1){ page--; load(); } });
   nextPg?.addEventListener('click', ()=>{ page++; load(); });
+
+  // Show/Hide create booking form
+  const createCard = document.getElementById('createCard');
+  const btnAddBooking = document.getElementById('btnAddBooking');
+  const btnCloseCreateTop = document.getElementById('btnCloseCreateTop');
+  const recentToolbar = document.getElementById('recentToolbar');
+  const recentCard = document.getElementById('recentCard');
+  btnAddBooking?.addEventListener('click', ()=>{
+    if(createCard){
+      createCard.style.display='block';
+      // Hide other sections so only the form is visible
+      if(recentToolbar) recentToolbar.style.display='none';
+      if(recentCard) recentCard.style.display='none';
+      window.scrollTo({ top: createCard.offsetTop - 70, behavior:'smooth' });
+    }
+  });
+  btnCloseCreateTop?.addEventListener('click', ()=>{ window.location.href = '/APLX/Parcel/frontend/admin/booking.html'; });
 
   // AJAX submit for booking form -> saves to DB using existing endpoint, then reload list
   const form = document.getElementById('bookForm');

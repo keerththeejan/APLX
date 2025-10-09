@@ -9,11 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.replace(`/APLX/Parcel/frontend/login.html?next=${next}`);
         return; // stop further init on this page
       }
-    }catch(_){ /* ignore */ }
+    } catch(_){ /* ignore */ }
   })();
   // While loading partials, hide layout to prevent flash/jumps
   document.body.setAttribute('data-admin-loading','1');
-
   // Load partials
   Promise.all([
     fetch('/APLX/Parcel/frontend/admin/sidebar.html', { cache:'no-store' }).then(r => r.text()).then(html => {
@@ -38,6 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear any pre-set actives from the partial markup
     links.forEach(a => a.classList.remove('active'));
     let activeSet = false;
+    // Treat specific pages as Settings
+    try{
+      const curPath = (window.location.pathname || '').toLowerCase();
+      if (/\/frontend\/admin\/(services|gallery|contact)\.html$/.test(curPath)) {
+        const settings = Array.from(links).find(a => (a.getAttribute('href')||'').toLowerCase().endsWith('/frontend/admin/settings.html'));
+        if (settings) { settings.classList.add('active'); activeSet = true; }
+      }
+    }catch(_){ }
     links.forEach(a => {
       try {
         const aUrl = new URL(a.href, window.location.origin);
@@ -99,8 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileBtn = document.getElementById('profileBtn');
     const notifMenu = document.getElementById('notifMenu');
     const profileMenu = document.getElementById('profileMenu');
+    const notifBadge = document.getElementById('notifBadge');
     function closeAll() { notifMenu?.classList.remove('open'); profileMenu?.classList.remove('open'); }
-    notifBtn?.addEventListener('click', (e) => { e.stopPropagation(); const o = notifMenu.classList.toggle('open'); if (o) profileMenu?.classList.remove('open'); });
+    notifBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const o = notifMenu.classList.toggle('open');
+      if (o) {
+        profileMenu?.classList.remove('open');
+        markNotificationsSeen();
+      }
+    });
     // Profile icon -> open modal form
     const profileModal = document.getElementById('adminProfileModal');
     const profileClose = document.getElementById('adminProfileClose');
@@ -175,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       notifAllModal.setAttribute('aria-hidden','false');
       document.body.style.overflow='hidden';
       if (notifList) notifList.innerHTML = '<li class="muted">Loading...</li>';
-      loadNotifications();
+      loadNotifications().then(()=> markNotificationsSeen());
     }
     function closeNotifModal(){
       if (!notifAllModal) return;
@@ -196,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         const items = Array.isArray(data.items) ? data.items : [];
         renderNotifications(items);
+        updateNotifBadge(items);
       }catch(err){
         if (notifList) notifList.innerHTML = '<li class="muted">Failed to load notifications</li>';
       }
@@ -217,5 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('click', closeAll);
+    // Initial badge/load
+    loadNotifications();
   }
 });

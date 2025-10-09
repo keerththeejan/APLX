@@ -80,3 +80,54 @@ CREATE TABLE IF NOT EXISTS admin_messages (
 
 
 
+  -- Services cards shown on Home (first 4 by sort_order)
+  CREATE TABLE IF NOT EXISTS `services` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `image_url` VARCHAR(512) NOT NULL,
+    `title` VARCHAR(120) NOT NULL,
+    `description` VARCHAR(500) NOT NULL,
+    `sort_order` INT NOT NULL DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_services_sort` (`sort_order`,`id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Auto-scrolling transport gallery on Home
+CREATE TABLE IF NOT EXISTS `gallery` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `image_url` VARCHAR(512) NOT NULL,
+{{ ... }}
+  `day` TINYINT UNSIGNED DEFAULT NULL,
+  `month` VARCHAR(12) DEFAULT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY `idx_gallery_sort` (`sort_order`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Optional starter rows (uncomment to seed)
+-- ('✈️', NULL, 'Air Freight', 'Efficient and reliable air solutions.', 1),
+-- ('🛳️', NULL, 'Ocean Freight', 'Global ocean freight services.', 2),
+-- ('🚚', NULL, 'Land Transport', 'Fast road transport solutions.', 3),
+-- ('🏬', NULL, 'Warehousing', 'Secure storage & inventory.', 4);
+
+  -- INSERT INTO gallery(image_url, tag, day, month, sort_order) VALUES
+  -- ('/APLX/Parcel/uploads/gallery/sample1.jpg', 'Transport', 25, 'Dec', 1),
+  -- ('/APLX/Parcel/uploads/gallery/sample2.jpg', 'Transport', 30, 'Dec', 2);
+
+-- Site contact details (single row). Admin editable, used in footer and contact cards
+CREATE TABLE IF NOT EXISTS `site_contact` (
+  `id` TINYINT UNSIGNED NOT NULL DEFAULT 1 PRIMARY KEY,
+  `address` VARCHAR(255) NOT NULL DEFAULT '',
+  `phone` VARCHAR(80) NOT NULL DEFAULT '',
+  `email` VARCHAR(150) NOT NULL DEFAULT '',
+  `hours_weekday` VARCHAR(120) NOT NULL DEFAULT 'Mon - Fri: 8:30 AM - 4:15 PM',
+  `hours_sat` VARCHAR(120) NOT NULL DEFAULT 'Sat: 9:00 AM - 2:00 PM',
+  `hours_sun` VARCHAR(120) NOT NULL DEFAULT 'Sun: Closed',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed default row if missing
+INSERT INTO site_contact (id, address, phone, email)
+SELECT 1, 'Ariviyal Nagar, Kilinochchi, Sri Lanka', '+94 21 492 7799', 'info@slgti.com'
+WHERE NOT EXISTS (SELECT 1 FROM site_contact WHERE id=1);

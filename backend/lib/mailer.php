@@ -20,11 +20,52 @@ function send_mail($to, $subject, $htmlBody, $textBody = '') {
         $textBody = strip_tags($htmlBody);
     }
 
+/**
+ * Best-effort classification of recipient type for logging.
+ */
+function infer_recipient_type($to){
+    $to = strtolower(trim((string)$to));
+    $support = strtolower(trim((string)($GLOBALS['SUPPORT_EMAIL'] ?? '')));
+    if ($support && $to === $support) return 'admin';
+    // If the local part contains 'admin' we treat as admin, else customer
+    $parts = explode('@', $to, 2);
+    $local = $parts[0] ?? '';
+    if (strpos($local, 'admin') !== false) return 'admin';
+    return 'customer';
+}
+
     // Some MTAs prefer CRLF line endings
     $headersStr = implode("\r\n", $headers);
     // Note: PHP mail() does not support alternative multipart easily without building MIME manually.
     // For simplicity, send HTML content directly. For production, switch to PHPMailer.
-    return @mail($to, $subject, $htmlBody, $headersStr);
+    $ok = @mail($to, $subject, $htmlBody, $headersStr);
+
+    // Log every outgoing mail to mail_logs for admin audit/history
+    try {
+        // Use global DB connection from config.php (included by init.php)
+        if (isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof mysqli) {
+            $conn = $GLOBALS['conn'];
+            // Ensure table exists once
+            $conn->query("CREATE TABLE IF NOT EXISTS mail_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                recipient_type ENUM('admin','customer') NOT NULL,
+                recipient_email VARCHAR(255) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                status VARCHAR(32) NOT NULL DEFAULT 'sent',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $rtype = infer_recipient_type($to);
+            $status = $ok ? 'sent' : 'failed';
+            $stmt = $conn->prepare("INSERT INTO mail_logs(recipient_type, recipient_email, subject, status) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param('ssss', $rtype, $to, $subject, $status);
+            $stmt->execute();
+        }
+    } catch (Throwable $e) {
+        // Do not interrupt caller on logging failure
+    }
+
+    return $ok;
 }
 
 function encode_addr($name, $email) {

@@ -32,6 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 . '</div>';
             if (send_mail($cust['email'], $subject, $htmlBody)) {
                 $msg = 'Message sent to ' . h($cust['name']) . ' (' . h($cust['email']) . ').';
+                // Log mail in mail_logs for audit/history shown in admin Mail page
+                try {
+                    $conn->query("CREATE TABLE IF NOT EXISTS mail_logs (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        recipient_type ENUM('admin','customer') NOT NULL,
+                        recipient_email VARCHAR(255) NOT NULL,
+                        subject VARCHAR(255) NOT NULL,
+                        status VARCHAR(32) NOT NULL DEFAULT 'sent',
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $stmtLog = $conn->prepare("INSERT INTO mail_logs(recipient_type, recipient_email, subject, status) VALUES ('customer', ?, ?, 'sent')");
+                    $stmtLog->bind_param('ss', $cust['email'], $subject);
+                    $stmtLog->execute();
+                } catch (Throwable $e) {
+                    // Silent fail on logging; mail already sent
+                }
             } else {
                 $error = 'Failed to send email. Please verify mail configuration.';
             }

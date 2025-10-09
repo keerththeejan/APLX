@@ -1,0 +1,27 @@
+<?php
+// backend/site_contact.php (public read-only)
+require_once __DIR__ . '/init.php';
+header('Content-Type: application/json');
+
+$conn->query("CREATE TABLE IF NOT EXISTS site_contact (
+  id TINYINT UNSIGNED NOT NULL DEFAULT 1 PRIMARY KEY,
+  address VARCHAR(255) NOT NULL DEFAULT '',
+  phone VARCHAR(80) NOT NULL DEFAULT '',
+  email VARCHAR(150) NOT NULL DEFAULT '',
+  hours_weekday VARCHAR(120) NOT NULL DEFAULT 'Mon - Fri: 8:30 AM - 4:15 PM',
+  hours_sat VARCHAR(120) NOT NULL DEFAULT 'Sat: 9:00 AM - 2:00 PM',
+  hours_sun VARCHAR(120) NOT NULL DEFAULT 'Sun: Closed',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$res = $conn->query('SELECT * FROM site_contact WHERE id=1');
+$row = $res->fetch_assoc() ?: [
+  'address' => '',
+  'phone' => '',
+  'email' => '',
+  'hours_weekday' => '',
+  'hours_sat' => '',
+  'hours_sun' => ''
+];
+
+echo json_encode(['item' => $row]);

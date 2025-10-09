@@ -7,7 +7,8 @@
   <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
   <style>
     .content{padding:16px;margin-left:260px}
-    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:48px 0 12px 0}
+    .toolbar{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin:48px 0 12px 0}
+    .search-row{width:100%;display:flex;justify-content:flex-end}
     .card{margin-top:10px}
     .searchbox{display:flex;gap:8px;align-items:center}
     .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111}
@@ -70,9 +71,11 @@
 
     <div class="toolbar">
       <h2>Users</h2>
-      <div class="searchbox">
-        <input id="q" type="search" placeholder="Search by name or email" />
-        <button class="btn" id="btnSearch">Search</button>
+      <div class="search-row" style="display:flex;justify-content:flex-end">
+        <div class="searchbox">
+          <input id="q" type="search" placeholder="Search by name or email" />
+          <button class="btn" id="btnSearch">Search</button>
+        </div>
       </div>
     </div>
 
