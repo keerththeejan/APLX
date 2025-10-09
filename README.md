@@ -81,3 +81,4 @@ Parcel/
 ## Notes
 - If your local path differs, update the absolute links in navbar or switch to relative links for portability.
 - Security: hash passwords on the server (`password_hash`), validate and sanitize all inputs, protect admin routes.
+# APLX
