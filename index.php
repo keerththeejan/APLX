@@ -17,10 +17,20 @@ if ($html === false) {
     exit;
 }
 
-// Inject <base href="/APLX/frontend/"> as the first element in <head>
+// Inject a dynamic <base> tag as the first element in <head>
+// This ensures relative URLs within frontend/index.html resolve correctly
+// whether the site is hosted at the domain root or a subdirectory (e.g., /APLX/).
+// Example results:
+//  - If script path is "/index.php" -> base "/frontend/"
+//  - If script path is "/APLX/index.php" -> base "/APLX/frontend/"
+//  - If behind deeper paths, dirname will normalize accordingly.
+$scriptPath = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '/';
+$dir = rtrim(str_replace('\\', '/', dirname($scriptPath)), '/');
+$base = ($dir === '') ? '/frontend/' : $dir . '/frontend/';
+
 $html = preg_replace(
     '#<head(\b[^>]*)>#i',
-    '<head$1><base href="/APLX/frontend/">',
+    '<head$1><base href="' . htmlspecialchars($base, ENT_QUOTES, 'UTF-8') . '">',
     $html,
     1
 );
