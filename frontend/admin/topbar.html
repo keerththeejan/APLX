@@ -76,12 +76,12 @@
     <div class="icon-btn" id="profileBtn" title="Admin Profile">👤</div>
     <div class="dropdown" id="notifMenu">
       <div class="item"><div class="title">No new notifications</div><div class="sub">You're up to date</div></div>
-      <div class="item"><a class="btn btn-sm" id="notifViewAll" href="/APLX/Parcel/frontend/admin/notifications.html">View All</a></div>
+      <div class="item"><a class="btn btn-sm" id="notifViewAll" href="/APLX/frontend/admin/notifications.html">View All</a></div>
     </div>
     <div class="dropdown" id="profileMenu">
       <div class="item"><div class="title">Admin</div><div class="sub">admin@parcel.local</div></div>
       <div class="item"><a id="editProfileLink" class="btn btn-sm" href="#">Edit Profile</a></div>
-      <div class="item"><a class="btn btn-sm btn-outline" href="/APLX/Parcel/backend/auth_logout.php">Logout</a></div>
+      <div class="item"><a class="btn btn-sm btn-outline" href="/APLX/backend/auth_logout.php">Logout</a></div>
     </div>
   </div>
 </div>
@@ -94,7 +94,7 @@
       <button class="modal-close" id="adminProfileClose" type="button" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/Parcel/backend/admin/profile_update.php">
+      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/backend/admin/profile_update.php">
         <div class="form-row">
           <input type="text" name="name" placeholder="Full Name" required />
         </div>

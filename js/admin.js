@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const role = localStorage.getItem('userRole') || '';
       if (!isLoggedIn || role !== 'admin') {
         const next = encodeURIComponent(window.location.pathname);
-        window.location.replace(`/APLX/Parcel/frontend/login.html?next=${next}`);
+        window.location.replace(`/APLX/frontend/login.html?next=${next}`);
         return; // stop further init on this page
       }
     } catch(_){ /* ignore */ }
@@ -15,11 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.setAttribute('data-admin-loading','1');
   // Load partials
   Promise.all([
-    fetch('/APLX/Parcel/frontend/admin/sidebar.html', { cache:'no-store' }).then(r => r.text()).then(html => {
+    fetch('/APLX/frontend/admin/sidebar.php', { cache:'no-store' }).then(r => r.text()).then(html => {
       const host = document.getElementById('sidebar');
       if (host) host.outerHTML = html;
     }),
-    fetch('/APLX/Parcel/frontend/admin/topbar.html', { cache:'no-store' }).then(r => r.text()).then(html => {
+    fetch('/APLX/frontend/admin/topbar.php', { cache:'no-store' }).then(r => r.text()).then(html => {
       const host = document.getElementById('topbar');
       if (host) host.outerHTML = html;
     })
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try{
         if (profileForm){
           profileStatus && (profileStatus.textContent = '');
-          const res = await fetch('/APLX/Parcel/backend/admin/profile_get.php', { cache:'no-store' });
+          const res = await fetch('/APLX/backend/admin/profile_get.php', { cache:'no-store' });
           if (res.ok){
             const data = await res.json();
             const it = data.item || {};
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadNotifications(){
       try{
         // Preferred API endpoint; adjust if your backend differs
-        const res = await fetch('/APLX/Parcel/backend/admin/notifications.php?api=1', { cache:'no-store' });
+        const res = await fetch('/APLX/backend/admin/notifications.php?api=1', { cache:'no-store' });
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
         const items = Array.isArray(data.items) ? data.items : [];

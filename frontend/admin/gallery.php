@@ -19,20 +19,13 @@
     .badge{display:inline-block;background:#ef4444;color:#fff;padding:2px 6px;border-radius:999px;font-size:12px}
     .page-actions{ text-align:right; margin:8px 0 12px; }
     .page-actions a{ display:inline-block; margin-left:8px; }
-  </style>
-  /* Dark theme inputs */
-    .card input[type="text"],
-    .card input[type="number"],
-    .card input[type="email"],
-    .card input[type="tel"],
-    .card input[type="file"],
-    .card select{
+    /* Dark theme inputs */
+    .card input[type="text"], .card input[type="number"], .card input[type="email"], .card input[type="tel"], .card input[type="file"], .card select{
       background:#0b1220; border:1px solid var(--border); color:var(--text);
       border-radius:8px; padding:10px; width:100%;
     }
     .card textarea{ resize:vertical; }
-    .card input::placeholder,
-    .card textarea::placeholder{ color:var(--muted); }
+    .card input::placeholder, .card textarea::placeholder{ color:var(--muted); }
   </style>
 </head>
 <body>
@@ -41,7 +34,7 @@
   <main class="content">
     <div id="topbar"></div>
     <div class="page-actions">
-      <a class="btn btn-outline" href="/APLX/frontend/admin/settings.html" title="Back to Settings">← Back to Settings</a>
+      <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php" title="Back to Settings">← Back to Settings</a>
     </div>
 
     <section class="card">
@@ -120,7 +113,7 @@
   }
   await getCSRF();
 
-  function escape(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
   async function load(){
     rows.innerHTML = '<tr><td colspan="6" class="muted">Loading...</td></tr>';
@@ -129,11 +122,11 @@
     const items = Array.isArray(data.items) ? data.items : [];
     if (!items.length){ rows.innerHTML = '<tr><td colspan="6" class="muted">No images. Use the form to add.</td></tr>'; return; }
     rows.innerHTML = items.map((it,i)=>{
-      const date = (it.day?('<span class="badge"><strong>'+escape(it.day)+'</strong> '+escape(it.month||'')+'</span>'):'');
-      const tag = it.tag ? ('<span class="badge" style="background:#111827">'+escape(it.tag)+'</span>') : '';
+      const date = (it.day?('<span class="badge"><strong>'+escapeHtml(it.day)+'</strong> '+escapeHtml(it.month||'')+'</span>'):'');
+      const tag = it.tag ? ('<span class="badge" style="background:#111827">'+escapeHtml(it.tag)+'</span>') : '';
       return `<tr>
         <td>${i+1}</td>
-        <td><img class="thumb" src="${escape(it.image_url)}" alt=""></td>
+        <td><img class="thumb" src="${escapeHtml(it.image_url)}" alt=""></td>
         <td>${date}</td>
         <td>${tag}</td>
         <td>${it.sort_order|0}</td>

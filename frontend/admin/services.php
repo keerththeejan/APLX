@@ -9,9 +9,7 @@
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
     .content{padding:16px;margin-left:260px}
-    .services-admin{
-      display:grid;grid-template-columns:2fr 1fr;gap:16px
-    }
+    .services-admin{ display:grid;grid-template-columns:2fr 1fr;gap:16px }
     @media (max-width: 1000px){ .services-admin{ grid-template-columns:1fr; } }
     .list table{ width:100%; border-collapse: collapse; }
     .list tr:hover{ background:#0b1220; }
@@ -21,20 +19,12 @@
     .image-thumb{ width:64px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); }
     .page-actions{ text-align:right; margin:8px 0 12px; }
     .page-actions a{ display:inline-block; margin-left:8px; }
-  </style>
-  /* Ensure form controls match dark theme */
-    .card input[type="text"],
-    .card input[type="number"],
-    .card input[type="email"],
-    .card input[type="tel"],
-    .card input[type="file"],
-    .card select{
-      background:#0b1220; border:1px solid var(--border); color:var(--text);
-      border-radius:8px; padding:10px; width:100%;
+    /* Dark theme inputs */
+    .card input[type="text"], .card input[type="number"], .card input[type="email"], .card input[type="tel"], .card input[type="file"], .card select{
+      background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; width:100%;
     }
     .card textarea{ resize:vertical; }
-    .card input::placeholder,
-    .card textarea::placeholder{ color:var(--muted); }
+    .card input::placeholder, .card textarea::placeholder{ color:var(--muted); }
   </style>
 </head>
 <body>
@@ -43,7 +33,7 @@
   <main class="content">
     <div id="topbar"></div>
     <div class="page-actions">
-      <a class="btn btn-outline" href="/APLX/frontend/admin/settings.html" title="Back to Settings">← Back to Settings</a>
+      <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php" title="Back to Settings">← Back to Settings</a>
     </div>
 
     <section class="card">
@@ -115,11 +105,10 @@
     try{
       const res = await fetch('/APLX/backend/router.php?route=admin/services&action=csrf', { cache:'no-store' });
       if (res.ok) { const d = await res.json(); csrfField.value = d.csrf || ''; }
-    }catch(_){}
-  }
+    }catch(_){}}
   await getCSRF();
 
-  function escape(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
   async function load(){
     rows.innerHTML = '<tr><td colspan="7" class="muted">Loading...</td></tr>';
@@ -128,14 +117,14 @@
     const items = Array.isArray(data.items) ? data.items : [];
     if (!items.length){ rows.innerHTML = '<tr><td colspan="7" class="muted">No services. Use the form to add.</td></tr>'; return; }
     rows.innerHTML = items.map((it,i)=>{
-      const icon = it.icon ? `<span class="preview-icon">${escape(it.icon)}</span>` : '';
-      const img = it.image_url ? `<img class="image-thumb" src="${escape(it.image_url)}" alt="">` : '';
+      const icon = it.icon ? `<span class="preview-icon">${escapeHtml(it.icon)}</span>` : '';
+      const img = it.image_url ? `<img class="image-thumb" src="${escapeHtml(it.image_url)}" alt="">` : '';
       return `<tr>
         <td>${i+1}</td>
         <td>${icon}</td>
         <td>${img}</td>
-        <td>${escape(it.title)}</td>
-        <td>${escape(it.description)}</td>
+        <td>${escapeHtml(it.title)}</td>
+        <td>${escapeHtml(it.description)}</td>
         <td>${it.sort_order|0}</td>
         <td class="actions">
           <button class="btn btn-small" data-act="edit" data-id="${it.id}">Edit</button>
@@ -158,7 +147,6 @@
     if (!btn) return;
     const id = btn.getAttribute('data-id');
     if (btn.dataset.act === 'edit'){
-      // Load row values from table
       const tr = btn.closest('tr');
       idField.value = id;
       methodField.value = 'PATCH';
@@ -168,7 +156,6 @@
       window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth' });
     } else if (btn.dataset.act === 'del'){
       if (!confirm('Delete this service?')) return;
-      // POST with _method=DELETE to include CSRF
       const fd = new FormData();
       fd.append('csrf', csrfField.value);
       fd.append('_method', 'DELETE');
@@ -181,17 +168,8 @@
     e.preventDefault();
     statusEl.textContent = 'Saving...';
     const fd = new FormData(form);
-    const res = await fetch(form.action + (methodField.value==='PATCH'?`?id=${encodeURIComponent(idField.value)}`:''), {
-      method:'POST', body: fd
-    });
-    if (res.ok){
-      await load();
-      statusEl.textContent = 'Saved';
-      resetForm();
-      await getCSRF();
-    } else {
-      statusEl.textContent = 'Save failed';
-    }
+    const res = await fetch(form.action + (methodField.value==='PATCH'?`?id=${encodeURIComponent(idField.value)}`:''), { method:'POST', body: fd });
+    if (res.ok){ await load(); statusEl.textContent = 'Saved'; resetForm(); await getCSRF(); } else { statusEl.textContent = 'Save failed'; }
   });
 
   load();

@@ -60,7 +60,6 @@
   const pgInfo= document.getElementById('pgInfo');
   let page=1, limit=10, total=0;
 
-
   async function load(){
     if(!tbody) return;
     tbody.innerHTML = '<tr><td colspan="6" class="muted">Loading...</td></tr>';

@@ -51,7 +51,7 @@ function save_upload($field, $subdir){
   $name = bin2hex(random_bytes(8)) . $allowed[$mime];
   $target = $dir . '/' . $name;
   if (!move_uploaded_file($file['tmp_name'], $target)) return null;
-  return '/APLX/Parcel/uploads/' . trim($subdir,'/') . '/' . $name;
+  return '/APLX/uploads/' . trim($subdir,'/') . '/' . $name;
 }
 
 switch ($method) {

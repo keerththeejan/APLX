@@ -1,66 +1,43 @@
 <?php
 require_once __DIR__ . '/../init.php';
 require_admin();
-$id = intval($_GET['id'] ?? 0);
-$stmt = $conn->prepare('SELECT * FROM shipments WHERE id = ?');
-$stmt->bind_param('i', $id);
-$stmt->execute();
-$shipment = $stmt->get_result()->fetch_assoc();
-if (!$shipment) { echo 'Shipment not found'; exit; }
-$msg = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check();
-    $receiver = trim($_POST['receiver_name'] ?? '');
-    $origin = trim($_POST['origin'] ?? '');
-    $destination = trim($_POST['destination'] ?? '');
-    $status = trim($_POST['status'] ?? 'Booked');
-    $stmt = $conn->prepare('UPDATE shipments SET receiver_name=?, origin=?, destination=?, status=? WHERE id=?');
-    $stmt->bind_param('ssssi', $receiver, $origin, $destination, $status, $id);
-    $stmt->execute();
-    $msg = 'Updated successfully';
-    $stmt = $conn->prepare('SELECT * FROM shipments WHERE id = ?');
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    $shipment = $stmt->get_result()->fetch_assoc();
+header('Content-Type: application/json');
+
+function respond($d,$c=200){ http_response_code($c); echo json_encode($d); exit; }
+function json_body(){ $raw = file_get_contents('php://input'); $d = json_decode($raw, true); return is_array($d) ? $d : []; }
+
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+if ($method === 'GET') {
+  $id = intval($_GET['id'] ?? 0);
+  if ($id <= 0) respond(['error' => 'Invalid id'], 400);
+  $stmt = $conn->prepare('SELECT id, tracking_number, sender_name, receiver_name, origin, destination, weight, price, status, created_at, updated_at FROM shipments WHERE id=? LIMIT 1');
+  $stmt->bind_param('i', $id);
+  $stmt->execute();
+  $item = $stmt->get_result()->fetch_assoc();
+  if (!$item) respond(['error' => 'Not found'], 404);
+  respond(['item' => $item]);
 }
-?>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Edit Shipment</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
-</head>
-<body>
-<header class="navbar">
-  <div class="container">
-    <div class="brand">Edit Shipment</div>
-    <nav>
-      <a href="/Parcel/backend/admin/dashboard.php">Dashboard</a>
-      <a href="/Parcel/backend/admin/shipments.php">Shipments</a>
-      <a href="/Parcel/backend/auth_logout.php">Logout</a>
-    </nav>
-  </div>
-</header>
-<main class="container">
-  <section class="card">
-    <?php if ($msg): ?><p class="notice"><?php echo h($msg); ?></p><?php endif; ?>
-    <form method="post">
-      <input type="hidden" name="csrf" value="<?php echo h(csrf_token()); ?>">
-      <div class="grid">
-        <input type="text" name="receiver_name" value="<?php echo h($shipment['receiver_name']); ?>" placeholder="Receiver Name" required>
-        <input type="text" name="origin" value="<?php echo h($shipment['origin']); ?>" placeholder="Origin" required>
-        <input type="text" name="destination" value="<?php echo h($shipment['destination']); ?>" placeholder="Destination" required>
-        <select name="status">
-          <?php foreach(['Booked','In Transit','Delivered','Cancelled'] as $st): ?>
-            <option value="<?php echo h($st); ?>" <?php echo $shipment['status']===$st?'selected':''; ?>><?php echo h($st); ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <button class="btn" type="submit">Save</button>
-    </form>
-  </section>
-</main>
-</body>
-</html>
+
+if (in_array($method, ['POST','PUT','PATCH'], true)) {
+  csrf_check();
+  $isJson = stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false;
+  $src = $isJson ? json_body() : $_POST;
+  $id = intval($_GET['id'] ?? ($src['id'] ?? 0));
+  if ($id <= 0) respond(['error' => 'Invalid id'], 400);
+  $cur = $conn->prepare('SELECT receiver_name, origin, destination, status FROM shipments WHERE id=?');
+  $cur->bind_param('i', $id);
+  $cur->execute();
+  $old = $cur->get_result()->fetch_assoc();
+  if (!$old) respond(['error' => 'Not found'], 404);
+  $receiver = trim($src['receiver_name'] ?? $old['receiver_name']);
+  $origin = trim($src['origin'] ?? $old['origin']);
+  $destination = trim($src['destination'] ?? $old['destination']);
+  $status = trim($src['status'] ?? $old['status']);
+  $stmt = $conn->prepare('UPDATE shipments SET receiver_name=?, origin=?, destination=?, status=? WHERE id=?');
+  $stmt->bind_param('ssssi', $receiver, $origin, $destination, $status, $id);
+  $stmt->execute();
+  respond(['ok' => true]);
+}
+
+respond(['error' => 'Method not allowed'], 405);

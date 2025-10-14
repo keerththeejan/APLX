@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Track Shipment</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .track-page{ position:relative; padding:48px 0; min-height:calc(100vh - 80px); display:flex; align-items:center; }
     .track-page .container{ display:flex; justify-content:center; }
@@ -27,10 +27,10 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="http://localhost/APLX/Parcel/frontend/index.html">Home</a>
-      <a href="http://localhost/APLX/Parcel/frontend/track.html" class="active">Track</a>
-      <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
+      <a href="http://localhost/APLX/frontend/index.html">Home</a>
+      <a href="http://localhost/APLX/frontend/track.html" class="active">Track</a>
+      <a id="navBook" href="http://localhost/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
+      <a href="http://localhost/APLX/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -40,7 +40,7 @@
       <div class="track-card" id="trackCard">
         <button type="button" class="track-close" id="closeTrack" aria-label="Close form">✕</button>
         <h2>Track Shipment</h2>
-        <form method="get" action="/APLX/Parcel/backend/track_result.php">
+        <form method="get" action="/APLX/backend/track_result.php">
           <div class="track-form-row">
             <input type="text" name="tn" placeholder="Enter Tracking Number" required>
           </div>
@@ -58,8 +58,8 @@
   const role = localStorage.getItem('userRole') || 'customer';
   const loggedCustomer = isLoggedIn && role === 'customer';
   book.href = loggedCustomer
-    ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
-    : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+    ? 'http://localhost/APLX/frontend/customer/book.html'
+    : 'http://localhost/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html';
 })();
 </script>
 <script>
@@ -88,7 +88,7 @@
 // Close track card -> go home
 (function(){
   const btn = document.getElementById('closeTrack');
-  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/Parcel/frontend/index.html'; }); }
+  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/frontend/index.html'; }); }
 })();
 </script>
 </body>

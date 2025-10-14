@@ -80,5 +80,34 @@ if ($method === 'POST') {
     }
 }
 
+// Allow DELETE for removing a user by id
+if ($method === 'DELETE') {
+    // Support method override via _method when sent from forms or query
+    $override = $_GET['_method'] ?? $_POST['_method'] ?? '';
+    if ($override && strtoupper($override) !== 'DELETE') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+        exit;
+    }
+    $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid id']);
+        exit;
+    }
+    // Do not allow deleting self (optional safety)
+    $me = $_SESSION['user_id'] ?? 0;
+    if ($me && $me == $id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Cannot delete current user']);
+        exit;
+    }
+    $stmt = $conn->prepare('DELETE FROM users WHERE id=?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 http_response_code(405);
 echo json_encode(['error' => 'Method not allowed']);

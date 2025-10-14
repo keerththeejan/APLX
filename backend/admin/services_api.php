@@ -58,14 +58,14 @@ function save_upload($field, $subdir) {
   $mime = $finfo ? finfo_buffer($finfo, file_get_contents($file['tmp_name'])) : ($file['type'] ?? '');
   $allowed = ['image/jpeg'=>'.jpg','image/png'=>'.png','image/webp'=>'.webp','image/gif'=>'.gif'];
   if (!isset($allowed[$mime])) { return null; }
-  $root = realpath(__DIR__ . '/../../'); // points to /APLX/Parcel
+  $root = realpath(__DIR__ . '/../../');
   $uploadDir = $root . '/uploads/' . trim($subdir, '/');
   if (!ensure_dir($uploadDir)) return null;
   $name = bin2hex(random_bytes(8)) . $allowed[$mime];
   $target = $uploadDir . '/' . $name;
   if (!move_uploaded_file($file['tmp_name'], $target)) return null;
   // Public URL
-  $public = '/APLX/Parcel/uploads/' . trim($subdir,'/') . '/' . $name;
+  $public = '/APLX/uploads/' . trim($subdir,'/') . '/' . $name;
   return $public;
 }
 
