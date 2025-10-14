@@ -85,10 +85,12 @@
       <button id="asCustomer" class="active" role="tab" aria-selected="true">Customer</button>
       <button id="asAdmin" role="tab" aria-selected="false">Admin</button>
     </div>
-    <form id="commonLoginForm" style="margin-top:12px">
-      <input id="loginEmail" type="email" placeholder="Email" required>
+    <form id="commonLoginForm" style="margin-top:12px" method="post" action="/APLX/Parcel/backend/auth_login.php">
+      <input type="hidden" name="role" id="roleField" value="customer">
+      <input type="hidden" name="next" id="nextField" value="">
+      <input id="loginEmail" name="email" type="email" placeholder="Email" required>
       <div class="input-wrap">
-        <input id="loginPass" type="password" placeholder="Password" required aria-describedby="togglePass">
+        <input id="loginPass" name="password" type="password" placeholder="Password" required aria-describedby="togglePass">
         <button type="button" id="togglePass" class="toggle-pass" aria-label="Show password" title="Show/Hide password">👁</button>
       </div>
       <button class="btn" type="submit">Login</button>
@@ -121,16 +123,19 @@
 (function(){
   const btnCust = document.getElementById('asCustomer');
   const btnAdmin = document.getElementById('asAdmin');
+  const roleField = document.getElementById('roleField');
+  const nextField = document.getElementById('nextField');
   let role = 'customer';
   // read next param
   const params = new URLSearchParams(location.search);
   const next = params.get('next');
   const stay = params.get('stay') === '1';
+  if (next) nextField.value = next;
   // If next points to admin pages, default to admin role
-  if (next && /\/APLX\/frontend\/admin\//i.test(next)) {
+  if (next && /\/APLX\/Parcel\/frontend\/admin\//i.test(next)) {
     role = 'admin';
   }
-  function setRole(r){ role = r; btnCust.classList.toggle('active', r==='customer'); btnCust.setAttribute('aria-selected', String(r==='customer')); btnAdmin.classList.toggle('active', r==='admin'); btnAdmin.setAttribute('aria-selected', String(r==='admin')); }
+  function setRole(r){ role = r; roleField.value = r; btnCust.classList.toggle('active', r==='customer'); btnCust.setAttribute('aria-selected', String(r==='customer')); btnAdmin.classList.toggle('active', r==='admin'); btnAdmin.setAttribute('aria-selected', String(r==='admin')); }
   btnCust?.addEventListener('click', ()=> setRole('customer'));
   btnAdmin?.addEventListener('click', ()=> setRole('admin'));
   // Reflect initial role in UI
@@ -147,51 +152,21 @@
     toggleBtn.setAttribute('title', isHidden ? 'Hide password' : 'Show password');
   });
   const form = document.getElementById('commonLoginForm');
-  form?.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    // Determine role at submit time based on active tab (extra safety)
+  form?.addEventListener('submit', ()=>{
+    // Ensure hidden role field matches current tab before submit
     try{
       const custActive = btnCust?.classList.contains('active');
       const adminActive = btnAdmin?.classList.contains('active');
-      if (adminActive) role = 'admin'; else if (custActive) role = 'customer';
+      if (adminActive) setRole('admin'); else if (custActive) setRole('customer');
     }catch(_){/* ignore */}
-    // Store session flags
-    try{
-      localStorage.setItem('userEmail', email);
-      localStorage.setItem('userRole', role);
-      localStorage.setItem('isLoggedIn', '1');
-    }catch(_){/* ignore */}
-    // Redirect
-    if (next && !stay) {
-      // Ensure next is same-origin path only
-      try{
-        const u = new URL(next, window.location.origin);
-        if (u.origin === window.location.origin) window.location.href = u.pathname + u.search + u.hash;
-        else window.location.href = '/APLX/frontend/index.html';
-      }catch(_){ window.location.href = '/APLX/frontend/index.html'; }
-      return;
-    }
-    if (!stay) {
-      if (role === 'admin') window.location.href = '/APLX/frontend/admin/dashboard.html';
-      else window.location.href = '/APLX/frontend/customer/book.html';
-    }
+    // Allow normal submit to backend which will handle redirects
   });
   // Close button -> back to previous or home
   const closeBtn = document.getElementById('closeLogin');
   closeBtn?.addEventListener('click', ()=>{
     window.location.href = 'index.html';
   });
-  // If already logged in, fast-path
-  const already = localStorage.getItem('isLoggedIn') === '1';
-  if (already) {
-    const savedRole = localStorage.getItem('userRole') || 'customer';
-    if (!stay) {
-      if (next) { window.location.replace(next); }
-      else if (savedRole === 'admin') { window.location.replace('/APLX/frontend/admin/dashboard.html'); }
-      else { window.location.replace('/APLX/frontend/customer/book.html'); }
-    }
-  }
+  // No frontend fast-path; backend session decides
 })();
 </script>
 </body>

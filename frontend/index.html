@@ -29,7 +29,7 @@
       <nav>
         <a href="/APLX/" class="active">Home</a>
         <a href="track.html">Track</a>
-        <a id="navBook" href="login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
+        <a id="navBook" href="login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
         <a href="login.html?stay=1" title="Login" aria-label="Login"><span aria-hidden="true">👤</span> <span class="hide-sm">Login</span></a>
       </nav>
     </div>
@@ -609,8 +609,8 @@
     const role = localStorage.getItem('userRole') || 'customer';
     const loggedCustomer = isLoggedIn && role === 'customer';
     book.href = loggedCustomer
-      ? '/APLX/frontend/customer/book.html'
-      : '/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html';
+      ? '/APLX/Parcel/frontend/customer/book.html'
+      : '/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
   })();
   // Hero cross-fade
   (function(){

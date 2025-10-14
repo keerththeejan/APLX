@@ -7,36 +7,36 @@ $receiver = trim($_POST['receiver_name'] ?? '');
 $origin = trim($_POST['origin'] ?? '');
 $destination = trim($_POST['destination'] ?? '');
 $weight = isset($_POST['weight']) ? floatval($_POST['weight']) : 0;
-$price = isset($_POST['price']) && $_POST['price'] !== '' ? floatval($_POST['price']) : null;
 $msg = '';
 $tracking = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($sender && $receiver && $origin && $destination && $weight > 0) {
         $tracking = strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
         $status = 'Booked';
-        if ($price === null || $price === '') {
-            // Insert without price so it stores as NULL
-            $stmt = $conn->prepare('INSERT INTO shipments (tracking_number, sender_name, receiver_name, origin, destination, weight, status) VALUES (?,?,?,?,?,?,?)');
-            $stmt->bind_param('sssssds', $tracking, $sender, $receiver, $origin, $destination, $weight, $status);
-            $stmt->execute();
-            // Log booking without price
-            $stmt2 = $conn->prepare('INSERT INTO bookings (tracking_number, sender_name, receiver_name, origin, destination, weight) VALUES (?,?,?,?,?,?)');
-            $stmt2->bind_param('sssssd', $tracking, $sender, $receiver, $origin, $destination, $weight);
-            $stmt2->execute();
-        } else {
-            $p = (float)$price;
-            $stmt = $conn->prepare('INSERT INTO shipments (tracking_number, sender_name, receiver_name, origin, destination, weight, price, status) VALUES (?,?,?,?,?,?,?,?)');
-            $stmt->bind_param('sssssdds', $tracking, $sender, $receiver, $origin, $destination, $weight, $p, $status);
-            $stmt->execute();
-            // Log booking with price
-            $stmt2 = $conn->prepare('INSERT INTO bookings (tracking_number, sender_name, receiver_name, origin, destination, weight, price) VALUES (?,?,?,?,?,?,?)');
-            $stmt2->bind_param('sssssdd', $tracking, $sender, $receiver, $origin, $destination, $weight, $p);
-            $stmt2->execute();
-        }
+        // Always insert without price so it stores as NULL
+        $stmt = $conn->prepare('INSERT INTO shipments (tracking_number, sender_name, receiver_name, origin, destination, weight, status) VALUES (?,?,?,?,?,?,?)');
+        $stmt->bind_param('sssssds', $tracking, $sender, $receiver, $origin, $destination, $weight, $status);
+        $stmt->execute();
+        // Log booking without price
+        $stmt2 = $conn->prepare('INSERT INTO bookings (tracking_number, sender_name, receiver_name, origin, destination, weight) VALUES (?,?,?,?,?,?)');
+        $stmt2->bind_param('sssssd', $tracking, $sender, $receiver, $origin, $destination, $weight);
+        $stmt2->execute();
         $msg = 'Shipment booked! Your tracking number is ' . htmlspecialchars($tracking, ENT_QUOTES, 'UTF-8');
     } else {
         $msg = 'Please fill all required fields.';
     }
+}
+
+// If client expects JSON, return API-style response for AJAX
+$accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+if (strpos($accept, 'application/json') !== false) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'ok' => (bool)$tracking,
+        'message' => $msg,
+        'tracking' => $tracking,
+    ]);
+    exit;
 }
 ?>
 <!doctype html>

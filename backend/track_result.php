@@ -8,6 +8,28 @@ if ($tracking !== '') {
     $stmt->execute();
     $shipment = $stmt->get_result()->fetch_assoc();
 }
+
+// If client expects JSON, return structured result (used by booking popup)
+$accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+if (strpos($accept, 'application/json') !== false) {
+    header('Content-Type: application/json');
+    if ($tracking === '') {
+        echo json_encode(['ok' => false, 'message' => 'No tracking number provided.']);
+    } elseif ($shipment) {
+        echo json_encode([
+            'ok' => true,
+            'tracking' => $shipment['tracking_number'],
+            'status' => $shipment['status'],
+            'origin' => $shipment['origin'],
+            'destination' => $shipment['destination'],
+            'receiver_name' => $shipment['receiver_name'],
+            'updated_at' => $shipment['updated_at'],
+        ]);
+    } else {
+        echo json_encode(['ok' => false, 'message' => 'No shipment found for tracking number: ' . $tracking]);
+    }
+    exit;
+}
 ?>
 <!doctype html>
 <html lang="en">

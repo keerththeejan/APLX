@@ -41,6 +41,9 @@
     .btn-primary{ background:#2563eb; color:#fff; border:1px solid #1d4ed8; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
     .btn-secondary{ background:transparent; color:var(--text); border:1px solid var(--border); padding:10px 14px; border-radius:10px; cursor:pointer; }
     @media (max-width: 900px){ .booking-grid{ grid-template-columns:1fr; } }
+    .popup-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .popup-card{ background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:18px; width:min(520px, 92vw); box-shadow:0 10px 24px rgba(0,0,0,.35); }
+    .popup-actions{ display:flex; gap:10px; margin-top:14px; justify-content:flex-end; }
   </style>
   <link rel="icon" href="#">
   <meta name="theme-color" content="#0b1220">
@@ -66,7 +69,7 @@
         <div class="booking-card" id="bookingCard">
           <button type="button" class="booking-close" id="closeBooking" aria-label="Close form">✕</button>
           <h2>Book Parcel</h2>
-          <form method="post" action="../../backend/book_submit.php">
+          <form id="bookForm" method="post" action="../../backend/book_submit.php">
             <div class="booking-grid">
               <input type="text" name="sender_name" placeholder="Sender Name" required>
               <input type="tel" name="sender_phone" placeholder="Sender Phone" required>
@@ -75,27 +78,38 @@
               <input type="text" name="origin" placeholder="Origin City" required>
               <input type="text" name="destination" placeholder="Destination City" required>
               <input type="number" step="0.01" name="weight" placeholder="Weight (kg)" required>
-              <input type="number" step="0.01" name="price" placeholder="Price (optional)">
             </div>
             <div class="booking-actions">
               <button class="btn-primary" type="submit">Book</button>
               <button class="btn-secondary" type="reset">Clear</button>
             </div>
           </form>
+          <div class="popup-backdrop" id="bookPopup">
+            <div class="popup-card">
+              <h3 id="popupTitle" style="margin:0 0 8px 0; font-size:20px;">Booking Result</h3>
+              <p id="popupMsg" style="margin:0 0 8px 0;"></p>
+              <div id="popupActions" class="popup-actions"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
   <script>
-  // Auth guard: require customer login to view this page
+  // Auth guard: require backend session as customer to view this page
   (function(){
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
-    const role = localStorage.getItem('userRole') || '';
-    if (!(isLoggedIn && role === 'customer')) {
-      window.location.replace('http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html');
-      return;
-    }
+    const next = encodeURIComponent('/APLX/Parcel/frontend/customer/book.html');
+    fetch('/APLX/Parcel/backend/whoami.php', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (!data || !data.loggedIn || data.role !== 'customer') {
+          window.location.replace('/APLX/Parcel/frontend/login.html?next=' + next);
+        }
+      })
+      .catch(() => {
+        window.location.replace('/APLX/Parcel/frontend/login.html?next=' + next);
+      });
   })();
   </script>
   <script>
@@ -126,6 +140,64 @@
     const btn = document.getElementById('closeBooking');
     if(btn){
       btn.addEventListener('click', ()=>{ window.location.href = '../index.html'; });
+    }
+  })();
+  </script>
+  <script>
+  (function(){
+    const form = document.getElementById('bookForm');
+    const popup = document.getElementById('bookPopup');
+    const msgEl = document.getElementById('popupMsg');
+    const actions = document.getElementById('popupActions');
+    function showPopup(message, tracking, details){
+      if (details && details.ok){
+        msgEl.innerHTML = `
+          <div><strong>Tracking:</strong> ${details.tracking}</div>
+          <div><strong>Status:</strong> ${details.status}</div>
+          <div><strong>From:</strong> ${details.origin} → <strong>To:</strong> ${details.destination}</div>
+          <div><strong>Receiver:</strong> ${details.receiver_name || ''}</div>
+          <div><strong>Updated:</strong> ${details.updated_at || ''}</div>
+          <hr style="margin:10px 0; opacity:.4">
+          <div>${message}</div>`;
+      } else {
+        msgEl.textContent = message;
+      }
+      actions.innerHTML = '';
+      const ok = document.createElement('button');
+      ok.className = 'btn-primary';
+      ok.type = 'button';
+      ok.textContent = 'OK';
+      ok.addEventListener('click', ()=>{ popup.style.display = 'none'; });
+      actions.appendChild(ok);
+      popup.style.display = 'flex';
+    }
+    if(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const fd = new FormData(form);
+        fetch(form.action, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' }, credentials: 'include' })
+          .then(r => r.ok ? r.json() : r.text().then(t=>{ throw new Error(t||'Error'); }))
+          .then(data => {
+            const msg = (data && data.message) ? data.message : 'Submitted';
+            const tn = (data && data.tracking) ? data.tracking : '';
+            if (data && data.ok){
+              form.reset();
+            }
+            if (tn){
+              fetch('/APLX/Parcel/backend/track_result.php?tn=' + encodeURIComponent(tn), { headers: { 'Accept': 'application/json' }})
+                .then(r => r.ok ? r.json() : Promise.resolve(null))
+                .then(details => {
+                  showPopup(msg, tn, details);
+                })
+                .catch(() => showPopup(msg, tn));
+            } else {
+              showPopup(msg, tn);
+            }
+          })
+          .catch(()=>{
+            showPopup('Something went wrong. Please try again.');
+          });
+      });
     }
   })();
   </script>
