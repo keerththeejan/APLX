@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const role = localStorage.getItem('userRole') || '';
       if (!isLoggedIn || role !== 'admin') {
         const next = encodeURIComponent(window.location.pathname);
-        window.location.replace(`/APLX/frontend/login.html?next=${next}`);
+        window.location.replace(`/APLX/frontend/login.php?next=${next}`);
         return; // stop further init on this page
       }
     } catch(_){ /* ignore */ }
@@ -237,3 +237,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadNotifications();
   }
 });
+
+

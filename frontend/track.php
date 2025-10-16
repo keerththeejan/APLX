@@ -27,10 +27,10 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="http://localhost/APLX/frontend/index.html">Home</a>
-      <a href="http://localhost/APLX/frontend/track.html" class="active">Track</a>
-      <a id="navBook" href="http://localhost/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
-      <a href="http://localhost/APLX/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
+      <a href="http://localhost/APLX/frontend/index.php">Home</a>
+      <a href="http://localhost/APLX/frontend/track.php" class="active">Track</a>
+      <a id="navBook" href="http://localhost/APLX/frontend/login.php?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
+      <a href="http://localhost/APLX/frontend/login.php?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -58,8 +58,8 @@
   const role = localStorage.getItem('userRole') || 'customer';
   const loggedCustomer = isLoggedIn && role === 'customer';
   book.href = loggedCustomer
-    ? 'http://localhost/APLX/frontend/customer/book.html'
-    : 'http://localhost/APLX/frontend/login.html?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.html';
+    ? 'http://localhost/APLX/frontend/customer/book.php'
+    : 'http://localhost/APLX/frontend/login.php?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.php';
 })();
 </script>
 <script>
@@ -88,8 +88,10 @@
 // Close track card -> go home
 (function(){
   const btn = document.getElementById('closeTrack');
-  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/frontend/index.html'; }); }
+  if(btn){ btn.addEventListener('click', ()=>{ window.location.href = '/APLX/frontend/index.php'; }); }
 })();
 </script>
 </body>
 </html>
+
+

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Settings</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -30,7 +30,7 @@
         <h3>Homepage Services</h3>
         <p>Manage the four service cards shown on the homepage (title, description, image/icon, order).</p>
         <div class="actions">
-          <a class="btn" href="/APLX/Parcel/frontend/admin/services.html">Open Services</a>
+          <a class="btn" href="/APLX/frontend/admin/services.php">Open Services</a>
         </div>
       </div>
       <div class="setting-card">
@@ -38,7 +38,7 @@
         <h3>Gallery (Slider)</h3>
         <p>Add, edit, reorder images for the auto-scrolling gallery with optional date badge and tag.</p>
         <div class="actions">
-          <a class="btn" href="/APLX/Parcel/frontend/admin/gallery.html">Open Gallery</a>
+          <a class="btn" href="/APLX/frontend/admin/gallery.php">Open Gallery</a>
         </div>
       </div>
       <div class="setting-card">
@@ -46,13 +46,17 @@
         <h3>Contact Details</h3>
         <p>Edit address, phone, email and opening hours used in the footer and contact info cards.</p>
         <div class="actions">
-          <a class="btn" href="/APLX/Parcel/frontend/admin/contact.html">Open Contact</a>
+          <a class="btn" href="/APLX/frontend/admin/contact.php">Open Contact</a>
         </div>
       </div>
     </div>
   </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 </body>
 </html>
+
+
+
+

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Mail</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .content{padding:16px;margin-left:260px}
     .toolbar{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin:48px 0 12px 0}
@@ -34,7 +34,7 @@
 
     <div class="toolbar">
       <h2>Mail Logs</h2>
-      <div class="mc-row"><a class="btn" href="/APLX/Parcel/frontend/admin/message_customer.html">Message Customer</a></div>
+      <div class="mc-row"><a class="btn" href="/APLX/frontend/admin/message_customer.php">Message Customer</a></div>
       <div class="controls-right">
         <div class="searchbox">
           <input id="q" type="search" placeholder="Search email or subject">
@@ -72,7 +72,7 @@
   </main>
 </div>
 
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script>
 (function(){
   const tbody = document.getElementById('logsTbody');
@@ -90,7 +90,7 @@
     const search = (q.value||'').trim();
     if (type) params.set('type', type);
     if (search) params.set('search', search);
-    const res = await fetch('/APLX/Parcel/backend/admin/mail_logs.php?' + params.toString());
+    const res = await fetch('/APLX/backend/admin/mail_logs.php?' + params.toString());
     const data = await res.json();
     total = data.total || 0;
     renderRows(data.items||[]);
@@ -137,3 +137,7 @@
 </script>
 </body>
 </html>
+
+
+
+

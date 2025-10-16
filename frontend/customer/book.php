@@ -55,10 +55,10 @@
       <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
       <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
       <nav>
-        <a href="../index.html">Home</a>
-        <a href="../track.html">Track</a>
-        <a href="./book.html" class="active">Book</a>
-        <a href="../login.html?stay=1" title="Login" aria-label="Login">👤</a>
+        <a href="../index.php">Home</a>
+        <a href="../track.php">Track</a>
+        <a href="./book.php" class="active">Book</a>
+        <a href="../login.php?stay=1" title="Login" aria-label="Login">👤</a>
       </nav>
     </div>
   </header>
@@ -99,16 +99,16 @@
   <script>
   // Auth guard: require backend session as customer to view this page
   (function(){
-    const next = encodeURIComponent('/APLX/Parcel/frontend/customer/book.html');
-    fetch('/APLX/Parcel/backend/whoami.php', { credentials: 'include' })
+    const next = encodeURIComponent('/APLX/frontend/customer/book.php');
+    fetch('/APLX/backend/whoami.php', { credentials: 'include' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => {
         if (!data || !data.loggedIn || data.role !== 'customer') {
-          window.location.replace('/APLX/Parcel/frontend/login.html?next=' + next);
+          window.location.replace('/APLX/frontend/login.php?next=' + next);
         }
       })
       .catch(() => {
-        window.location.replace('/APLX/Parcel/frontend/login.html?next=' + next);
+        window.location.replace('/APLX/frontend/login.php?next=' + next);
       });
   })();
   </script>
@@ -139,7 +139,7 @@
   (function(){
     const btn = document.getElementById('closeBooking');
     if(btn){
-      btn.addEventListener('click', ()=>{ window.location.href = '../index.html'; });
+      btn.addEventListener('click', ()=>{ window.location.href = '../index.php'; });
     }
   })();
   </script>
@@ -184,7 +184,7 @@
               form.reset();
             }
             if (tn){
-              fetch('/APLX/Parcel/backend/track_result.php?tn=' + encodeURIComponent(tn), { headers: { 'Accept': 'application/json' }})
+              fetch('/APLX/backend/track_result.php?tn=' + encodeURIComponent(tn), { headers: { 'Accept': 'application/json' }})
                 .then(r => r.ok ? r.json() : Promise.resolve(null))
                 .then(details => {
                   showPopup(msg, tn, details);
@@ -203,3 +203,7 @@
   </script>
 </body>
 </html>
+
+
+
+

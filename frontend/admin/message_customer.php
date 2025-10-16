@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Message Customer</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     /* Lock page: remove scrollbar and keep fixed */
     html, body { height:100%; overflow:hidden; }
@@ -32,7 +32,7 @@
     <section class="card">
       <h2 class="title-yellow">Message Customer</h2>
       <p class="muted help-green">Start by selecting a customer by name. The Customer Email will auto-fill. You will type the actual message on the next step.</p>
-      <form id="msgCustForm" class="form-grid" method="get" action="/APLX/Parcel/backend/admin/message_customer.php">
+      <form id="msgCustForm" class="form-grid" method="get" action="/APLX/backend/admin/message_customer.php">
         <!-- Hidden field actually sent to backend -->
         <input type="hidden" id="mc_customer_id" name="customer_id" />
 
@@ -54,14 +54,14 @@
           <textarea id="mc_message" name="message" rows="8" placeholder="Type your message..." required class="input-like" style="min-height:140px; resize:vertical"></textarea>
         </div>
         <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
-          <a class="btn btn-secondary" href="/APLX/Parcel/frontend/admin/dashboard.html">Cancel</a>
+          <a class="btn btn-secondary" href="/APLX/frontend/admin/dashboard.php">Cancel</a>
           <button class="btn" type="submit">Continue to Send</button>
         </div>
-      <div class="muted" style="margin-top:10px">Alternatively, you can open the full backend page: <a class="btn btn-sm btn-outline" href="/APLX/Parcel/backend/admin/message_customer.php">Open Live</a></div>
+      <div class="muted" style="margin-top:10px">Alternatively, you can open the full backend page: <a class="btn btn-sm btn-outline" href="/APLX/backend/admin/message_customer.php">Open Live</a></div>
     </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script>
   // Lightweight autocomplete for Customer Name -> fills ID and Email
   (function(){
@@ -80,7 +80,7 @@
       if(!q || q.trim().length < 2){ list.innerHTML = ''; return; }
       try{
         const params = new URLSearchParams({ q:q.trim(), limit:'10', page:'1' });
-        const res = await fetch('/APLX/Parcel/backend/admin/customer_lookup.php?'+params.toString(), { cache:'no-store' });
+        const res = await fetch('/APLX/backend/admin/customer_lookup.php?'+params.toString(), { cache:'no-store' });
         if(!res.ok) return;
         const data = await res.json();
         const items = (data.items||[]);
@@ -144,3 +144,7 @@
   </script>
 </body>
 </html>
+
+
+
+

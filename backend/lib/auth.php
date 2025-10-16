@@ -12,13 +12,13 @@ function is_admin() {
 
 function require_login() {
     if (!current_user()) {
-        redirect('/APLX/Parcel/frontend/login.html');
+        redirect('/APLX/?login=1');
     }
 }
 
 function require_admin() {
     if (!is_admin()) {
-        redirect('/APLX/Parcel/frontend/login.html');
+        redirect('/APLX/?login=1');
     }
 }
 
@@ -231,3 +231,5 @@ function logout() {
     session_destroy();
 }
 ?>
+
+

@@ -1,5 +1,5 @@
 <?php
-// Run once from browser: http://localhost/APLX/Parcel/backend/seed_admin.php
+// Run once from browser: http://localhost/APLX/backend/seed_admin.php
 require_once __DIR__ . '/init.php';
 $email = 'admin@parcel.local';
 $name = 'Administrator';
@@ -30,3 +30,5 @@ $stmt->bind_param('isss', $adminId, $name, $email, $hash);
 $stmt->execute();
 
 echo 'Admin (admin_profile) created: ' . htmlspecialchars($email) . ' / password: ' . htmlspecialchars($pass) . ' with admin_id=' . (int)$adminId;
+
+

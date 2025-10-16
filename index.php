@@ -1,41 +1,56 @@
 <?php
-// Serve the frontend home at /APLX/ without changing the URL.
-// We inject a <base> tag so that all relative URLs in frontend/index.html
-// continue to resolve under /APLX/frontend/.
-
-$file = __DIR__ . '/frontend/index.html';
-if (!is_file($file)) {
+// Serve frontend/index.php internally without changing the URL.
+$frontendIndex = __DIR__ . '/frontend/index.php';
+$loginFile = __DIR__ . '/frontend/login.php';
+if (!is_file($frontendIndex)) {
     http_response_code(404);
     echo 'Frontend index not found.';
     exit;
 }
 
-$html = file_get_contents($file);
-if ($html === false) {
-    http_response_code(500);
-    echo 'Unable to read frontend index.';
-    exit;
+ob_start();
+// Ensure relative includes inside frontend/index.php resolve correctly
+$oldCwd = getcwd();
+chdir(__DIR__ . '/frontend');
+// If a short-lived cookie or query says to show login, render login.php instead
+$hasError = (isset($_GET['status']) && strtolower($_GET['status']) === 'error');
+$requestedLogin = (
+    (isset($_COOKIE['show_login']) && $_COOKIE['show_login'] === '1') ||
+    (isset($_GET['login']) && $_GET['login'] === '1') ||
+    $hasError
+);
+if ($requestedLogin && is_file($loginFile)) {
+    if (isset($_COOKIE['show_login'])) {
+        // Clear the one-shot cookie
+        setcookie('show_login', '', time() - 3600, '/APLX');
+        unset($_COOKIE['show_login']);
+    }
+    // Prevent caching of the error/login view
+    if (!headers_sent()) {
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+    }
+    include $loginFile;
+} else {
+    include $frontendIndex;
 }
+$cwdRestored = chdir($oldCwd);
+$output = ob_get_clean();
 
-// Inject a dynamic <base> tag as the first element in <head>
-// This ensures relative URLs within frontend/index.html resolve correctly
-// whether the site is hosted at the domain root or a subdirectory (e.g., /APLX/).
-// Example results:
-//  - If script path is "/index.php" -> base "/frontend/"
-//  - If script path is "/APLX/index.php" -> base "/APLX/frontend/"
-//  - If behind deeper paths, dirname will normalize accordingly.
+// Inject a dynamic <base> tag to ensure relative assets resolve under /APLX/frontend/
 $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '/';
 $dir = rtrim(str_replace('\\', '/', dirname($scriptPath)), '/');
 $base = ($dir === '') ? '/frontend/' : $dir . '/frontend/';
 
-$html = preg_replace(
-    '#<head(\b[^>]*)>#i',
-    '<head$1><base href="' . htmlspecialchars($base, ENT_QUOTES, 'UTF-8') . '">',
-    $html,
-    1
-);
+if (stripos($output, '<base ') === false) {
+    $output = preg_replace(
+        '#<head(\b[^>]*)>#i',
+        '<head$1><base href="' . htmlspecialchars($base, ENT_QUOTES, 'UTF-8') . '">',
+        $output,
+        1
+    );
+}
 
-// Output as HTML
 header('Content-Type: text/html; charset=utf-8');
-echo $html;
+echo $output;
 exit;

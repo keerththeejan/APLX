@@ -41,7 +41,7 @@ Parcel/
 2. **Database**
    - Open phpMyAdmin and run `schema.sql` or via MySQL CLI:
      ```sql
-     SOURCE c:/wamp64/www/APLX/Parcel/schema.sql;
+     SOURCE c:/wamp64/www/APLX/schema.sql;
      ```
    - This creates `parcel_db` with `users` and `customers` tables.
 3. **Backend endpoints**
@@ -52,7 +52,7 @@ Parcel/
      - `/Parcel/backend/auth_login.php`
    - Configure DB connection credentials inside your PHP files.
 4. **Run**
-   - Visit: `http://localhost/APLX/Parcel/frontend/index.html`
+   - Visit: `http://localhost/APLX/frontend/index.php`
 
 ## Mobile Track Modal Behavior
 - Defined in `frontend/index.html` near the end:
@@ -82,3 +82,5 @@ Parcel/
 - If your local path differs, update the absolute links in navbar or switch to relative links for portability.
 - Security: hash passwords on the server (`password_hash`), validate and sanitize all inputs, protect admin routes.
 # APLX
+
+

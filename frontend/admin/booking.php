@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Booking</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -27,7 +27,7 @@
   <section class="card" id="createCard" style="display:none; max-width:520px; margin:0 auto; position:relative">
     <h2>Create Booking</h2>
     <button id="btnCloseCreateTop" class="modal-close" type="button" aria-label="Close" style="position:absolute; right:12px; top:12px">✕</button>
-    <form id="bookForm" method="post" action="/APLX/Parcel/backend/book_submit.php">
+    <form id="bookForm" method="post" action="/APLX/backend/book_submit.php">
       <div class="grid">
         <input type="text" name="sender_name" placeholder="Sender Name" required>
         <input type="text" name="receiver_name" placeholder="Receiver Name" required>
@@ -38,7 +38,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
         <button class="btn" type="submit">Create Booking</button>
-        <a class="btn btn-outline" href="/APLX/Parcel/frontend/customer/book.html">Use Customer Form</a>
+        <a class="btn btn-outline" href="/APLX/frontend/customer/book.php">Use Customer Form</a>
         <span id="bookStatus" class="muted" aria-live="polite"></span>
       </div>
     </form>
@@ -80,7 +80,7 @@
   </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script>
 (function(){
   // List controls
@@ -96,7 +96,7 @@
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="6" class="muted">Loading...</td></tr>';
     const params = new URLSearchParams({ page:String(page), limit:String(limit), search:(q?.value||'').trim() });
-    const res = await fetch('/APLX/Parcel/backend/admin/shipments.php?api=1&'+params.toString(), { cache:'no-store' });
+    const res = await fetch('/APLX/backend/admin/shipments.php?api=1&'+params.toString(), { cache:'no-store' });
     if (!res.ok){ tbody.innerHTML = '<tr><td colspan="6" class="muted">Failed to load</td></tr>'; return; }
     const data = await res.json();
     total = Number(data.total||0);
@@ -146,7 +146,7 @@
       window.scrollTo({ top: createCard.offsetTop - 70, behavior:'smooth' });
     }
   });
-  btnCloseCreateTop?.addEventListener('click', ()=>{ window.location.href = '/APLX/Parcel/frontend/admin/booking.html'; });
+  btnCloseCreateTop?.addEventListener('click', ()=>{ window.location.href = '/APLX/frontend/admin/booking.php'; });
 
   // AJAX submit for booking form -> saves to DB using existing endpoint, then reload list
   const form = document.getElementById('bookForm');
@@ -173,3 +173,7 @@
 </script>
 </body>
 </html>
+
+
+
+

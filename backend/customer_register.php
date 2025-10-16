@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $booking   = $BOOKING_EMAIL ?? 'booking@parcel.local';
             $phoneNo   = $SUPPORT_PHONE ?? '';
             $addr      = $SUPPORT_ADDRESS ?? '';
-            $bookUrl   = 'http://localhost/APLX/Parcel/frontend/customer/book.html';
+            $bookUrl   = 'http://localhost/APLX/frontend/customer/book.php';
 
             $subject = 'Welcome to ' . $company . ' – Booking Details Inside';
             $htmlBody = '<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#111">'
@@ -67,7 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $error ? 'error' : ($msg ? 'ok' : 'error');
     $text = $error ?: $msg ?: 'Unexpected error.';
     $qs = http_build_query(['status' => $status, 'msg' => $text]);
-    header('Location: /APLX/Parcel/frontend/customer/register.html?' . $qs);
+    header('Location: /APLX/frontend/customer/register.php?' . $qs);
     exit;
 }
 ?>
+
+

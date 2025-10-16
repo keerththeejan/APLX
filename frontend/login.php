@@ -1,3 +1,23 @@
+<?php
+$root = '/APLX/';
+if (php_sapi_name() !== 'cli') {
+    $isDirect = isset($_SERVER['SCRIPT_FILENAME']) && basename($_SERVER['SCRIPT_FILENAME']) === 'login.php';
+    if ($isDirect) {
+        $params = [];
+        if (isset($_GET['next'])) { $params['next'] = $_GET['next']; }
+        if (isset($_GET['stay'])) { $params['stay'] = $_GET['stay']; }
+        $params['login'] = '1';
+        setcookie('show_login', '1', time() + 120, '/APLX');
+        header('Location: ' . $root . (count($params) ? ('?' . http_build_query($params)) : ''), true, 302);
+        exit;
+    }
+}
+$showError = (isset($_GET['status']) && strtolower($_GET['status']) === 'error');
+if ($showError && !headers_sent()) {
+    http_response_code(401);
+    header('X-Login-Error: 1');
+}
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -68,24 +88,25 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="index.html">Home</a>
-      <a href="track.html" class="active">Track</a>
-      <a href="customer/book.html">Book</a>
-      <a href="login.html" title="Login" aria-label="Login">👤</a>
+      <a href="index.php">Home</a>
+      <a href="track.php" class="active">Track</a>
+      <a href="customer/book.php">Book</a>
+      <a href="/APLX/?login=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
 <main class="container small login-card login-center">
   <div class="login-stage">
     <section class="card login-fixed-card">
-    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='index.html'">✕</button>
+    <button type="button" class="login-close" id="closeLogin" aria-label="Close" onclick="window.location.href='index.php'">✕</button>
     <h2>Login</h2>
     <p class="muted">Choose role and enter credentials.</p>
+    <p id="loginError" style="margin:8px 0 0;color:#fca5a5;font-weight:600; display: <?php echo $showError ? 'block' : 'none'; ?>;">Invalid email or password.</p>
     <div class="role-switch" role="tablist" aria-label="Select role">
       <button id="asCustomer" class="active" role="tab" aria-selected="true">Customer</button>
       <button id="asAdmin" role="tab" aria-selected="false">Admin</button>
     </div>
-    <form id="commonLoginForm" style="margin-top:12px" method="post" action="/APLX/Parcel/backend/auth_login.php">
+    <form id="commonLoginForm" style="margin-top:12px" method="post" action="/APLX/backend/auth_login.php">
       <input type="hidden" name="role" id="roleField" value="customer">
       <input type="hidden" name="next" id="nextField" value="">
       <input id="loginEmail" name="email" type="email" placeholder="Email" required>
@@ -129,10 +150,15 @@
   // read next param
   const params = new URLSearchParams(location.search);
   const next = params.get('next');
+  const status = params.get('status');
   const stay = params.get('stay') === '1';
   if (next) nextField.value = next;
+  if (status === 'error') {
+    const el = document.getElementById('loginError');
+    if (el) el.style.display = 'block';
+  }
   // If next points to admin pages, default to admin role
-  if (next && /\/APLX\/Parcel\/frontend\/admin\//i.test(next)) {
+  if (next && /\/APLX\/frontend\/admin\//i.test(next)) {
     role = 'admin';
   }
   function setRole(r){ role = r; roleField.value = r; btnCust.classList.toggle('active', r==='customer'); btnCust.setAttribute('aria-selected', String(r==='customer')); btnAdmin.classList.toggle('active', r==='admin'); btnAdmin.setAttribute('aria-selected', String(r==='admin')); }
@@ -164,10 +190,16 @@
   // Close button -> back to previous or home
   const closeBtn = document.getElementById('closeLogin');
   closeBtn?.addEventListener('click', ()=>{
-    window.location.href = 'index.html';
+    window.location.href = 'index.php';
   });
   // No frontend fast-path; backend session decides
 })();
 </script>
 </body>
 </html>
+
+
+
+
+\
+\

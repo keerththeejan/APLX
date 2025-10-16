@@ -61,20 +61,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Message Customer</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
 </head>
 <body>
 <header class="navbar">
   <div class="container">
     <div class="brand">Admin</div>
     <nav>
-      <a href="/APLX/Parcel/backend/admin/dashboard.php">Dashboard</a>
-      <a href="/APLX/Parcel/backend/admin/booking.php">Booking</a>
-      <a href="/APLX/Parcel/backend/admin/shipments.php">Shipments</a>
-      <a href="/APLX/Parcel/backend/admin/analytics.php">Analytics</a>
-      <a href="/APLX/Parcel/backend/admin/settings.php">Settings</a>
-      <a href="/APLX/Parcel/backend/admin/message_customer.php" class="active">Message Customer</a>
-      <a href="/APLX/Parcel/backend/auth_logout.php">Logout</a>
+      <a href="/APLX/backend/admin/dashboard.php">Dashboard</a>
+      <a href="/APLX/backend/admin/booking.php">Booking</a>
+      <a href="/APLX/backend/admin/shipments.php">Shipments</a>
+      <a href="/APLX/backend/admin/analytics.php">Analytics</a>
+      <a href="/APLX/backend/admin/settings.php">Settings</a>
+      <a href="/APLX/backend/admin/message_customer.php" class="active">Message Customer</a>
+      <a href="/APLX/backend/auth_logout.php">Logout</a>
     </nav>
   </div>
 </header>
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <textarea name="message" rows="8" placeholder="Type your message..." required><?php echo h($prefill_message); ?></textarea>
       </div>
       <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
-        <a class="btn btn-secondary" href="/APLX/Parcel/backend/admin/dashboard.php">Cancel</a>
+        <a class="btn btn-secondary" href="/APLX/backend/admin/dashboard.php">Cancel</a>
         <button class="btn" type="submit">Send Message</button>
       </div>
     </form>
@@ -115,3 +115,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </main>
 </body>
 </html>
+
+

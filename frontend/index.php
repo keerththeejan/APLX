@@ -28,9 +28,9 @@
       <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
       <nav>
         <a href="/APLX/" class="active">Home</a>
-        <a href="track.html">Track</a>
-        <a id="navBook" href="login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
-        <a href="login.html?stay=1" title="Login" aria-label="Login"><span aria-hidden="true">👤</span> <span class="hide-sm">Login</span></a>
+        <a href="track.php">Track</a>
+        <a id="navBook" href="login.php?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
+        <a href="login.php?stay=1" title="Login" aria-label="Login"><span aria-hidden="true">👤</span> <span class="hide-sm">Login</span></a>
       </nav>
     </div>
   </header>
@@ -52,7 +52,7 @@
         <h1>Adaptable coordinated factors<br/>Quick Conveyance</h1>
         <p>Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.</p>
         <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
-          <a class="btn btn-primary" href="customer/register.html" style="text-decoration:none;">Get Started</a>
+          <a class="btn btn-primary" href="customer/register.php" style="text-decoration:none;">Get Started</a>
           <a class="btn btn-secondary" href="#contact" style="text-decoration:none;">Learn More</a>
         </div>
       </section>
@@ -479,7 +479,7 @@
             <li><a href="/APLX/">Home</a></li>
             <li><a href="#about">About Us</a></li>
             <li><a href="#services">Services</a></li>
-            <li><a href="track.html">Track Shipment</a></li>
+            <li><a href="track.php">Track Shipment</a></li>
             <li><a href="#contact">Contact Us</a></li>
           </ul>
         </div>
@@ -609,8 +609,8 @@
     const role = localStorage.getItem('userRole') || 'customer';
     const loggedCustomer = isLoggedIn && role === 'customer';
     book.href = loggedCustomer
-      ? '/APLX/Parcel/frontend/customer/book.html'
-      : '/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+      ? '/APLX/frontend/customer/book.php'
+      : '/APLX/frontend/login.php?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php';
   })();
   // Hero cross-fade
   (function(){
@@ -704,7 +704,7 @@
         <button class="modal-close" id="trackModalClose" type="button" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
-        <form method="get" action="/APLX/Parcel/backend/track_result.php">
+        <form method="get" action="/APLX/backend/track_result.php">
           <div class="track-form-row">
             <input type="text" name="tn" placeholder="Enter Tracking Number" required>
             <button class="btn" type="submit">Track</button>
@@ -718,7 +718,7 @@
   // Mobile-only: open Track modal instead of navigating
   (function(){
     const mq = window.matchMedia('(max-width: 640px)');
-    const navLink = document.querySelector('.navbar nav a[href$="/track.html"], .navbar nav a[href$="track.html"]');
+    const navLink = document.querySelector('.navbar nav a[href$="/track.php"], .navbar nav a[href$="track.php"]');
     const modal = document.getElementById('trackModal');
     const closeBtn = document.getElementById('trackModalClose');
     if (!navLink || !modal) return;
@@ -732,3 +732,7 @@
   </script>
 </body>
 </html>
+
+
+
+

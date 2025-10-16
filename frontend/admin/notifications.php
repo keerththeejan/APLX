@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Notifications</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -50,7 +50,7 @@
     </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script>
 (function(){
   const list = document.getElementById('notifListAll');
@@ -89,7 +89,7 @@
     if (query) params.set('search', query);
     if (showAll) params.set('all','1');
     try{
-      const res = await fetch('/APLX/Parcel/backend/admin/notifications.php?api=1&'+params.toString(), { cache:'no-store' });
+      const res = await fetch('/APLX/backend/admin/notifications.php?api=1&'+params.toString(), { cache:'no-store' });
       if(!res.ok) throw new Error('HTTP '+res.status);
       const data = await res.json();
       total = Number(data.total||0);
@@ -126,3 +126,5 @@
 </script>
 </body>
 </html>
+
+

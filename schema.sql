@@ -16,6 +16,17 @@ CREATE TABLE IF NOT EXISTS shipments (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- New: users table (generic users incl. role 'customer' or 'admin')
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(32) NOT NULL DEFAULT 'customer',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_user_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- New: admin_profile table to store admin profile details (keyed by admin_id)
 CREATE TABLE IF NOT EXISTS admin_profile (
   id INT AUTO_INCREMENT PRIMARY KEY,

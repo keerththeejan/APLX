@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Contact</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -24,11 +24,11 @@
   <main class="content">
   <div id="topbar"></div>
   <div class="page-actions" style="text-align:right; margin:50px 0 12px;">
-    <a class="btn btn-outline" href="/APLX/Parcel/frontend/admin/settings.html" title="Back to Settings">← Back to Settings</a>
+    <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php" title="Back to Settings">← Back to Settings</a>
   </div>
   <section class="card">
     <h2>Website Contact Details</h2>
-    <form id="siteContactForm" class="stack" method="post" action="/APLX/Parcel/backend/admin/site_contact_api.php">
+    <form id="siteContactForm" class="stack" method="post" action="/APLX/backend/admin/site_contact_api.php">
       <input type="hidden" name="csrf" id="csrfField" value="">
       <div class="grid">
         <label style="grid-column:1/-1">Address
@@ -53,14 +53,14 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="btn" type="submit">Save</button>
         <button class="btn btn-outline" id="scReload" type="button">Reload</button>
-        <a class="btn btn-outline" href="/APLX/Parcel/frontend/index.html">View Site</a>
+        <a class="btn btn-outline" href="/APLX/frontend/index.php">View Site</a>
       </div>
       <div id="scStatus" class="muted" style="margin-top:6px" aria-live="polite"></div>
     </form>
   </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script>
 // Load + Save site contact
 (function(){
@@ -77,12 +77,12 @@
     sun: document.getElementById('scSun')
   };
   async function getCSRF(){
-    try{ const r = await fetch('/APLX/Parcel/backend/admin/site_contact_api.php?action=csrf',{cache:'no-store'}); if(r.ok){ const d=await r.json(); csrfField.value=d.csrf||''; } }catch(_){ }
+    try{ const r = await fetch('/APLX/backend/admin/site_contact_api.php?action=csrf',{cache:'no-store'}); if(r.ok){ const d=await r.json(); csrfField.value=d.csrf||''; } }catch(_){ }
   }
   async function load(){
     statusEl.textContent = 'Loading...';
     try{
-      const r = await fetch('/APLX/Parcel/backend/site_contact.php',{cache:'no-store'});
+      const r = await fetch('/APLX/backend/site_contact.php',{cache:'no-store'});
       const d = r.ok ? await r.json() : { item:{} };
       const it = d.item||{};
       f.address.value = it.address||'';
@@ -110,4 +110,8 @@
 </script>
 </body>
 </html>
+
+
+
+
 

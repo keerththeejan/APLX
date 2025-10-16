@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Customer Registration</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .register-page{ position:relative; padding:48px 0; min-height:calc(100vh - 80px); display:flex; align-items:center; }
     .register-page .container{ display:flex; justify-content:center; }
@@ -52,11 +52,11 @@
     <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
     <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
     <nav>
-      <a href="http://localhost/APLX/Parcel/frontend/index.html">Home</a>
-      <a href="http://localhost/APLX/Parcel/frontend/track.html">Track</a>
-      <a id="navBook" href="http://localhost/APLX/Parcel/frontend/login.html?next=%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html">Book</a>
-      <a href="http://localhost/APLX/Parcel/frontend/customer/register.html" class="active">Register</a>
-      <a href="http://localhost/APLX/Parcel/frontend/login.html?stay=1" title="Login" aria-label="Login">👤</a>
+      <a href="http://localhost/APLX/frontend/index.php">Home</a>
+      <a href="http://localhost/APLX/frontend/track.php">Track</a>
+      <a id="navBook" href="http://localhost/APLX/frontend/login.php?next=%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
+      <a href="http://localhost/APLX/frontend/customer/register.php" class="active">Register</a>
+      <a href="http://localhost/APLX/frontend/login.php?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>
   </div>
 </header>
@@ -65,9 +65,9 @@
   <section class="register-page">
     <div class="container">
       <div class="register-card" id="registerCard">
-        <a href="/APLX/Parcel/frontend/index.html" class="register-close" id="closeRegister" role="button" aria-label="Close form">✕</a>
+        <a href="/APLX/frontend/index.php" class="register-close" id="closeRegister" role="button" aria-label="Close form">✕</a>
         <h2>Create Customer Account</h2>
-        <form method="post" action="/APLX/Parcel/backend/customer_register.php">
+        <form method="post" action="/APLX/backend/customer_register.php">
           <div class="register-grid">
             <input type="text" name="name" placeholder="Full Name" required>
             <input type="email" name="email" placeholder="Email" required>
@@ -158,8 +158,8 @@
   const role = localStorage.getItem('userRole') || 'customer';
   const loggedCustomer = isLoggedIn && role === 'customer';
   book.href = loggedCustomer
-    ? 'http://localhost/APLX/Parcel/frontend/customer/book.html'
-    : 'http://localhost/APLX/Parcel/frontend/login.html?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.html';
+    ? 'http://localhost/APLX/frontend/customer/book.php'
+    : 'http://localhost/APLX/frontend/login.php?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php';
 })();
 // Toggle password visibility (hardened)
 (function(){
@@ -190,7 +190,7 @@
 (function(){
   const closeBtn = document.getElementById('closeRegister');
   if(!closeBtn) return;
-  const goHome = (e)=>{ e.preventDefault(); e.stopPropagation(); window.location.assign('/APLX/Parcel/frontend/index.html'); };
+  const goHome = (e)=>{ e.preventDefault(); e.stopPropagation(); window.location.assign('/APLX/frontend/index.php'); };
   closeBtn.addEventListener('click', goHome);
   closeBtn.addEventListener('touchstart', goHome, {passive:false});
 })();
@@ -212,3 +212,7 @@
     window.history.replaceState({}, document.title, cleanUrl);
   }
 })();
+
+
+
+

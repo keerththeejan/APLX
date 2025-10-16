@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin | Analytics</title>
-  <link rel="stylesheet" href="/APLX/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
   <style>
     .layout{min-height:100vh}
     .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:#0b1220;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}
@@ -48,7 +48,7 @@
   </section>
   </main>
 </div>
-<script src="/APLX/Parcel/js/admin.js"></script>
+<script src="/APLX/js/admin.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 (function(){
@@ -76,7 +76,7 @@
 
   async function load(){
     try{
-      const res = await fetch('/APLX/Parcel/backend/admin/analytics.php?api=1', { cache:'no-store' });
+      const res = await fetch('/APLX/backend/admin/analytics.php?api=1', { cache:'no-store' });
       if(!res.ok) throw new Error('HTTP '+res.status);
       const data = await res.json();
 
@@ -118,3 +118,5 @@
 </script>
 </body>
 </html>
+
+
