@@ -1,3 +1,7 @@
+<?php
+ header('Location: /APLX/frontend/index.php', true, 302);
+ exit;
+?>
 <!doctype html>
 <html lang="en">
 <head>

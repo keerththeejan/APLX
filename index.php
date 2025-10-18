@@ -1,7 +1,6 @@
 <?php
 // Serve frontend/index.php internally without changing the URL.
 $frontendIndex = __DIR__ . '/frontend/index.php';
-$loginFile = __DIR__ . '/frontend/login.php';
 if (!is_file($frontendIndex)) {
     http_response_code(404);
     echo 'Frontend index not found.';
@@ -12,28 +11,8 @@ ob_start();
 // Ensure relative includes inside frontend/index.php resolve correctly
 $oldCwd = getcwd();
 chdir(__DIR__ . '/frontend');
-// If a short-lived cookie or query says to show login, render login.php instead
-$hasError = (isset($_GET['status']) && strtolower($_GET['status']) === 'error');
-$requestedLogin = (
-    (isset($_COOKIE['show_login']) && $_COOKIE['show_login'] === '1') ||
-    (isset($_GET['login']) && $_GET['login'] === '1') ||
-    $hasError
-);
-if ($requestedLogin && is_file($loginFile)) {
-    if (isset($_COOKIE['show_login'])) {
-        // Clear the one-shot cookie
-        setcookie('show_login', '', time() - 3600, '/APLX');
-        unset($_COOKIE['show_login']);
-    }
-    // Prevent caching of the error/login view
-    if (!headers_sent()) {
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        header('Pragma: no-cache');
-    }
-    include $loginFile;
-} else {
-    include $frontendIndex;
-}
+// Always load the main frontend; dedicated login pages are under /frontend/
+include $frontendIndex;
 $cwdRestored = chdir($oldCwd);
 $output = ob_get_clean();
 

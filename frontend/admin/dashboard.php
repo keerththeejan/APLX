@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../backend/init.php';
+require_admin();
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -101,7 +105,11 @@
         <a class="btn" href="/APLX/frontend/admin/booking.php">Add New Booking</a>
         <a class="btn" href="/APLX/frontend/admin/shipments.php">Manage Shipments</a>
         <a class="btn" href="/APLX/frontend/admin/analytics.php">View Reports</a>
-        <a class="btn" href="/APLX/frontend/admin/settings.php">System Settings</a>
+        <a class="btn" href="/APLX/frontend/admin/customers.php">Manage Customers</a>
+        <a class="btn" href="/APLX/frontend/admin/services.php">Manage Services</a>
+        <a class="btn" href="/APLX/frontend/admin/gallery.php">Manage Gallery</a>
+        <a class="btn" href="/APLX/frontend/admin/contact.php">Edit Contact Details</a>
+        <a class="btn" href="/APLX/frontend/admin/settings.php">Open Settings</a>
         <a class="btn" href="/APLX/frontend/admin/message_customer.php">Message Customer</a>
       </div>
     </section>

@@ -6,6 +6,10 @@ require_once __DIR__ . '/app/controllers/ShipmentsController.php';
 header('Content-Type: application/json');
 
 $route = trim($_GET['route'] ?? '', '/');
+// Guard: any route under admin/* requires an authenticated admin session
+if (strpos($route, 'admin/') === 0) {
+    require_admin();
+}
 
 try {
     switch ($route) {
@@ -21,6 +25,12 @@ try {
             break;
         case 'admin/gallery':
             require __DIR__ . '/admin/gallery_api.php';
+            break;
+        case 'admin/hero':
+            require __DIR__ . '/admin/hero_api.php';
+            break;
+        case 'admin/customers':
+            require __DIR__ . '/admin/customers_api.php';
             break;
         case 'admin/stats':
             require __DIR__ . '/admin/stats_api.php';

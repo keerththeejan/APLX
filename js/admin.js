@@ -1,16 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Simple admin auth guard using localStorage (server session can coexist)
-  (function adminGuard(){
-    try{
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
-      const role = localStorage.getItem('userRole') || '';
-      if (!isLoggedIn || role !== 'admin') {
-        const next = encodeURIComponent(window.location.pathname);
-        window.location.replace(`/APLX/frontend/login.php?next=${next}`);
-        return; // stop further init on this page
-      }
-    } catch(_){ /* ignore */ }
-  })();
   // While loading partials, hide layout to prevent flash/jumps
   document.body.setAttribute('data-admin-loading','1');
   // Load partials

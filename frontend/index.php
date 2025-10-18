@@ -22,18 +22,18 @@
   </style>
 </head>
 <body>
-  <header class="navbar">
-    <div class="container">
-      <div class="brand"><span class="brand-icon" aria-hidden="true">🚚</span> Parcel Transport</div>
-      <button id="themeToggle" class="theme-toggle centered" title="Toggle theme" aria-pressed="false">☀️/🌙</button>
-      <nav>
-        <a href="/APLX/" class="active">Home</a>
-        <a href="track.php">Track</a>
-        <a id="navBook" href="login.php?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
-        <a href="login.php?stay=1" title="Login" aria-label="Login"><span aria-hidden="true">👤</span> <span class="hide-sm">Login</span></a>
-      </nav>
-    </div>
-  </header>
+  <?php require_once __DIR__ . '/partials/header.php'; ?>
+  <?php
+    // Load hero banners server-side (no API)
+    $heroBanners = [];
+    $heroFirst = null;
+    try {
+      require_once __DIR__ . '/../backend/init.php';
+      $res = $conn->query("SELECT * FROM hero_banners WHERE is_active=1 ORDER BY sort_order ASC, id ASC");
+      while ($row = $res->fetch_assoc()) { $heroBanners[] = $row; }
+      if (count($heroBanners) > 0) { $heroFirst = $heroBanners[0]; }
+    } catch (Throwable $e) { /* ignore, fallback to static */ }
+  ?>
   <div class="spotlight-layer" id="spotlight"></div>
   <main>
 
@@ -42,18 +42,34 @@
     <div class="container-hero hero-wrap full-bleed">
       <section class="hero hero-full">
         <div class="slideshow" aria-hidden="true">
-          <img class="active" src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="" />
-          <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1600&auto=format&fit=crop" alt="" />
-          <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop" alt="" />
-          <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600&auto=format&fit=crop" alt="" />
-          <img src="https://images.unsplash.com/photo-1529078155058-5d716f45d604?q=80&w=1600&auto=format&fit=crop" alt="" />
+          <?php if (!empty($heroBanners)): ?>
+            <?php foreach ($heroBanners as $i => $b): $src = htmlspecialchars($b['image_url'] ?? ''); ?>
+              <img <?php echo $i===0 ? 'id="heroBg1" class="active"' : '';?> src="<?php echo $src; ?>" alt="" />
+            <?php endforeach; ?>
+          <?php else: ?>
+            <img id="heroBg1" class="active" src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1600&auto=format&fit=crop" alt="" />
+            <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1600&auto=format&fit=crop" alt="" />
+            <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop" alt="" />
+            <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600&auto=format&fit=crop" alt="" />
+            <img src="https://images.unsplash.com/photo-1529078155058-5d716f45d604?q=80&w=1600&auto=format&fit=crop" alt="" />
+          <?php endif; ?>
         </div>
-        <span class="eyebrow">Safe Transportation &amp; Logistics</span>
-        <h1>Adaptable coordinated factors<br/>Quick Conveyance</h1>
-        <p>Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.</p>
+        <span class="eyebrow" id="heroEyebrow"><?php echo htmlspecialchars($heroFirst['eyebrow'] ?? 'Safe Transportation & Logistics'); ?></span>
+        <h1 id="heroTitle"><?php
+          $t = (string)($heroFirst['title'] ?? 'Adaptable coordinated factors');
+          $s = (string)($heroFirst['subtitle'] ?? 'Quick Conveyance');
+          echo htmlspecialchars($t);
+          echo '<br/>';
+          echo htmlspecialchars($s);
+        ?></h1>
+        <p id="heroTagline"><?php echo htmlspecialchars($heroFirst['tagline'] ?? 'Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.'); ?></p>
         <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
-          <a class="btn btn-primary" href="customer/register.php" style="text-decoration:none;">Get Started</a>
-          <a class="btn btn-secondary" href="#contact" style="text-decoration:none;">Learn More</a>
+          <a id="heroCta1" class="btn btn-primary" href="<?php echo htmlspecialchars(($heroFirst['cta1_link'] ?? '/APLX/frontend/login.php') ?: '/APLX/frontend/login.php'); ?>" style="text-decoration:none;">
+            <?php echo htmlspecialchars(($heroFirst['cta1_text'] ?? 'Get Started') ?: 'Get Started'); ?>
+          </a>
+          <a id="heroCta2" class="btn btn-secondary" href="<?php echo htmlspecialchars(($heroFirst['cta2_link'] ?? '#') ?: '#'); ?>" style="text-decoration:none;">
+            <?php echo htmlspecialchars(($heroFirst['cta2_text'] ?? 'Learn More') ?: 'Learn More'); ?>
+          </a>
         </div>
       </section>
 
@@ -610,7 +626,7 @@
     const loggedCustomer = isLoggedIn && role === 'customer';
     book.href = loggedCustomer
       ? '/APLX/frontend/customer/book.php'
-      : '/APLX/frontend/login.php?next=%2FAPLX%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php';
+      : '/APLX/frontend/login.php?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.php';
   })();
   // Hero cross-fade
   (function(){

@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../backend/init.php';
+require_admin();
+?>
 <!doctype html>
 <html lang="en">
 <head>

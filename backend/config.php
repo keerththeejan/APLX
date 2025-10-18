@@ -20,6 +20,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Toggle to disable all authentication and treat requests as logged-in
+$AUTH_DISABLED = false;
+
 // Company / Support details (used in emails and UI)
 // You may later persist and load these from DB; for now they are constants here.
 $COMPANY_NAME   = 'Parcel Transport';

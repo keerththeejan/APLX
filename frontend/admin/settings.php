@@ -35,10 +35,26 @@
       </div>
       <div class="setting-card">
         <div class="icon">🖼️</div>
+        <h3>Homepage Banner</h3>
+        <p>Edit main hero title, subtitle, tagline, buttons and background image.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/hero.php">Open Banner</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">🖼️</div>
         <h3>Gallery (Slider)</h3>
         <p>Add, edit, reorder images for the auto-scrolling gallery with optional date badge and tag.</p>
         <div class="actions">
           <a class="btn" href="/APLX/frontend/admin/gallery.php">Open Gallery</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">👥</div>
+        <h3>Customers</h3>
+        <p>Create, edit, and delete customer accounts; manage status and details.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/customers.php">Open Customers</a>
         </div>
       </div>
       <div class="setting-card">

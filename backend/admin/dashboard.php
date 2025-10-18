@@ -13,16 +13,16 @@ $booked = $conn->query("SELECT COUNT(*) c FROM shipments WHERE status='Booked'")
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Dashboard</title>
-  <link rel="stylesheet" href="/Parcel/css/style.css">
+  <link rel="stylesheet" href="/APLX/css/style.css">
 </head>
 <body>
 <header class="navbar">
   <div class="container">
     <div class="brand">Admin Dashboard</div>
     <nav>
-      <a href="/Parcel/backend/admin/dashboard.php" class="active">Dashboard</a>
-      <a href="/Parcel/backend/admin/shipments.php">Shipments</a>
-      <a href="/Parcel/backend/auth_logout.php">Logout</a>
+      <a href="/APLX/backend/admin/dashboard.php" class="active">Dashboard</a>
+      <a href="/APLX/backend/admin/shipments.php">Shipments</a>
+      <a href="/APLX/backend/auth_logout.php">Logout</a>
     </nav>
   </div>
 </header>
