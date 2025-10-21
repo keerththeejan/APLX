@@ -65,6 +65,9 @@
             <label>Icon (upload)
               <input type="file" name="image_file" id="fileField" accept="image/*">
             </label>
+            <label>Image URL
+              <input name="image_url" id="imgField" placeholder="https://...">
+            </label>
             <label>Title
               <input name="title" id="titleField" required>
             </label>
@@ -98,6 +101,7 @@
   const titleField = document.getElementById('titleField');
   const descField = document.getElementById('descField');
   const orderField = document.getElementById('orderField');
+  const imgField = document.getElementById('imgField');
   const resetBtn = document.getElementById('resetBtn');
   const fileField = document.getElementById('fileField');
 
@@ -127,7 +131,7 @@
         <td>${escapeHtml(it.description)}</td>
         <td>${it.sort_order|0}</td>
         <td class="actions">
-          <button class="btn btn-small" data-act="edit" data-id="${it.id}">Edit</button>
+          <button class="btn btn-small" data-act="edit" data-id="${it.id}" data-img="${escapeHtml(it.image_url||'')}">Edit</button>
           <button class="btn btn-small btn-danger" data-act="del" data-id="${it.id}">Delete</button>
         </td>
       </tr>`;
@@ -153,6 +157,7 @@
       titleField.value = tr.children[3].textContent.trim();
       descField.value = tr.children[4].textContent.trim();
       orderField.value = parseInt(tr.children[5].textContent.trim()||'0',10);
+      imgField.value = btn.getAttribute('data-img') || '';
       window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth' });
     } else if (btn.dataset.act === 'del'){
       if (!confirm('Delete this service?')) return;

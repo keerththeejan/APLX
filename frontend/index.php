@@ -32,6 +32,35 @@
       $res = $conn->query("SELECT * FROM hero_banners WHERE is_active=1 ORDER BY sort_order ASC, id ASC");
       while ($row = $res->fetch_assoc()) { $heroBanners[] = $row; }
       if (count($heroBanners) > 0) { $heroFirst = $heroBanners[0]; }
+      // Load services (top 4 by sort_order, id)
+      $services = [];
+      if ($r = $conn->query("SELECT image_url, title, description, sort_order FROM services ORDER BY sort_order ASC, id ASC LIMIT 4")) {
+        while ($row = $r->fetch_assoc()) { $services[] = $row; }
+      }
+      // Load gallery items (limit 10 most recent by id desc; if sort_order exists use it)
+      $gallery = [];
+      if ($g = $conn->query("SELECT image_url, tag, day, month FROM gallery ORDER BY sort_order ASC, id ASC")) {
+        while ($row = $g->fetch_assoc()) { $gallery[] = $row; }
+      }
+      // Load contact details (single row id=1)
+      $contact = ['address'=>'','phone'=>'','email'=>'','hours_weekday'=>'','hours_sat'=>'','hours_sun'=>''];
+      if ($c = $conn->query("SELECT * FROM site_contact WHERE id=1")) {
+        $row = $c->fetch_assoc();
+        if ($row) { $contact = $row; }
+      }
+      // Load home stats (single row id=1)
+      $homeStats = [
+        'hero_title'   => 'We Provide Full Assistance in Freight & Warehousing',
+        'hero_subtext' => 'Comprehensive ocean, air, and land freight backed by modern warehousing. Track, optimize, and scale with confidence.',
+        'image_url'    => '',
+        'stat1_number' => '35+', 'stat1_label' => 'Countries Represented',
+        'stat2_number' => '853+', 'stat2_label' => 'Projects completed',
+        'stat3_number' => '35+', 'stat3_label' => 'Total Revenue',
+      ];
+      if ($h = $conn->query("SELECT * FROM home_stats WHERE id=1")) {
+        $row = $h->fetch_assoc();
+        if ($row) { $homeStats = array_merge($homeStats, $row); }
+      }
     } catch (Throwable $e) { /* ignore, fallback to static */ }
   ?>
   <div class="spotlight-layer" id="spotlight"></div>
@@ -78,26 +107,42 @@
     <section class="services" id="services">
       <div class="container">
       <div class="services-grid" id="servicesGrid">
-        <div class="service-card reveal reveal-card stagger-1">
-          <div class="service-icon">✈️</div>
-          <div class="service-title">Air Freight</div>
-          <div class="service-desc">Efficient and reliable air freight solutions for your business needs.</div>
-        </div>
-        <div class="service-card reveal reveal-card stagger-2">
-          <div class="service-icon">🛳️</div>
-          <div class="service-title">Ocean Freight</div>
-          <div class="service-desc">Comprehensive ocean freight services worldwide.</div>
-        </div>
-        <div class="service-card reveal reveal-card stagger-3">
-          <div class="service-icon">🚚</div>
-          <div class="service-title">Land Transport</div>
-          <div class="service-desc">Efficient land transportation solutions for all your needs.</div>
-        </div>
-        <div class="service-card reveal reveal-card stagger-1">
-          <div class="service-icon">🏬</div>
-          <div class="service-title">Warehousing</div>
-          <div class="service-desc">Secure storage and inventory management.</div>
-        </div>
+        <?php if (!empty($services)): ?>
+          <?php foreach ($services as $i => $s): ?>
+            <div class="service-card reveal reveal-card stagger-<?php echo (($i % 3) + 1); ?>">
+              <div class="service-icon">
+                <?php if (!empty($s['image_url'])): ?>
+                  <img src="<?php echo htmlspecialchars($s['image_url']); ?>" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);" />
+                <?php else: ?>
+                  ⬢
+                <?php endif; ?>
+              </div>
+              <div class="service-title"><?php echo htmlspecialchars($s['title'] ?? ''); ?></div>
+              <div class="service-desc"><?php echo htmlspecialchars($s['description'] ?? ''); ?></div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="service-card reveal reveal-card stagger-1">
+            <div class="service-icon">✈️</div>
+            <div class="service-title">Air Freight</div>
+            <div class="service-desc">Efficient and reliable air freight solutions for your business needs.</div>
+          </div>
+          <div class="service-card reveal reveal-card stagger-2">
+            <div class="service-icon">🛳️</div>
+            <div class="service-title">Ocean Freight</div>
+            <div class="service-desc">Comprehensive ocean freight services worldwide.</div>
+          </div>
+          <div class="service-card reveal reveal-card stagger-3">
+            <div class="service-icon">🚚</div>
+            <div class="service-title">Land Transport</div>
+            <div class="service-desc">Efficient land transportation solutions for all your needs.</div>
+          </div>
+          <div class="service-card reveal reveal-card stagger-1">
+            <div class="service-icon">🏬</div>
+            <div class="service-title">Warehousing</div>
+            <div class="service-desc">Secure storage and inventory management.</div>
+          </div>
+        <?php endif; ?>
       </div>
       </div>
     </section>
@@ -283,23 +328,24 @@
       <div class="container">
         <div class="stats-hero-grid">
           <div class="stats-hero-image">
-            <img src="https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=1600&auto=format&fit=crop" alt="Cargo ship at sea">
+            <?php $statsImg = trim((string)($homeStats['image_url'] ?? '')); ?>
+            <img src="<?php echo htmlspecialchars($statsImg ?: 'https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=1600&auto=format&fit=crop'); ?>" alt="Stats image">
           </div>
           <div class="stats-hero-content">
-            <h2>We Provide Full Assistance in Freight &amp; Warehousing</h2>
-            <p>Comprehensive ocean, air, and land freight backed by modern warehousing. Track, optimize, and scale with confidence.</p>
+            <h2><?php echo htmlspecialchars($homeStats['hero_title'] ?? ''); ?></h2>
+            <p><?php echo htmlspecialchars($homeStats['hero_subtext'] ?? ''); ?></p>
             <div class="stats-cards">
               <div class="stat-card stat-red">
-                <div class="stat-number">35+</div>
-                <div class="stat-label">Countries Represented</div>
+                <div class="stat-number"><?php echo htmlspecialchars($homeStats['stat1_number'] ?? ''); ?></div>
+                <div class="stat-label"><?php echo htmlspecialchars($homeStats['stat1_label'] ?? ''); ?></div>
               </div>
               <div class="stat-card stat-navy">
-                <div class="stat-number">853+</div>
-                <div class="stat-label">Projects completed</div>
+                <div class="stat-number"><?php echo htmlspecialchars($homeStats['stat2_number'] ?? ''); ?></div>
+                <div class="stat-label"><?php echo htmlspecialchars($homeStats['stat2_label'] ?? ''); ?></div>
               </div>
               <div class="stat-card stat-yellow">
-                <div class="stat-number">35+</div>
-                <div class="stat-label">Total Revenue</div>
+                <div class="stat-number"><?php echo htmlspecialchars($homeStats['stat3_number'] ?? ''); ?></div>
+                <div class="stat-label"><?php echo htmlspecialchars($homeStats['stat3_label'] ?? ''); ?></div>
               </div>
             </div>
           </div>
@@ -312,57 +358,21 @@
       <div class="container">
         <div class="tg-slider">
           <div class="tg-track" id="tgTrack" style="--tg-duration:24s; --tg-shift:-2400px;">
-            <!-- 10 cards -->
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>25</strong><small>Dec</small></span>
-              <img src="images/truck-moving-shipping-container-min-1024x683.jpeg" alt="Truck at dock">
-              <span class="tag-pill">Transport</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>20</strong><small>Dec</small></span>
-              <img src="images/premium_photo-1661962420310-d3be75c8921c.jpg" alt="Cargo ships">
-              <span class="tag-pill">Transport</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>30</strong><small>Dec</small></span>
-              <img src="images/premium_photo-1661932015882-c35eee885897.jpg" alt="Port container ship">
-              <span class="tag-pill">Transport</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>05</strong><small>Jan</small></span>
-              <img src="images/iStock-1024024568-scaled.jpg" alt="Warehouse pallets">
-              <span class="tag-pill">Warehouse</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>12</strong><small>Jan</small></span>
-              <img src="images/pngtree-truck-delivering-packages-across-a-3d-world-map-picture-image_3756058.jpg" alt="Truck highway">
-              <span class="tag-pill">Logistics</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>18</strong><small>Jan</small></span>
-              <img src="images/COLOURBOX35652344.jpg" alt="Forklift loading">
-              <span class="tag-pill">Warehouse</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>24</strong><small>Jan</small></span>
-              <img src="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" alt="Cargo containers">
-              <span class="tag-pill">Shipping</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>01</strong><small>Feb</small></span>
-              <img src="images/premium_photo-1661962420310-d3be75c8921c.jpg" alt="Air freight">
-              <span class="tag-pill">Air</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>06</strong><small>Feb</small></span>
-              <img src="images/iStock-1024024568-scaled.jpg" alt="Warehouse aisle">
-              <span class="tag-pill">Warehouse</span>
-            </article>
-            <article class="tg-item news-card">
-              <span class="date-badge"><strong>14</strong><small>Feb</small></span>
-              <img src="images/truck-moving-shipping-container-min-1024x683.jpeg" alt="Port cranes">
-              <span class="tag-pill">Transport</span>
-            </article>
+            <?php if (!empty($gallery)): ?>
+              <?php foreach ($gallery as $gi): ?>
+                <?php $img = htmlspecialchars($gi['image_url'] ?? ''); if (!$img) continue; ?>
+                <article class="tg-item news-card">
+                  <?php if (!empty($gi['day']) || !empty($gi['month'])): ?>
+                    <span class="date-badge"><strong><?php echo htmlspecialchars(str_pad((string)($gi['day'] ?? ''),2,'0',STR_PAD_LEFT)); ?></strong><small><?php echo htmlspecialchars(substr((string)($gi['month'] ?? ''),0,3)); ?></small></span>
+                  <?php endif; ?>
+                  <img src="<?php echo $img; ?>" alt="">
+                  <span class="tag-pill"><?php echo htmlspecialchars($gi['tag'] ?? ''); ?></span>
+                </article>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <!-- fallback static cards remain if gallery empty -->
+              <article class="tg-item news-card"><img src="images/truck-moving-shipping-container-min-1024x683.jpeg" alt="Truck at dock"><span class="tag-pill">Transport</span></article>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -451,7 +461,7 @@
             <div class="contact-icon">📍</div>
             <div>
               <h4>Address</h4>
-              <p>Ariviyal Nagar, Kilinochchi, Sri Lanka</p>
+              <p><?php echo htmlspecialchars($contact['address'] ?? ''); ?></p>
             </div>
           </div>
           <div class="contact-card">
@@ -459,9 +469,9 @@
             <div>
               <h4>Business Hours</h4>
               <ul>
-                <li>Mon - Fri: 8:30 AM - 4:15 PM</li>
-                <li>Sat: 9:00 AM - 2:00 PM</li>
-                <li>Sun: Closed</li>
+                <li><?php echo htmlspecialchars($contact['hours_weekday'] ?? ''); ?></li>
+                <li><?php echo htmlspecialchars($contact['hours_sat'] ?? ''); ?></li>
+                <li><?php echo htmlspecialchars($contact['hours_sun'] ?? ''); ?></li>
               </ul>
             </div>
           </div>
@@ -469,7 +479,10 @@
             <div class="contact-icon">📞</div>
             <div>
               <h4>Contact</h4>
-              <p>Phone: <a href="tel:+94214927799">+94 21 492 7799</a><br/>Email: <a href="mailto:info@slgti.com">info@slgti.com</a></p>
+              <p>
+                Phone: <a href="tel:<?php echo htmlspecialchars(preg_replace('/\s+/','',$contact['phone'] ?? '')); ?>"><?php echo htmlspecialchars($contact['phone'] ?? ''); ?></a><br/>
+                Email: <a href="mailto:<?php echo htmlspecialchars($contact['email'] ?? ''); ?>"><?php echo htmlspecialchars($contact['email'] ?? ''); ?></a>
+              </p>
             </div>
           </div>
         </div>
@@ -512,10 +525,10 @@
         <div class="footer-col">
           <div class="footer-title">Contact Info</div>
           <ul class="footer-contact">
-            <li>📍 Sri Lanka German Training Institute, Ariviyal Nagar, Kilinochchi, Sri Lanka</li>
-            <li>📞 <a href="tel:+94214927799">+94 21 492 7799</a></li>
-            <li>✉️ <a href="mailto:info@slgti.com">info@slgti.com</a></li>
-            <li>⏰ Mon – Fri: 8:30 A.M – 16:15 P.M</li>
+            <li>📍 <?php echo htmlspecialchars($contact['address'] ?? ''); ?></li>
+            <li>📞 <a href="tel:<?php echo htmlspecialchars(preg_replace('/\s+/','',$contact['phone'] ?? '')); ?>"><?php echo htmlspecialchars($contact['phone'] ?? ''); ?></a></li>
+            <li>✉️ <a href="mailto:<?php echo htmlspecialchars($contact['email'] ?? ''); ?>"><?php echo htmlspecialchars($contact['email'] ?? ''); ?></a></li>
+            <li>⏰ <?php echo htmlspecialchars($contact['hours_weekday'] ?? ''); ?></li>
           </ul>
         </div>
       </div>

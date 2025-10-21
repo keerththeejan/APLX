@@ -61,6 +61,10 @@ switch ($method) {
   case 'POST':
     // Prefer uploaded file over URL if provided
     $image_url = save_upload('image_file', 'services');
+    if (!$image_url) {
+      $url = trim($_POST['image_url'] ?? '');
+      if ($url !== '') { $image_url = $url; }
+    }
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $sort_order = intval($_POST['sort_order'] ?? 0);
@@ -86,7 +90,7 @@ switch ($method) {
     $sort_order = isset($src['sort_order']) ? intval($src['sort_order']) : 0;
     // Prefer uploaded file if present
     $newUpload = save_upload('image_file', 'services');
-    $image_url = $newUpload ?: $old; // no JSON URL fallback
+    $image_url = $newUpload ?: (trim($src['image_url'] ?? '') ?: $old);
     if (!$image_url) respond(['error' => 'Image is required'], 400);
     if (!$title || !$description) respond(['error' => 'Title and description are required'], 400);
     $stmt = $conn->prepare('UPDATE services SET image_url=?, title=?, description=?, sort_order=? WHERE id=?');

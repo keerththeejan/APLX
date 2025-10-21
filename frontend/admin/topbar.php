@@ -37,6 +37,36 @@
   </div>
 </div>
 
+<!-- Admin Profile Modal -->
+<div id="adminProfileModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-panel" style="max-width:520px">
+    <div class="modal-header">
+      <h3 class="modal-title">Admin Profile</h3>
+      <button class="modal-close" id="adminProfileClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="adminProfileForm" class="form-grid" method="post" action="/APLX/backend/admin/profile_update.php">
+        <div class="form-row">
+          <input type="text" name="name" placeholder="Full Name" required />
+        </div>
+        <div class="form-row two">
+          <input type="email" name="email" placeholder="Email" required />
+          <input type="tel" name="phone" placeholder="Phone (optional)" />
+        </div>
+        <div class="form-row two">
+          <input type="password" name="password" placeholder="New Password (optional)" />
+          <input type="password" name="confirm_password" placeholder="Confirm Password" />
+        </div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn btn-secondary" id="adminProfileCancel">Cancel</button>
+          <button type="submit" class="btn">Save Changes</button>
+        </div>
+      </form>
+      <div id="adminProfileStatus" class="inline-status" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Notifications Modal -->
 <div id="notifAllModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="modal-panel" style="max-width:720px">

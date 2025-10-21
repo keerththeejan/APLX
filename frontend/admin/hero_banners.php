@@ -115,6 +115,15 @@ while ($row = $res->fetch_assoc()) { $items[] = $row; }
     .actions{display:flex;gap:8px}
     .muted{color:var(--muted)}
     .preview{width:100%;max-width:420px;border:1px solid var(--border);border-radius:10px}
+    .btn-icon{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:#0b1220;}
+    .btn-blue{background:#1d4ed8;border-color:#1e40af;color:#fff}
+    .btn-blue:hover{filter:brightness(1.08)}
+    .btn-red{background:#dc2626;border-color:#b91c1c;color:#fff}
+    .btn-red:hover{filter:brightness(1.08)}
+    .btn-green{background:#16a34a;border-color:#15803d;color:#fff}
+    .btn-green:hover{filter:brightness(1.08)}
+    /* Make action buttons same size on this page */
+    .actions .btn{min-width:110px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
   </style>
 </head>
 <body>
@@ -149,12 +158,12 @@ while ($row = $res->fetch_assoc()) { $items[] = $row; }
                   </div>
                   <div role="cell"><?php echo (int)$it['sort_order']; ?></div>
                   <div role="cell" class="actions">
-                    <a class="btn btn-secondary" href="/APLX/frontend/admin/hero_banners.php?action=edit&id=<?php echo (int)$it['id']; ?>">Edit</a>
-                    <form method="post" onsubmit="return confirm('Delete this banner?');">
+                    <a class="btn-icon btn-blue" title="Edit" aria-label="Edit" href="/APLX/frontend/admin/hero_banners.php?action=edit&id=<?php echo (int)$it['id']; ?>">✏️</a>
+                    <form method="post" onsubmit="return confirm('Delete this banner?');" style="display:inline">
                       <input type="hidden" name="csrf" value="<?php echo h(csrf_token()); ?>">
                       <input type="hidden" name="_mode" value="delete">
                       <input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
-                      <button class="btn btn-danger" type="submit">Delete</button>
+                      <button class="btn-icon btn-red" type="submit" title="Delete" aria-label="Delete">🗑️</button>
                     </form>
                   </div>
                 </div>
@@ -184,9 +193,13 @@ while ($row = $res->fetch_assoc()) { $items[] = $row; }
             <label class="row"><span>Sort Order</span><input type="number" name="sort_order" value="<?php echo isset($edit['sort_order']) ? (int)$edit['sort_order'] : 0; ?>" aria-label="Sort order"></label>
             <label class="row"><span>Active</span><input type="checkbox" name="is_active" value="1" <?php echo !isset($edit['is_active']) || (int)$edit['is_active'] ? 'checked' : ''; ?> aria-label="Is active"></label>
 
-            <div class="actions" style="margin-top:10px;justify-content:flex-end">
-              <a class="btn btn-secondary" href="/APLX/frontend/admin/hero_banners.php">Cancel</a>
-              <button class="btn" type="submit"><?php echo $edit ? 'Update' : 'Create'; ?></button>
+            <div class="actions" style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:flex-end">
+              <?php if ($edit): ?>
+                <button class="btn btn-green" type="submit" title="Update" aria-label="Update">Update</button>
+              <?php else: ?>
+                <button class="btn btn-green" type="submit" title="Create" aria-label="Create">Create</button>
+              <?php endif; ?>
+              <a class="btn btn-red" href="/APLX/frontend/admin/hero_banners.php" title="Cancel" aria-label="Cancel">Cancel</a>
             </div>
           </form>
           <?php if (($edit['image_url'] ?? '') !== ''): ?>
