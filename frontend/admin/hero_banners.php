@@ -212,10 +212,6 @@ while ($row = $res->fetch_assoc()) { $items[] = $row; }
     </section>
   </main>
 </div>
-<script>
-// Load admin chrome
-fetch('/APLX/frontend/admin/sidebar.php').then(r=>r.text()).then(html=>{ document.getElementById('sidebar').outerHTML = html; });
-fetch('/APLX/frontend/admin/topbar.php').then(r=>r.text()).then(html=>{ document.getElementById('topbar').outerHTML = html; });
-</script>
+<script src="/APLX/js/admin.js"></script>
 </body>
 </html>

@@ -1,3 +1,100 @@
+<?php
+require_once __DIR__ . '/../../backend/init.php';
+require_admin();
+
+// Ensure DB schema needed by this page exists
+function ensure_services_schema(mysqli $conn){
+  try{
+    $res = $conn->query("SHOW COLUMNS FROM services LIKE 'icon_url'");
+    if ($res && $res->num_rows === 0){
+      $conn->query("ALTER TABLE services ADD COLUMN icon_url VARCHAR(512) NULL AFTER icon");
+    }
+  }catch(Throwable $e){ /* ignore; page will still work without icon */ }
+}
+ensure_services_schema($conn);
+
+function respond_redirect($url){ header('Location: ' . $url); exit; }
+function ensure_dir($p){ if (!is_dir($p)) { @mkdir($p, 0775, true); } return is_dir($p); }
+function save_upload_img($field, $subdir){
+  if (!isset($_FILES[$field]) || !is_uploaded_file($_FILES[$field]['tmp_name'])) return null;
+  $file = $_FILES[$field];
+  if ($file['error'] !== UPLOAD_ERR_OK) return null;
+  $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+  $mime = $finfo ? finfo_buffer($finfo, file_get_contents($file['tmp_name'])) : ($file['type'] ?? '');
+  $allowed = ['image/jpeg'=>'.jpg','image/png'=>'.png','image/webp'=>'.webp','image/gif'=>'.gif'];
+  if (!isset($allowed[$mime])) return null;
+  $root = realpath(__DIR__ . '/../../');
+  $dir = $root . '/uploads/' . trim($subdir,'/');
+  if (!ensure_dir($dir)) return null;
+  $name = bin2hex(random_bytes(8)) . $allowed[$mime];
+  $target = $dir . '/' . $name;
+  if (!move_uploaded_file($file['tmp_name'], $target)) return null;
+  return '/APLX/uploads/' . trim($subdir,'/') . '/' . $name;
+}
+
+$id = intval($_GET['id'] ?? 0);
+$msg = '';
+$edit = null;
+$err = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST'){
+  csrf_check();
+  $mode = $_POST['_mode'] ?? 'create';
+  if ($mode === 'delete'){
+    $delId = intval($_POST['id'] ?? 0);
+    if ($delId > 0){
+      $stmt = $conn->prepare('DELETE FROM services WHERE id=?');
+      $stmt->bind_param('i', $delId);
+      $stmt->execute();
+      $msg = 'Service deleted';
+    }
+    respond_redirect('/APLX/frontend/admin/services.php?msg=' . urlencode($msg));
+  }
+  $title = trim($_POST['title'] ?? '');
+  $description = trim($_POST['description'] ?? '');
+  $sort_order = intval($_POST['sort_order'] ?? 0);
+  $icon_url = save_upload_img('icon_file', 'services/icons');
+  $image_url = save_upload_img('image_file', 'services');
+  if (!$image_url) { $image_url = trim($_POST['image_url'] ?? ''); }
+  if ($mode === 'update'){
+    $updId = intval($_POST['id'] ?? 0);
+    if ($updId > 0){
+      $cur = $conn->prepare('SELECT icon_url, image_url FROM services WHERE id=?');
+      $cur->bind_param('i', $updId);
+      $cur->execute();
+      $old = $cur->get_result()->fetch_assoc() ?: [];
+      $icon_final = $icon_url ?: ($old['icon_url'] ?? null);
+      $img_final = $image_url ?: ($old['image_url'] ?? '');
+      $stmt = $conn->prepare('UPDATE services SET icon_url=?, image_url=?, title=?, description=?, sort_order=? WHERE id=?');
+      $stmt->bind_param('ssssii', $icon_final, $img_final, $title, $description, $sort_order, $updId);
+      $stmt->execute();
+      $msg = 'Service updated';
+      respond_redirect('/APLX/frontend/admin/services.php?msg=' . urlencode($msg));
+    }
+  } else {
+    if (!$image_url) { $err = 'Image is required'; }
+    if (empty($title) || empty($description)) { $err = ($err? $err.'; ' : '') . 'Title and description required'; }
+    if (empty($err)){
+      $stmt = $conn->prepare('INSERT INTO services(icon_url, image_url, title, description, sort_order) VALUES (?, ?, ?, ?, ?)');
+      $stmt->bind_param('ssssi', $icon_url, $image_url, $title, $description, $sort_order);
+      $stmt->execute();
+      $msg = 'Service created';
+      respond_redirect('/APLX/frontend/admin/services.php?msg=' . urlencode($msg));
+    }
+  }
+}
+
+$services = [];
+$res = $conn->query('SELECT * FROM services ORDER BY sort_order, id');
+while ($row = $res->fetch_assoc()) { $services[] = $row; }
+
+if ($id > 0){
+  $stmt = $conn->prepare('SELECT * FROM services WHERE id=?');
+  $stmt->bind_param('i', $id);
+  $stmt->execute();
+  $edit = $stmt->get_result()->fetch_assoc();
+}
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -19,6 +116,14 @@
     .image-thumb{ width:64px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); }
     .page-actions{ text-align:right; margin:8px 0 12px; }
     .page-actions a{ display:inline-block; margin-left:8px; }
+    /* Match action button style used elsewhere */
+    .btn-icon{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:#0b1220}
+    .btn-blue{background:#1d4ed8;border-color:#1e40af;color:#fff}
+    .btn-blue:hover{filter:brightness(1.08)}
+    .btn-red{background:#dc2626;border-color:#b91c1c;color:#fff}
+    .btn-red:hover{filter:brightness(1.08)}
+    .btn-green{background:#16a34a;border-color:#15803d;color:#fff}
+    .btn-green:hover{filter:brightness(1.08)}
     /* Dark theme inputs */
     .card input[type="text"], .card input[type="number"], .card input[type="email"], .card input[type="tel"], .card input[type="file"], .card select{
       background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; width:100%;
@@ -38,6 +143,7 @@
 
     <section class="card">
       <h2 id="pageTitle">Services</h2>
+      <?php if (isset($_GET['msg'])): ?><div class="notice" role="status" aria-live="polite"><?php echo h($_GET['msg']); ?></div><?php endif; ?>
       <div class="services-admin">
         <div class="list">
           <table aria-label="Services list">
@@ -52,37 +158,69 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="svcRows">
-              <tr><td colspan="7" class="muted">Loading...</td></tr>
+            <tbody>
+            <?php if (empty($services)): ?>
+              <tr><td colspan="7" class="muted">No services. Use the form to add.</td></tr>
+            <?php else: foreach($services as $i=>$it): ?>
+              <tr>
+                <td><?php echo $i+1; ?></td>
+                <td><?php if(!empty($it['icon_url'])): ?><img class="image-thumb" src="<?php echo h($it['icon_url']); ?>" alt=""><?php endif; ?></td>
+                <td><?php if(!empty($it['image_url'])): ?><img class="image-thumb" src="<?php echo h($it['image_url']); ?>" alt=""><?php endif; ?></td>
+                <td><?php echo h($it['title']); ?></td>
+                <td><?php echo h($it['description']); ?></td>
+                <td><?php echo (int)$it['sort_order']; ?></td>
+                <td class="actions" style="display:flex;gap:8px;align-items:center;">
+                  <a class="btn-icon btn-blue" href="/APLX/frontend/admin/services.php?id=<?php echo (int)$it['id']; ?>" title="Edit" aria-label="Edit">✏️</a>
+                  <form method="post" style="display:inline;" onsubmit="return confirm('Delete this service?');">
+                    <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+                    <input type="hidden" name="_mode" value="delete">
+                    <input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
+                    <button class="btn-icon btn-red" type="submit" title="Delete" aria-label="Delete">🗑️</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; endif; ?>
             </tbody>
           </table>
         </div>
         <div>
-          <form id="svcForm" class="stack" method="post" action="/APLX/backend/router.php?route=admin/services" enctype="multipart/form-data">
-            <input type="hidden" name="csrf" id="csrfField" value="">
-            <input type="hidden" name="_method" id="methodField" value="POST">
-            <input type="hidden" name="id" id="idField" value="">
+          <form class="stack" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+            <?php if ($edit): ?>
+              <input type="hidden" name="_mode" value="update">
+              <input type="hidden" name="id" value="<?php echo (int)$edit['id']; ?>">
+            <?php endif; ?>
             <label>Icon (upload)
-              <input type="file" name="image_file" id="fileField" accept="image/*">
+              <input type="file" name="icon_file" accept="image/*">
+            </label>
+            <?php if ($edit && !empty($edit['icon_url'])): ?>
+            <div class="muted"><img class="image-thumb" src="<?php echo h($edit['icon_url']); ?>" alt=""></div>
+            <?php endif; ?>
+            <label>Upload Image
+              <input type="file" name="image_file" accept="image/*">
             </label>
             <label>Image URL
-              <input name="image_url" id="imgField" placeholder="https://...">
+              <input name="image_url" placeholder="https://..." value="<?php echo h($edit['image_url'] ?? ''); ?>">
             </label>
             <label>Title
-              <input name="title" id="titleField" required>
+              <input name="title" value="<?php echo h($edit['title'] ?? ''); ?>" required>
             </label>
             <label>Description
-              <input name="description" id="descField" placeholder="Short description shown on the homepage cards" required>
+              <input name="description" placeholder="Short description shown on the homepage cards" value="<?php echo h($edit['description'] ?? ''); ?>" required>
             </label>
             <label>Sort Order
-              <input name="sort_order" id="orderField" type="number" value="0">
+              <input name="sort_order" type="number" value="<?php echo isset($edit['sort_order']) ? (int)$edit['sort_order'] : 0; ?>">
             </label>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" type="submit">Save</button>
-              <button class="btn btn-outline" id="resetBtn" type="button">Reset</button>
+            <div class="actions" style="margin-top:10px;display:flex;gap:8px;align-items:center;justify-content:flex-end">
+              <?php if ($edit): ?>
+                <button class="btn btn-green" type="submit" title="Update" aria-label="Update">Update</button>
+                <a class="btn btn-red" href="/APLX/frontend/admin/services.php" title="Cancel" aria-label="Cancel">Cancel</a>
+              <?php else: ?>
+                <button class="btn btn-green" type="submit" title="Create" aria-label="Create">Create</button>
+                <a class="btn btn-red" href="/APLX/frontend/admin/services.php" title="Cancel" aria-label="Cancel">Cancel</a>
+              <?php endif; ?>
             </div>
             <small class="muted">Tip: Browse and upload an icon image for the card. Title and Description are short texts; lower sort order appears earlier.</small>
-            <div id="formStatus" class="muted" aria-live="polite"></div>
           </form>
         </div>
       </div>
@@ -90,95 +228,5 @@
   </main>
 </div>
 <script src="/APLX/js/admin.js"></script>
-<script>
-(async function(){
-  const rows = document.getElementById('svcRows');
-  const form = document.getElementById('svcForm');
-  const statusEl = document.getElementById('formStatus');
-  const csrfField = document.getElementById('csrfField');
-  const methodField = document.getElementById('methodField');
-  const idField = document.getElementById('idField');
-  const titleField = document.getElementById('titleField');
-  const descField = document.getElementById('descField');
-  const orderField = document.getElementById('orderField');
-  const imgField = document.getElementById('imgField');
-  const resetBtn = document.getElementById('resetBtn');
-  const fileField = document.getElementById('fileField');
-
-  async function getCSRF(){
-    try{
-      const res = await fetch('/APLX/backend/router.php?route=admin/services&action=csrf', { cache:'no-store' });
-      if (res.ok) { const d = await res.json(); csrfField.value = d.csrf || ''; }
-    }catch(_){}}
-  await getCSRF();
-
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
-
-  async function load(){
-    rows.innerHTML = '<tr><td colspan="7" class="muted">Loading...</td></tr>';
-    const res = await fetch('/APLX/backend/router.php?route=admin/services', { cache:'no-store' });
-    const data = res.ok ? await res.json() : { items:[] };
-    const items = Array.isArray(data.items) ? data.items : [];
-    if (!items.length){ rows.innerHTML = '<tr><td colspan="7" class="muted">No services. Use the form to add.</td></tr>'; return; }
-    rows.innerHTML = items.map((it,i)=>{
-      const icon = it.icon ? `<span class="preview-icon">${escapeHtml(it.icon)}</span>` : '';
-      const img = it.image_url ? `<img class="image-thumb" src="${escapeHtml(it.image_url)}" alt="">` : '';
-      return `<tr>
-        <td>${i+1}</td>
-        <td>${icon}</td>
-        <td>${img}</td>
-        <td>${escapeHtml(it.title)}</td>
-        <td>${escapeHtml(it.description)}</td>
-        <td>${it.sort_order|0}</td>
-        <td class="actions">
-          <button class="btn btn-small" data-act="edit" data-id="${it.id}" data-img="${escapeHtml(it.image_url||'')}">Edit</button>
-          <button class="btn btn-small btn-danger" data-act="del" data-id="${it.id}">Delete</button>
-        </td>
-      </tr>`;
-    }).join('');
-  }
-
-  function resetForm(){
-    methodField.value = 'POST';
-    idField.value=''; titleField.value=''; descField.value=''; orderField.value='0';
-    if (fileField) fileField.value = '';
-    statusEl.textContent='';
-  }
-  resetBtn.addEventListener('click', resetForm);
-
-  document.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-id');
-    if (btn.dataset.act === 'edit'){
-      const tr = btn.closest('tr');
-      idField.value = id;
-      methodField.value = 'PATCH';
-      titleField.value = tr.children[3].textContent.trim();
-      descField.value = tr.children[4].textContent.trim();
-      orderField.value = parseInt(tr.children[5].textContent.trim()||'0',10);
-      imgField.value = btn.getAttribute('data-img') || '';
-      window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth' });
-    } else if (btn.dataset.act === 'del'){
-      if (!confirm('Delete this service?')) return;
-      const fd = new FormData();
-      fd.append('csrf', csrfField.value);
-      fd.append('_method', 'DELETE');
-      const res = await fetch(`/APLX/backend/router.php?route=admin/services&id=${encodeURIComponent(id)}`, { method:'POST', body: fd });
-      if (res.ok){ await load(); statusEl.textContent = 'Deleted'; } else { statusEl.textContent = 'Delete failed'; }
-    }
-  });
-
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    statusEl.textContent = 'Saving...';
-    const fd = new FormData(form);
-    const res = await fetch(form.action + (methodField.value==='PATCH'?`?id=${encodeURIComponent(idField.value)}`:''), { method:'POST', body: fd });
-    if (res.ok){ await load(); statusEl.textContent = 'Saved'; resetForm(); await getCSRF(); } else { statusEl.textContent = 'Save failed'; }
-  });
-
-  load();
-})();
-</script>
 </body>
 </html>

@@ -20,7 +20,6 @@ $initials = function($n){ $p = preg_split('/\s+/', trim((string)$n)); $a = strto
       <a href="/APLX/frontend/admin/booking.php"><span class="icon">📝</span><span>Bookings</span></a>
       <a href="/APLX/frontend/admin/analytics.php"><span class="icon">📊</span><span>Analytics</span></a>
       <a href="/APLX/frontend/admin/settings.php"><span class="icon">⚙️</span><span>Settings</span></a>
-      <a href="/APLX/frontend/admin/hero_banners.php"><span class="icon">🖼️</span><span>Hero Banners</span></a>
     </nav>
   </div>
   <div class="side-user">

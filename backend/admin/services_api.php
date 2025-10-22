@@ -22,8 +22,8 @@ function json_body() {
 function respond($data, $code = 200){ http_response_code($code); echo json_encode($data); exit; }
 
 if ($method === 'GET') {
-  // List all
-  $q = $conn->query('SELECT id, image_url, title, description, sort_order FROM services ORDER BY sort_order, id');
+  // List all (include icon_url if exists)
+  $q = $conn->query('SELECT id, icon_url, image_url, title, description, sort_order FROM services ORDER BY sort_order, id');
   $rows = [];
   while ($row = $q->fetch_assoc()) { $rows[] = $row; }
   respond(['items' => $rows]);
@@ -59,7 +59,9 @@ function save_upload($field, $subdir) {
 
 switch ($method) {
   case 'POST':
-    // Prefer uploaded file over URL if provided
+    // Upload icon (optional)
+    $icon_url = save_upload('icon_file', 'services/icons');
+    // Prefer uploaded image over URL if provided
     $image_url = save_upload('image_file', 'services');
     if (!$image_url) {
       $url = trim($_POST['image_url'] ?? '');
@@ -70,8 +72,13 @@ switch ($method) {
     $sort_order = intval($_POST['sort_order'] ?? 0);
     if (!$image_url) respond(['error' => 'Image is required'], 400);
     if (!$title || !$description) respond(['error' => 'Title and description are required'], 400);
-    $stmt = $conn->prepare('INSERT INTO services(image_url, title, description, sort_order) VALUES (?, ?, ?, ?)');
-    $stmt->bind_param('sssi', $image_url, $title, $description, $sort_order);
+    if ($icon_url) {
+      $stmt = $conn->prepare('INSERT INTO services(icon_url, image_url, title, description, sort_order) VALUES (?, ?, ?, ?, ?)');
+      $stmt->bind_param('ssssi', $icon_url, $image_url, $title, $description, $sort_order);
+    } else {
+      $stmt = $conn->prepare('INSERT INTO services(image_url, title, description, sort_order) VALUES (?, ?, ?, ?)');
+      $stmt->bind_param('sssi', $image_url, $title, $description, $sort_order);
+    }
     $stmt->execute();
     respond(['ok' => true, 'id' => $stmt->insert_id]);
   case 'PUT':
@@ -81,20 +88,29 @@ switch ($method) {
     $id = intval($_GET['id'] ?? ($src['id'] ?? 0));
     if ($id <= 0) respond(['error' => 'Invalid id'], 400);
     // Load existing image_url to keep when not replaced
-    $cur = $conn->prepare('SELECT image_url FROM services WHERE id=?');
+    $cur = $conn->prepare('SELECT icon_url, image_url FROM services WHERE id=?');
     $cur->bind_param('i', $id);
     $cur->execute();
-    $old = ($cur->get_result()->fetch_assoc()['image_url'] ?? '');
+    $oldRow = $cur->get_result()->fetch_assoc() ?: [];
+    $oldImage = $oldRow['image_url'] ?? '';
+    $oldIcon = $oldRow['icon_url'] ?? '';
     $title = trim(($src['title'] ?? ''));
     $description = trim(($src['description'] ?? ''));
     $sort_order = isset($src['sort_order']) ? intval($src['sort_order']) : 0;
-    // Prefer uploaded file if present
+    // Prefer uploaded files if present
+    $newIcon = save_upload('icon_file', 'services/icons');
     $newUpload = save_upload('image_file', 'services');
-    $image_url = $newUpload ?: (trim($src['image_url'] ?? '') ?: $old);
+    $icon_url = $newIcon ?: ($src['icon_url'] ?? $oldIcon);
+    $image_url = $newUpload ?: (trim($src['image_url'] ?? '') ?: $oldImage);
     if (!$image_url) respond(['error' => 'Image is required'], 400);
     if (!$title || !$description) respond(['error' => 'Title and description are required'], 400);
-    $stmt = $conn->prepare('UPDATE services SET image_url=?, title=?, description=?, sort_order=? WHERE id=?');
-    $stmt->bind_param('sssii', $image_url, $title, $description, $sort_order, $id);
+    if ($icon_url !== null) {
+      $stmt = $conn->prepare('UPDATE services SET icon_url=?, image_url=?, title=?, description=?, sort_order=? WHERE id=?');
+      $stmt->bind_param('ssssii', $icon_url, $image_url, $title, $description, $sort_order, $id);
+    } else {
+      $stmt = $conn->prepare('UPDATE services SET image_url=?, title=?, description=?, sort_order=? WHERE id=?');
+      $stmt->bind_param('sssii', $image_url, $title, $description, $sort_order, $id);
+    }
     $stmt->execute();
     respond(['ok' => true]);
   case 'DELETE':

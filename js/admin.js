@@ -95,6 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifMenu = document.getElementById('notifMenu');
     const profileMenu = document.getElementById('profileMenu');
     const notifBadge = document.getElementById('notifBadge');
+    let latestNotifs = [];
+    function getLastSeen(){ const v = localStorage.getItem('admin_notif_last_seen') || '0'; const n = parseInt(v,10); return isNaN(n)?0:n; }
+    function itemMarker(it){ const id = Number(it.id||0); if (!isNaN(id) && id>0) return id; const t = Date.parse(it.created_at||it.time||''); return isNaN(t)?0:t; }
+    function updateNotifBadge(items){ try{ const last = getLastSeen(); const unseen = (items||[]).filter(it => itemMarker(it) > last).length; if (notifBadge){ if (unseen>0){ notifBadge.textContent = String(unseen); notifBadge.style.display='inline-block'; } else { notifBadge.textContent=''; notifBadge.style.display='none'; } } }catch(_){ if (notifBadge){ notifBadge.textContent=''; notifBadge.style.display='none'; } } }
+    function markNotificationsSeen(){ try{ const maxMark = (latestNotifs||[]).reduce((m,it)=>{ const k=itemMarker(it); return k>m?k:m; }, getLastSeen()); localStorage.setItem('admin_notif_last_seen', String(maxMark)); updateNotifBadge(latestNotifs); }catch(_){ } }
     function closeAll() { notifMenu?.classList.remove('open'); profileMenu?.classList.remove('open'); }
     notifBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -198,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
         const items = Array.isArray(data.items) ? data.items : [];
+        latestNotifs = items;
         renderNotifications(items);
         updateNotifBadge(items);
       }catch(err){
@@ -221,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('click', closeAll);
-    // Initial badge/load
     loadNotifications();
   }
 });

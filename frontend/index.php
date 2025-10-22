@@ -34,7 +34,7 @@
       if (count($heroBanners) > 0) { $heroFirst = $heroBanners[0]; }
       // Load services (top 4 by sort_order, id)
       $services = [];
-      if ($r = $conn->query("SELECT image_url, title, description, sort_order FROM services ORDER BY sort_order ASC, id ASC LIMIT 4")) {
+      if ($r = $conn->query("SELECT icon_url, image_url, title, description, sort_order FROM services ORDER BY sort_order ASC, id ASC LIMIT 4")) {
         while ($row = $r->fetch_assoc()) { $services[] = $row; }
       }
       // Load gallery items (limit 10 most recent by id desc; if sort_order exists use it)
@@ -111,7 +111,9 @@
           <?php foreach ($services as $i => $s): ?>
             <div class="service-card reveal reveal-card stagger-<?php echo (($i % 3) + 1); ?>">
               <div class="service-icon">
-                <?php if (!empty($s['image_url'])): ?>
+                <?php if (!empty($s['icon_url'])): ?>
+                  <img src="<?php echo htmlspecialchars($s['icon_url']); ?>" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);" />
+                <?php elseif (!empty($s['image_url'])): ?>
                   <img src="<?php echo htmlspecialchars($s['image_url']); ?>" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);" />
                 <?php else: ?>
                   ⬢
@@ -557,11 +559,12 @@
         const items = (data && Array.isArray(data.items)) ? data.items.slice(0,4) : [];
         if (!items.length) return; // keep static
         grid.innerHTML = items.map((it,i)=>{
-          const icon = it.icon ? escapeHtml(it.icon) : '';
+          const iconUrl = it.icon_url ? escapeHtml(it.icon_url) : '';
           const title = escapeHtml(it.title);
           const desc = escapeHtml(it.description);
           const img = it.image_url ? `<img src="${escapeHtml(it.image_url)}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
-          const iconHtml = icon ? `<div class=\"service-icon\">${icon}</div>` : (img ? `<div class=\"service-icon\">${img}</div>` : '<div class="service-icon">⬢</div>');
+          const iconImg = iconUrl ? `<img src="${iconUrl}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
+          const iconHtml = iconImg ? `<div class=\"service-icon\">${iconImg}</div>` : (img ? `<div class=\"service-icon\">${img}</div>` : '<div class="service-icon">⬢</div>');
           const cls = 'service-card reveal reveal-card stagger-' + ((i%3)+1);
           return `<div class="${cls}">${iconHtml}<div class="service-title">${title}</div><div class="service-desc">${desc}</div></div>`;
         }).join('');
