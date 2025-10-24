@@ -71,7 +71,7 @@ require_admin();
             <svg viewBox="0 0 24 24"><path d="M3 7h12v10H3z"/><path d="M15 11h4l3 3v3h-7z"/><circle cx="7.5" cy="19" r="2"/><circle cx="17.5" cy="19" r="2"/></svg>
           </div>
           <div class="stat-meta">
-            <div class="stat-title">TOTAL DELIVERY</div>
+            <div class="stat-title">TOTAL SHIPMENTS</div>
             <div class="stat-value" id="statShipments">—</div>
           </div>
         </div>
@@ -115,16 +115,8 @@ require_admin();
     </section>
     <section class="card">
       <h2>Recent Activity</h2>
-      <ul class="activity-list">
-        <li>
-          <div class="time">2025-09-25 13:37:01</div>
-          <div class="desc"><strong>Booked</strong> — New shipment from ygydu to yufyud. AWB: PRCL23053368</div>
-        </li>
-        <li>
-          <div class="time">2025-09-25 13:25:27</div>
-          <div class="desc"><strong>Booked</strong> — New shipment from Aravinthan to Srithevi. AWB: PRCL58662683</div>
-        </li>
-        <li class="muted">For live data, open <a class="btn btn-sm btn-outline" href="/APLX/backend/admin/dashboard.php">Live Dashboard</a></li>
+      <ul id="recentList" class="activity-list">
+        <li class="muted">Loading...</li>
       </ul>
     </section>
   </main>
@@ -155,6 +147,33 @@ require_admin();
   }
   loadStats();
   setInterval(loadStats, 60000);
+  // Dynamic recent activity (latest notifications derived from shipments)
+  async function loadRecent(){
+    const list = document.getElementById('recentList');
+    if (!list) return;
+    try{
+      const res = await fetch('/APLX/backend/admin/notifications.php?api=1&limit=5', { cache:'no-store' });
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      if (!items.length){ list.innerHTML = '<li class="muted">No recent activity</li>'; return; }
+      const escapeHtml = (s)=> String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+      const fmt = (d)=>{ try{ const tz='Asia/Colombo'; const dt = (typeof d==='string')? new Date(d.replace(' ','T')): new Date(d); const date=new Intl.DateTimeFormat('en-GB',{timeZone:tz,year:'numeric',month:'short',day:'2-digit'}).format(dt); const time=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(dt); return `${date} ${time}`; }catch(_){ return String(d||''); } };
+      list.innerHTML = items.map(n=>{
+        const title = escapeHtml(n.title || n.type || 'Update');
+        const msg = escapeHtml(n.message || '');
+        const when = fmt(n.created_at || n.time || '');
+        return `<li>
+          <div class="time">${when}</div>
+          <div class="desc"><strong>${title}</strong>${msg?` — ${msg}`:''}</div>
+        </li>`;
+      }).join('');
+    }catch(err){
+      list.innerHTML = '<li class="muted">Failed to load recent activity</li>';
+    }
+  }
+  loadRecent();
+  setInterval(loadRecent, 60000);
 })();
 </script>
 </body>

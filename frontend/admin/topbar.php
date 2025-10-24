@@ -9,12 +9,19 @@
   .icon-btn.notif{ position: relative; }
   .icon-btn.notif .notif-badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:11px;line-height:1;padding:2px 6px;border-radius:999px;box-shadow:0 0 0 2px #0b1220;display:none}
   .icon-btn.notif .notif-badge.show{ display:inline-block }
+  /* Center modals on screen overriding global bottom-sheet layout */
+  .modal-backdrop{ display:none; align-items:center; justify-content:center; }
   .modal-backdrop.open{ display:flex }
   .modal-panel{ width:100%; max-width:520px; background:#0b1220; border:1px solid var(--border); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.5) }
   body[data-theme="light"] .modal-panel{ background:#ffffff }
   .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border) }
   .modal-title{ margin:0; font-size:18px }
   .modal-close{ background:#111827; color:#fff; border:1px solid var(--border); border-radius:8px; padding:6px 10px; cursor:pointer }
+  /* Danger button (Cancel) */
+  .btn-danger{ background:#ef4444; color:#ffffff; border:1px solid #dc2626 }
+  .btn-danger:hover{ filter:brightness(1.05) }
+  /* Ensure red overrides modal's generic .btn green */
+  .modal-body .btn.btn-danger{ background:#ef4444 !important; color:#ffffff; border:1px solid #dc2626 }
 </style>
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
@@ -58,8 +65,8 @@
           <input type="password" name="confirm_password" placeholder="Confirm Password" />
         </div>
         <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
-          <button type="button" class="btn btn-secondary" id="adminProfileCancel">Cancel</button>
           <button type="submit" class="btn">Save Changes</button>
+          <button type="button" class="btn btn-danger" id="adminProfileCancel">Cancel</button>
         </div>
       </form>
       <div id="adminProfileStatus" class="inline-status" aria-live="polite"></div>

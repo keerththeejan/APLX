@@ -93,7 +93,7 @@
         ?></h1>
         <p id="heroTagline"><?php echo htmlspecialchars($heroFirst['tagline'] ?? 'Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.'); ?></p>
         <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
-          <a id="heroCta1" class="btn btn-primary" href="<?php echo htmlspecialchars(($heroFirst['cta1_link'] ?? '/APLX/frontend/login.php') ?: '/APLX/frontend/login.php'); ?>" style="text-decoration:none;">
+          <a id="heroCta1" class="btn btn-primary" href="<?php echo htmlspecialchars(($heroFirst['cta1_link'] ?? '/APLX/frontend/customer/register.php') ?: '/APLX/frontend/customer/register.php'); ?>" style="text-decoration:none;">
             <?php echo htmlspecialchars(($heroFirst['cta1_text'] ?? 'Get Started') ?: 'Get Started'); ?>
           </a>
           <a id="heroCta2" class="btn btn-secondary" href="<?php echo htmlspecialchars(($heroFirst['cta2_link'] ?? '#') ?: '#'); ?>" style="text-decoration:none;">
@@ -637,12 +637,7 @@
   (function(){
     const book = document.getElementById('navBook');
     if (!book) return;
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === '1';
-    const role = localStorage.getItem('userRole') || 'customer';
-    const loggedCustomer = isLoggedIn && role === 'customer';
-    book.href = loggedCustomer
-      ? '/APLX/frontend/customer/book.php'
-      : '/APLX/frontend/login.php?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.php';
+    book.href = '/APLX/frontend/customer/book.php';
   })();
   // Hero cross-fade
   (function(){

@@ -4,10 +4,31 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../init.php'; // provides $conn (mysqli)
 
 try {
-    // Total users
-    $res = $conn->query("SELECT COUNT(*) AS c FROM users");
-    $row = $res->fetch_assoc();
-    $total_users = (int)($row['c'] ?? 0);
+    // Total users (prefer customers table if present)
+    $total_users = 0;
+    try {
+        $hasCustomers = false;
+        foreach (['customer','customers'] as $t) {
+            try {
+                $chk = $conn->prepare("SELECT 1 FROM `{$t}` LIMIT 1");
+                if ($chk) { $chk->execute(); $chk->close(); $hasCustomers = $t; break; }
+            } catch (Throwable $e) { /* try next */ }
+        }
+        if ($hasCustomers) {
+            $res = $conn->query("SELECT COUNT(*) AS c FROM `{$hasCustomers}`");
+            $row = $res ? $res->fetch_assoc() : null;
+            $total_users = (int)($row['c'] ?? 0);
+        } else {
+            $res = $conn->query("SELECT COUNT(*) AS c FROM users");
+            $row = $res ? $res->fetch_assoc() : null;
+            $total_users = (int)($row['c'] ?? 0);
+        }
+    } catch (Throwable $e) {
+        // Fallback if detection fails
+        $res = $conn->query("SELECT COUNT(*) AS c FROM users");
+        $row = $res ? $res->fetch_assoc() : null;
+        $total_users = (int)($row['c'] ?? 0);
+    }
 
     // Total shipments
     $res = $conn->query("SELECT COUNT(*) AS c FROM shipments");

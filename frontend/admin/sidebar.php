@@ -13,7 +13,6 @@ $initials = function($n){ $p = preg_split('/\s+/', trim((string)$n)); $a = strto
     </div>
     <nav>
       <a href="/APLX/frontend/admin/dashboard.php"><span class="icon">🏠</span><span>Dashboard</span></a>
-      <a href="/APLX/frontend/admin/users.php"><span class="icon">👤</span><span>Users</span></a>
       <a href="/APLX/frontend/admin/customers.php"><span class="icon">👥</span><span>Customers</span></a>
       <a href="/APLX/frontend/admin/mail.php"><span class="icon">✉️</span><span>Mail</span></a>
       <a href="/APLX/frontend/admin/shipments.php"><span class="icon">📦</span><span>Shipments</span></a>

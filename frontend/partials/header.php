@@ -10,7 +10,7 @@ $isAdmin = $u && (($u['role'] ?? '') === 'admin');
     <nav>
       <a href="/APLX/" class="<?php echo ($_SERVER['REQUEST_URI'] ?? '') === '/APLX/' ? 'active' : ''; ?>">Home</a>
       <a href="/APLX/frontend/track.php">Track</a>
-      <a id="navBook" href="/APLX/frontend/login.php?next=%2FAPLX%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
+      <a id="navBook" href="/APLX/frontend/customer/book.php">Book</a>
       <?php if ($isAdmin) { ?>
         <a href="/APLX/frontend/admin/dashboard.php" title="Admin Dashboard" aria-label="Admin Dashboard"><span aria-hidden="true">🛡️</span> <span class="hide-sm">Admin</span></a>
       <?php } else { ?>

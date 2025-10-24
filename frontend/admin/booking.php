@@ -135,6 +135,7 @@
       <table class="data">
         <thead>
           <tr>
+            <th>No</th>
             <th>Tracking</th>
             <th>Sender</th>
             <th>Receiver</th>
@@ -149,7 +150,7 @@
           </tr>
         </thead>
         <tbody id="bookTbody">
-          <tr><td colspan="6" class="muted">Loading...</td></tr>
+          <tr><td colspan="12" class="muted">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -450,17 +451,18 @@
 
   async function load(){
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6" class="muted">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="muted">Loading...</td></tr>';
     const params = new URLSearchParams({ page:String(page), limit:String(limit), search:(q?.value||'').trim() });
     const res = await fetch('/APLX/backend/admin/shipments.php?api=1&'+params.toString(), { cache:'no-store' });
-    if (!res.ok){ tbody.innerHTML = '<tr><td colspan="6" class="muted">Failed to load</td></tr>'; return; }
+    if (!res.ok){ tbody.innerHTML = '<tr><td colspan="12" class="muted">Failed to load</td></tr>'; return; }
     const data = await res.json();
     total = Number(data.total||0);
     const items = Array.isArray(data.items)?data.items:[];
-    if (items.length===0){ tbody.innerHTML = '<tr><td colspan="10" class="muted">No results</td></tr>'; }
+    if (items.length===0){ tbody.innerHTML = '<tr><td colspan="12" class="muted">No results</td></tr>'; }
     else{
-      tbody.innerHTML = items.map(s => `
+      tbody.innerHTML = items.map((s, idx) => `
         <tr data-id="${s.id}">
+          <td>${(page-1)*limit + idx + 1}</td>
           <td>${escapeHtml(s.tracking_number||'')}</td>
           <td>${escapeHtml(s.sender_name||'')}</td>
           <td>${escapeHtml(s.receiver_name||'')}</td>
@@ -720,8 +722,8 @@
           // Get booking details from the row
           const booking = {
             id: bookingId,
-            tracking_number: row.cells[0].textContent,
-            status: row.cells[7].textContent.trim().toLowerCase()
+            tracking_number: row.cells[1].textContent,
+            status: row.cells[8].textContent.trim().toLowerCase()
           };
           
           openEditModal(booking, row);
@@ -734,7 +736,7 @@
     
     // Add status classes to rows
     document.querySelectorAll('tr[data-id]').forEach(row => {
-      const statusCell = row.cells[7]; // Status is in the 8th column
+      const statusCell = row.cells[8]; // Status is now in the 9th column after adding No
       if (statusCell) {
         const status = statusCell.textContent.trim().toLowerCase();
         // Remove all status classes
