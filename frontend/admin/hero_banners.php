@@ -131,7 +131,10 @@ while ($row = $res->fetch_assoc()) { $items[] = $row; }
   <aside id="sidebar"></aside>
   <main class="content">
     <div id="topbar"></div>
-
+    <div class="page-actions" style="text-align:right; margin:50px 0 12px;">
+      <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php" title="Back to Settings">← Back to Settings</a>
+    </div>
+    
     <section class="card">
       <h2>Hero Banners</h2>
       <?php if (isset($_GET['msg'])): ?><div class="notice" role="status" aria-live="polite"><?php echo h($_GET['msg']); ?></div><?php endif; ?>

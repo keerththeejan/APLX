@@ -8,9 +8,11 @@
   <style>
     .content{padding:16px;margin-left:260px}
     .toolbar{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin:48px 0 12px 0}
-    .mc-row{display:flex;justify-content:flex-start}
+    .bar-row{display:flex;justify-content:space-between;align-items:center;width:100%}
+    .mc-row{display:flex;justify-content:flex-start;align-items:center}
     .searchbox{display:flex;gap:8px;align-items:center}
-    .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111}
+    .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111;height:40px}
+    .toolbar .btn{height:40px;display:inline-flex;align-items:center}
     .controls-right{display:flex;flex-direction:column;align-items:flex-end;width:100%}
     .under-search{margin-top:6px}
     .sm-select{padding:6px 8px !important;font-size:12px !important;min-width:140px;border-radius:8px}
@@ -34,18 +36,20 @@
 
     <div class="toolbar">
       <h2>Mail Logs</h2>
-      <div class="mc-row"><a class="btn" href="/APLX/frontend/admin/message_customer.php">Message Customer</a></div>
-      <div class="controls-right">
-        <div class="searchbox">
-          <input id="q" type="search" placeholder="Search email or subject">
-          <button class="btn" id="btnSearch">Search</button>
-        </div>
-        <div class="under-search">
-          <select id="f_type" class="sm-select">
-            <option value="">All</option>
-            <option value="admin">Admin</option>
-            <option value="customer">Customer</option>
-          </select>
+      <div class="bar-row">
+        <div class="mc-row"><a class="btn" href="/APLX/frontend/admin/message_customer.php">Message Customer</a></div>
+        <div class="controls-right">
+          <div class="searchbox">
+            <input id="q" type="search" placeholder="Search email or subject">
+            <button class="btn" id="btnSearch">Search</button>
+          </div>
+          <div class="under-search">
+            <select id="f_type" class="sm-select">
+              <option value="">All</option>
+              <option value="admin">Admin</option>
+              <option value="customer">Customer</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>

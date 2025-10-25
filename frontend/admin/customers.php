@@ -17,7 +17,8 @@ require_admin();
     .search-row{width:100%;display:flex;justify-content:space-between;gap:10px;align-items:center}
     .actions-row{display:flex;gap:8px}
     .searchbox{display:flex;gap:8px;align-items:center}
-    .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111}
+    .searchbox input{padding:10px 12px;border-radius:10px;border:1px solid var(--border);min-width:260px;background:#fff;color:#111;height:40px}
+    .toolbar .btn{height:40px;display:inline-flex;align-items:center}
 
     table.data{width:100%;border-collapse:separate;border-spacing:0 12px}
     table.data th{color:var(--muted);text-align:left;padding:8px 12px;font-weight:600}
@@ -53,12 +54,12 @@ require_admin();
     <div class="toolbar">
       <h2>Customers</h2>
       <div class="search-row">
+        <div class="actions-row">
+          <button class="btn" id="btnAdd">Add Customer</button>
+        </div>
         <div class="searchbox">
           <input id="q" type="search" placeholder="Search by name or email" />
           <button class="btn" id="btnSearch">Search</button>
-        </div>
-        <div class="actions-row">
-          <button class="btn" id="btnAdd">Add Customer</button>
         </div>
       </div>
     </div>

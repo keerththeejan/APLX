@@ -6,10 +6,18 @@ require_admin();
 if (isset($_GET['api']) && $_GET['api'] == '1') {
   header('Content-Type: application/json');
   try {
-    // Shipments per day (last 7 days)
-    $q1 = $conn->query("SELECT DATE(updated_at) AS d, COUNT(*) AS c FROM shipments WHERE updated_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) GROUP BY DATE(updated_at) ORDER BY d ASC");
+    // Weekly shipments by weekday (current ISO week, Mon..Sun)
+    $labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    $counts = array_fill(0, 7, 0);
+    $q1 = $conn->query("SELECT WEEKDAY(updated_at) AS wd, COUNT(*) AS c
+                        FROM shipments
+                        WHERE YEARWEEK(updated_at, 3) = YEARWEEK(CURDATE(), 3)
+                        GROUP BY wd");
+    if ($q1) {
+      while ($r = $q1->fetch_assoc()) { $counts[(int)$r['wd']] = (int)$r['c']; }
+    }
     $by_day = [];
-    while ($r = $q1->fetch_assoc()) { $by_day[] = $r; }
+    for ($i = 0; $i < 7; $i++) { $by_day[] = ['d' => $labels[$i], 'c' => $counts[$i]]; }
 
     // Weekly status counts (last 7 days)
     $q2 = $conn->query("SELECT status, COUNT(*) AS c FROM shipments WHERE updated_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) GROUP BY status");

@@ -137,7 +137,7 @@ if ($id > 0){
   <aside id="sidebar"></aside>
   <main class="content">
     <div id="topbar"></div>
-    <div class="page-actions">
+    <div class="page-actions" style="text-align:right; margin:50px 0 12px;">
       <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php" title="Back to Settings">← Back to Settings</a>
     </div>
 
