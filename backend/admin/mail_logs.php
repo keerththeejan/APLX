@@ -75,6 +75,45 @@ try {
         exit;
     }
 
+    if ($method === 'POST') {
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw, true);
+        if (!is_array($data)) { $data = []; }
+        $action = strtolower(trim($data['action'] ?? ''));
+        if ($action === 'delete') {
+            $id = (int)($data['id'] ?? 0);
+            if ($id <= 0) { http_response_code(400); echo json_encode(['ok'=>false,'error'=>'Invalid id']); exit; }
+            $stmt = $conn->prepare('DELETE FROM mail_logs WHERE id = ?');
+            $stmt->bind_param('i', $id);
+            $ok = $stmt->execute();
+            echo json_encode(['ok' => (bool)$ok]);
+            exit;
+        }
+        if ($action === 'update') {
+            $id = (int)($data['id'] ?? 0);
+            if ($id <= 0) { http_response_code(400); echo json_encode(['ok'=>false,'error'=>'Invalid id']); exit; }
+            $subject = trim((string)($data['subject'] ?? ''));
+            $status  = trim((string)($data['status'] ?? ''));
+            if ($subject === '' && $status === '') { http_response_code(400); echo json_encode(['ok'=>false,'error'=>'No fields to update']); exit; }
+            // Build dynamic update for provided fields
+            $fields = [];
+            $params = [];
+            $types  = '';
+            if ($subject !== '') { $fields[] = 'subject = ?'; $params[] = $subject; $types .= 's'; }
+            if ($status !== '')  { $fields[] = 'status = ?';  $params[] = $status;  $types .= 's'; }
+            $params[] = $id; $types .= 'i';
+            $sql = 'UPDATE mail_logs SET ' . implode(', ', $fields) . ' WHERE id = ?';
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $ok = $stmt->execute();
+            echo json_encode(['ok' => (bool)$ok]);
+            exit;
+        }
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'error'=>'Unknown action']);
+        exit;
+    }
+
     http_response_code(405);
     echo json_encode(['ok' => false, 'error' => 'Method not allowed']);
 } catch (Throwable $e) {

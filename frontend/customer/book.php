@@ -96,22 +96,7 @@
     </section>
   </main>
 
-  <script>
-  // Auth guard: require backend session as customer to view this page
-  (function(){
-    const next = encodeURIComponent('/APLX/frontend/customer/book.php');
-    fetch('/APLX/backend/whoami.php', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        if (!data || !data.loggedIn || data.role !== 'customer') {
-          window.location.replace('/APLX/frontend/login.php?next=' + next);
-        }
-      })
-      .catch(() => {
-        window.location.replace('/APLX/frontend/login.php?next=' + next);
-      });
-  })();
-  </script>
+  
   <script>
   // Theme toggle + persist (same as index)
   (function(){

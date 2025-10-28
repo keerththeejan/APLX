@@ -90,7 +90,7 @@
           <td>${escapeHtml(s.status||'')}</td>
           <td>${escapeHtml(s.updated_at||'')}</td>
           <td class="actions">
-            <button class="btn-icon btn-blue action-edit" title="Edit" data-id="${s.id}">✏️</button>
+            <button class="btn-icon btn-blue action-edit" title="Edit" data-id="${s.id}" data-status="${escapeHtml(s.status||'')}">✏️</button>
             <button class="btn-icon btn-red action-del" title="Delete" data-id="${s.id}">🗑️</button>
           </td>
         </tr>
@@ -108,6 +108,101 @@
     try{ const r = await fetch('/APLX/backend/admin/customers_api.php?action=csrf',{cache:'no-store'}); if(r.ok){ const d = await r.json(); csrf = d.csrf||''; } }catch(e){}
   }
 
+  // Edit Modal (centered dark theme)
+  const modal = document.createElement('div');
+  modal.id = 'shipModal';
+  modal.className = 'modal-backdrop';
+  modal.setAttribute('aria-hidden','true');
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  modal.innerHTML = `
+    <div class="modal-panel" style="max-width:520px">
+      <div class="modal-header">
+        <h3 class="modal-title">Update Shipment Status</h3>
+        <button class="modal-close" id="shipModalClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="shipForm" class="form-grid">
+          <input type="hidden" id="ship_id" />
+          <div class="form-row">
+            <select id="ship_status" required>
+              <option value="Booked">Booked</option>
+              <option value="pending">pending</option>
+              <option value="in_transit">in_transit</option>
+              <option value="delivered">delivered</option>
+              <option value="cancelled">cancelled</option>
+            </select>
+          </div>
+          <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+            <button type="submit" class="btn">Save</button>
+            <button type="button" class="btn btn-danger" id="shipCancel">Cancel</button>
+          </div>
+        </form>
+        <div id="shipStatusMsg" class="inline-status" aria-live="polite"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const shipForm = modal.querySelector('#shipForm');
+  const shipIdEl = modal.querySelector('#ship_id');
+  const shipStatusEl = modal.querySelector('#ship_status');
+  const shipCloseBtn = modal.querySelector('#shipModalClose');
+  const shipCancelBtn = modal.querySelector('#shipCancel');
+  const shipMsgEl = modal.querySelector('#shipStatusMsg');
+  function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  shipCloseBtn.addEventListener('click', closeModal);
+  shipCancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+
+  // Reusable confirm modal (centered, dark theme)
+  const cfm = document.createElement('div');
+  cfm.id = 'confirmModal';
+  cfm.className = 'modal-backdrop';
+  cfm.setAttribute('aria-hidden','true');
+  cfm.setAttribute('role','dialog');
+  cfm.setAttribute('aria-modal','true');
+  cfm.innerHTML = `
+    <div class="modal-panel" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+        <button class="modal-close" id="confirmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="confirmMsg" style="margin-bottom:12px"></div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn" id="confirmOk">OK</button>
+          <button type="button" class="btn btn-danger" id="confirmCancel">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(cfm);
+  const confirmMsgEl = cfm.querySelector('#confirmMsg');
+  const confirmOkBtn = cfm.querySelector('#confirmOk');
+  const confirmCancelBtn = cfm.querySelector('#confirmCancel');
+  const confirmCloseBtn = cfm.querySelector('#confirmClose');
+  function openConfirm(){ cfm.classList.add('open'); cfm.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeConfirm(){ cfm.classList.remove('open'); cfm.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function showConfirm(message){
+    confirmMsgEl.textContent = message || 'Are you sure?';
+    openConfirm();
+    return new Promise((resolve)=>{
+      function cleanup(){
+        confirmOkBtn.removeEventListener('click', ok);
+        confirmCancelBtn.removeEventListener('click', cancel);
+        confirmCloseBtn.removeEventListener('click', cancel);
+        cfm.removeEventListener('click', onBackdrop);
+      }
+      function ok(){ cleanup(); closeConfirm(); resolve(true); }
+      function cancel(){ cleanup(); closeConfirm(); resolve(false); }
+      function onBackdrop(e){ if(e.target===cfm){ cancel(); } }
+      confirmOkBtn.addEventListener('click', ok);
+      confirmCancelBtn.addEventListener('click', cancel);
+      confirmCloseBtn.addEventListener('click', cancel);
+      cfm.addEventListener('click', onBackdrop);
+      window.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ cancel(); window.removeEventListener('keydown', esc); } });
+    });
+  }
+
   tbody?.addEventListener('click', async (e)=>{
     const btn = e.target.closest('.action-edit, .action-del');
     if(!btn) return;
@@ -115,19 +210,32 @@
     if(!id) return;
     if(!csrf) await getCSRF();
     if(btn.classList.contains('action-del')){
-      if(!confirm('Delete this shipment?')) return;
+      const ok = await showConfirm('Delete this shipment?');
+      if(!ok) return;
       const fd = new FormData(); fd.append('csrf', csrf); fd.append('_method','DELETE');
       const r = await fetch('/APLX/backend/admin/shipments.php?id='+encodeURIComponent(id), { method:'POST', body: fd });
       if(r.ok){ showCenterPopup('Shipment deleted','success'); load(); } else { showCenterPopup('Delete failed','error'); }
     } else if(btn.classList.contains('action-edit')){
-      const status = prompt('Update status (e.g., Booked, pending, in_transit, delivered, cancelled):');
-      if(status===null) return;
-      const fd = new FormData(); fd.append('csrf', csrf); fd.append('_method','PATCH'); fd.append('status', status.trim());
-      const r = await fetch('/APLX/backend/admin/shipments.php?id='+encodeURIComponent(id), { method:'POST', body: fd });
-      if(r.ok){ showCenterPopup('Status updated','success'); load(); } else { showCenterPopup('Update failed','error'); }
+      shipMsgEl.textContent='';
+      shipIdEl.value = id;
+      const cur = (btn.getAttribute('data-status')||'').trim();
+      // Preselect if matches one of options (case-insensitive)
+      const opts = Array.from(shipStatusEl.options).map(o=>o.value);
+      const match = opts.find(o=>o.toLowerCase()===cur.toLowerCase());
+      shipStatusEl.value = match || 'Booked';
+      openModal();
     }
   });
 
+  shipForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    shipMsgEl.textContent='Saving...';
+    const id = shipIdEl.value;
+    const statusVal = shipStatusEl.value;
+    const fd = new FormData(); fd.append('csrf', csrf); fd.append('_method','PATCH'); fd.append('status', statusVal);
+    const r = await fetch('/APLX/backend/admin/shipments.php?id='+encodeURIComponent(id), { method:'POST', body: fd });
+    if(r.ok){ shipMsgEl.textContent='Updated'; closeModal(); showCenterPopup('Status updated','success'); load(); } else { shipMsgEl.textContent='Update failed'; showCenterPopup('Update failed','error'); }
+  });
   btnSearch?.addEventListener('click', ()=>{ page=1; load(); });
   input?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); }});
   prevPg?.addEventListener('click', ()=>{ if(page>1){ page--; load(); }});

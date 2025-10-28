@@ -93,7 +93,7 @@
         ?></h1>
         <p id="heroTagline"><?php echo htmlspecialchars($heroFirst['tagline'] ?? 'Reliable logistics solutions for every shipment. From pickup to delivery, track and manage your parcels with ease.'); ?></p>
         <div class="form-actions" style="margin-top:16px; display:flex; gap:12px;">
-          <a id="heroCta1" class="btn btn-primary" href="<?php echo htmlspecialchars(($heroFirst['cta1_link'] ?? '/APLX/frontend/customer/register.php') ?: '/APLX/frontend/customer/register.php'); ?>" style="text-decoration:none;">
+          <a id="heroCta1" class="btn btn-primary" href="/APLX/frontend/customer/register.php" style="text-decoration:none;">
             <?php echo htmlspecialchars(($heroFirst['cta1_text'] ?? 'Get Started') ?: 'Get Started'); ?>
           </a>
           <a id="heroCta2" class="btn btn-secondary" href="<?php echo htmlspecialchars(($heroFirst['cta2_link'] ?? '#') ?: '#'); ?>" style="text-decoration:none;">
@@ -570,6 +570,34 @@
         }).join('');
       })
       .catch(()=>{});
+  })();
+
+  // Quote/Contact forms -> submit to admin notifications (store message)
+  (function(){
+    async function submitForm(form, statusEl){
+      if (!form) return;
+      statusEl && (statusEl.textContent = 'Sending...');
+      try{
+        const fd = new FormData(form);
+        const res = await fetch('/APLX/backend/public/message_submit.php', { method:'POST', body: fd });
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+        if (data && data.ok){
+          statusEl && (statusEl.textContent = 'Message sent');
+          form.reset();
+        } else {
+          statusEl && (statusEl.textContent = (data && data.error) ? data.error : 'Failed to send');
+        }
+      }catch(err){
+        statusEl && (statusEl.textContent = 'Failed to send');
+      }
+    }
+    const homeForm = document.getElementById('homeQuoteForm');
+    const homeStatus = document.getElementById('homeQuoteStatus');
+    homeForm && homeForm.addEventListener('submit', (e)=>{ e.preventDefault(); submitForm(homeForm, homeStatus); });
+    const quickForm = document.getElementById('quickQuoteForm');
+    const quickStatus = document.getElementById('quickQuoteStatus');
+    quickForm && quickForm.addEventListener('submit', (e)=>{ e.preventDefault(); submitForm(quickForm, quickStatus); });
   })();
   // Transport gallery: fetch from backend, render, then enable seamless scroll
   (function(){

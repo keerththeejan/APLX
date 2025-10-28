@@ -448,6 +448,7 @@
   const nextPg = document.getElementById('nextPg');
   const pgInfo = document.getElementById('pgInfo');
   let page = 1, limit = 10, total = 0;
+  let csrf = '';
 
   async function load(){
     if (!tbody) return;
@@ -489,6 +490,14 @@
   }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+
+  // Fetch CSRF token (reuse existing admin endpoint)
+  async function getCSRF(){
+    try{
+      const r = await fetch('/APLX/backend/admin/customers_api.php?action=csrf',{cache:'no-store'});
+      if(r.ok){ const d = await r.json(); csrf = d.csrf||''; }
+    }catch(_){ /* ignore */ }
+  }
 
   btnSearch?.addEventListener('click', ()=>{ page=1; load(); });
   q?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); } });
@@ -632,7 +641,7 @@
   closeEditModal.addEventListener('click', closeModal);
   cancelEdit.addEventListener('click', closeModal);
 
-  // Handle form submission
+  // Handle form submission (save status)
   document.getElementById('editBookingForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -657,34 +666,34 @@
       saveButtonText.style.display = 'none';
       saveButtonLoader.style.display = 'inline';
       
-      const response = await fetch('/APLX/backend/admin/update_booking_status.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          id: currentBookingId,
-          status: status,
-          csrf: document.querySelector('input[name="csrf"]')?.value || ''
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
+      if (!csrf) { await getCSRF(); }
+      const fd = new FormData();
+      fd.append('csrf', csrf);
+      fd.append('_method', 'PATCH');
+      fd.append('status', status);
+      const response = await fetch('/APLX/backend/admin/shipments.php?id='+encodeURIComponent(currentBookingId), { method:'POST', body: fd });
+      if (response.ok) {
+        // Also persist to bookings table
+        const r2 = await fetch('/APLX/backend/admin/booking_update.php', {
+          method: 'POST',
+          headers: {},
+          body: (()=>{ const f=new FormData(); f.append('csrf', csrf); f.append('id', currentBookingId); f.append('status', status); return f; })()
+        });
         // Update the status in the table
         if (currentBookingRow) {
-          const statusCell = currentBookingRow.cells[7]; // Status is in the 8th column
+          const statusCell = currentBookingRow.cells[8]; // Status column index in this table
           if (statusCell) {
             // Update status text and class
-            statusCell.innerHTML = `<span class="status-badge status-${status}">${statusText}</span>`;
+            statusCell.textContent = status;
           }
         }
         
         showToast('✅ Booking status updated successfully', 'success');
         closeModal();
+        // Also refresh list to reflect updated time
+        await load();
       } else {
-        showToast(`❌ ${result.error || 'Failed to update booking'}`, 'error');
+        showToast('❌ Failed to update booking', 'error');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -748,29 +757,77 @@
   };
 
   // Initial load
-  load();
+  getCSRF().then(load);
   
+  // Reusable confirm modal (centered, dark theme)
+  const cfm = document.createElement('div');
+  cfm.id = 'confirmModal';
+  cfm.className = 'modal-backdrop';
+  cfm.setAttribute('aria-hidden','true');
+  cfm.setAttribute('role','dialog');
+  cfm.setAttribute('aria-modal','true');
+  cfm.innerHTML = `
+    <div class="modal-panel" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+        <button class="modal-close" id="confirmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="confirmMsg" style="margin-bottom:12px"></div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn" id="confirmOk">OK</button>
+          <button type="button" class="btn btn-danger" id="confirmCancel">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(cfm);
+  const confirmMsgEl = cfm.querySelector('#confirmMsg');
+  const confirmOkBtn = cfm.querySelector('#confirmOk');
+  const confirmCancelBtn = cfm.querySelector('#confirmCancel');
+  const confirmCloseBtn = cfm.querySelector('#confirmClose');
+  function openConfirm(){ cfm.classList.add('open'); cfm.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeConfirm(){ cfm.classList.remove('open'); cfm.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function showConfirm(message){
+    confirmMsgEl.textContent = message || 'Are you sure?';
+    openConfirm();
+    return new Promise((resolve)=>{
+      function cleanup(){
+        confirmOkBtn.removeEventListener('click', ok);
+        confirmCancelBtn.removeEventListener('click', cancel);
+        confirmCloseBtn.removeEventListener('click', cancel);
+        cfm.removeEventListener('click', onBackdrop);
+      }
+      function ok(){ cleanup(); closeConfirm(); resolve(true); }
+      function cancel(){ cleanup(); closeConfirm(); resolve(false); }
+      function onBackdrop(e){ if(e.target===cfm){ cancel(); } }
+      confirmOkBtn.addEventListener('click', ok);
+      confirmCancelBtn.addEventListener('click', cancel);
+      confirmCloseBtn.addEventListener('click', cancel);
+      cfm.addEventListener('click', onBackdrop);
+      window.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ cancel(); window.removeEventListener('keydown', esc); } });
+    });
+  }
+
   // Handle delete action
   document.addEventListener('click', async function(e) {
     const deleteBtn = e.target.closest('.delete-btn');
     if (!deleteBtn) return;
     
     e.preventDefault();
-    
-    if (!confirm('Are you sure you want to delete this booking?')) {
-      return;
-    }
+    const ok = await showConfirm('Are you sure you want to delete this booking?');
+    if (!ok) return;
     
     const id = deleteBtn.dataset.id;
     const row = deleteBtn.closest('tr');
     
     try {
+      if (!csrf) { await getCSRF(); }
       const response = await fetch('/APLX/backend/admin/booking_delete.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `id=${encodeURIComponent(id)}&csrf=${encodeURIComponent(document.querySelector('input[name="csrf"]')?.value || '')}`
+        body: `id=${encodeURIComponent(id)}&csrf=${encodeURIComponent(csrf)}`
       });
       
       const result = await response.json();

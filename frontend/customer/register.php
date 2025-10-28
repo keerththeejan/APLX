@@ -58,7 +58,7 @@
     <nav>
       <a href="http://localhost/APLX/frontend/index.php">Home</a>
       <a href="http://localhost/APLX/frontend/track.php">Track</a>
-      <a id="navBook" href="http://localhost/APLX/frontend/login.php?next=%2FParcel%2Ffrontend%2Fcustomer%2Fbook.php">Book</a>
+      <a id="navBook" href="http://localhost/APLX/frontend/customer/book.php">Book</a>
       <a href="http://localhost/APLX/frontend/customer/register.php" class="active">Register</a>
       <a href="http://localhost/APLX/frontend/login.php?stay=1" title="Login" aria-label="Login">👤</a>
     </nav>

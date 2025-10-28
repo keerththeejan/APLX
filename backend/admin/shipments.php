@@ -100,7 +100,7 @@ try {
       $status = trim($src['status'] ?? $old['status']);
       $price = array_key_exists('price', $src) ? ( ($src['price'] === '' || $src['price'] === null) ? null : floatval($src['price']) ) : $old['price'];
       $weight = array_key_exists('weight', $src) ? floatval($src['weight']) : $old['weight'];
-      $stmt = $conn->prepare('UPDATE shipments SET receiver_name=?, origin=?, destination=?, status=?, price=?, weight=? WHERE id=?');
+      $stmt = $conn->prepare('UPDATE shipments SET receiver_name=?, origin=?, destination=?, status=?, price=?, weight=?, updated_at = NOW() WHERE id=?');
       $stmt->bind_param('sssssdi', $receiver, $origin, $destination, $status, $price, $weight, $id);
       $stmt->execute();
       respond(['ok'=>true]);

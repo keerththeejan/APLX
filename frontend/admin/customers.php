@@ -207,8 +207,11 @@ require_admin();
         </td>
         <td class="addr">
           <div class="loc">
-            ${addr?`<div>${addr}</div>`:''}
-            ${(district||province)?`<div class="muted">${[district, province].filter(Boolean).join(', ')}</div>`:''}
+            ${
+              (district||province)
+                ? `<div>${[district, province].filter(Boolean).join(', ')}</div>`
+                : (addr ? `<div>${addr}</div>` : '-')
+            }
           </div>
         </td>
         <td class="reg">
@@ -285,6 +288,55 @@ require_admin();
 
   btnAdd.addEventListener('click', ()=> openEdit(''));
 
+  // Reusable confirm modal (centered dark theme)
+  const cfm = document.createElement('div');
+  cfm.id = 'confirmModal';
+  cfm.className = 'modal-backdrop';
+  cfm.setAttribute('aria-hidden','true');
+  cfm.setAttribute('role','dialog');
+  cfm.setAttribute('aria-modal','true');
+  cfm.innerHTML = `
+    <div class="modal-panel" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+        <button class="modal-close" id="confirmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="confirmMsg" style="margin-bottom:12px"></div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn" id="confirmOk">OK</button>
+          <button type="button" class="btn btn-danger" id="confirmCancel">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(cfm);
+  const confirmMsgEl = cfm.querySelector('#confirmMsg');
+  const confirmOkBtn = cfm.querySelector('#confirmOk');
+  const confirmCancelBtn = cfm.querySelector('#confirmCancel');
+  const confirmCloseBtn = cfm.querySelector('#confirmClose');
+  function openConfirm(){ cfm.classList.add('open'); cfm.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeConfirm(){ cfm.classList.remove('open'); cfm.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function showConfirm(message){
+    confirmMsgEl.textContent = message || 'Are you sure?';
+    openConfirm();
+    return new Promise((resolve)=>{
+      function cleanup(){
+        confirmOkBtn.removeEventListener('click', ok);
+        confirmCancelBtn.removeEventListener('click', cancel);
+        confirmCloseBtn.removeEventListener('click', cancel);
+        cfm.removeEventListener('click', onBackdrop);
+      }
+      function ok(){ cleanup(); closeConfirm(); resolve(true); }
+      function cancel(){ cleanup(); closeConfirm(); resolve(false); }
+      function onBackdrop(e){ if(e.target===cfm){ cancel(); } }
+      confirmOkBtn.addEventListener('click', ok);
+      confirmCancelBtn.addEventListener('click', cancel);
+      confirmCloseBtn.addEventListener('click', cancel);
+      cfm.addEventListener('click', onBackdrop);
+      window.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ cancel(); window.removeEventListener('keydown', esc); } });
+    });
+  }
+
   tbody.addEventListener('click', async (e)=>{
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -292,7 +344,8 @@ require_admin();
     if (btn.dataset.act === 'edit') {
       openEdit(id);
     } else if (btn.dataset.act === 'del') {
-      if (!confirm('Delete this customer?')) return;
+      const ok = await showConfirm('Delete this customer?');
+      if (!ok) return;
       const fd = new FormData(); fd.append('csrf', f.csrf.value); fd.append('_method','DELETE');
       const r = await fetch('/APLX/backend/admin/customers_api.php?id='+encodeURIComponent(id), { method:'POST', body: fd });
       if (r.ok){ load(); } else { alert('Delete failed'); }
