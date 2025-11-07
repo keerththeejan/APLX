@@ -34,6 +34,14 @@
         </div>
       </div>
       <div class="setting-card">
+        <div class="icon">📈</div>
+        <h3>Home Stats</h3>
+        <p>Edit image, title, subtext and three stat cards (numbers + labels) for the stats block.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/home_stats.php">Open Home Stats</a>
+        </div>
+      </div>
+      <div class="setting-card">
         <div class="icon">🖼️</div>
         <h3>Homepage Banner</h3>
         <p>Edit main hero title, subtitle, tagline, buttons and background image.</p>
@@ -49,7 +57,38 @@
           <a class="btn" href="/APLX/frontend/admin/gallery.php">Open Gallery</a>
         </div>
       </div>
-      
+      <div class="setting-card">
+        <div class="icon">🏷️</div>
+        <h3>About Section</h3>
+        <p>Manage the image, eyebrow, title, subtext and two feature bullets shown in the About block.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/about.php">Open About</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">💡</div>
+        <h3>Why Best</h3>
+        <p>Edit the center image and four features for the "Why we are the best" section.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/why_best.php">Open Why Best</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">📋</div>
+        <h3>Services Tabs</h3>
+        <p>Manage the left list and preview image bullets in the Services Tabs section on the homepage.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/service_tabs.php">Open Service Tabs</a>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="icon">🗺️</div>
+        <h3>Map / Find Us</h3>
+        <p>Manage the header title, subtext, and Google Maps embed URL for the 'Find Us Here' section.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/map_section.php">Open Map Settings</a>
+        </div>
+      </div>
       <div class="setting-card">
         <div class="icon">📞</div>
         <h3>Contact Details</h3>

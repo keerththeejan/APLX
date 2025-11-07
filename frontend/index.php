@@ -48,6 +48,16 @@
         $row = $c->fetch_assoc();
         if ($row) { $contact = $row; }
       }
+      // Load map section (single row id=1)
+      $map = [
+        'header_title' => 'Find Us Here',
+        'header_subtext' => 'Visit our office location in Kilinochchi, Sri Lanka',
+        'map_embed_url' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127317.59409384069!2d80.04778896986493!3d9.664430939428727!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3afe53c9c5a7a7c5%3A0x9b2b9a5f7b0d1d0!2sAriviyal%20Nagar!5e0!3m2!1sen!2slk!4v1700000000000'
+      ];
+      if ($m = $conn->query("SELECT * FROM map_section WHERE id=1")) {
+        $row = $m->fetch_assoc();
+        if ($row) { $map = array_merge($map, $row); }
+      }
       // Load home stats (single row id=1)
       $homeStats = [
         'hero_title'   => 'We Provide Full Assistance in Freight & Warehousing',
@@ -60,6 +70,39 @@
       if ($h = $conn->query("SELECT * FROM home_stats WHERE id=1")) {
         $row = $h->fetch_assoc();
         if ($row) { $homeStats = array_merge($homeStats, $row); }
+      }
+      // Load about section (single row id=1)
+      $about = [
+        'eyebrow' => 'Safe Transportation & Logistics',
+        'title'   => 'Modern transport system & secure packaging',
+        'subtext' => 'We combine real‑time visibility with secure handling to move your freight quickly and safely.',
+        'image_url' => '',
+        'feature1_icon_text' => '',
+        'feature1_icon_url'  => '',
+        'feature1_title'     => 'Air Freight Transportation',
+        'feature1_desc'      => 'Fast air cargo across regions.',
+        'feature2_icon_text' => '',
+        'feature2_icon_url'  => '',
+        'feature2_title'     => 'Ocean Freight Transportation',
+        'feature2_desc'      => 'Cost‑effective global lanes.',
+      ];
+      if ($a = $conn->query("SELECT * FROM about_section WHERE id=1")) {
+        $row = $a->fetch_assoc();
+        if ($row) { $about = array_merge($about, $row); }
+      }
+      // Load why-best section (single row id=1)
+      $why = [
+        'header_title' => 'Why we are considered the best in business',
+        'header_subtext' => 'Decentralized trade, direct transport, high flexibility and secure delivery.',
+        'center_image_url' => '',
+        'f1_icon_text' => '⬢', 'f1_icon_url' => '', 'f1_title' => 'Decentralized Trade', 'f1_desc' => 'Streamlined hubs maximize speed.',
+        'f2_icon_text' => '➤', 'f2_icon_url' => '', 'f2_title' => 'Direct Transport', 'f2_desc' => 'Fewer touches, faster delivery.',
+        'f3_icon_text' => '⏱', 'f3_icon_url' => '', 'f3_title' => 'Highly Flexible', 'f3_desc' => 'Adaptable capacity and routes.',
+        'f4_icon_text' => '⬛', 'f4_icon_url' => '', 'f4_title' => 'Secure Delivery', 'f4_desc' => 'Tamper‑evident packaging, QA.',
+      ];
+      if ($w = $conn->query("SELECT * FROM why_best WHERE id=1")) {
+        $row = $w->fetch_assoc();
+        if ($row) { $why = array_merge($why, $row); }
       }
     } catch (Throwable $e) { /* ignore, fallback to static */ }
   ?>
@@ -116,7 +159,7 @@
                 <?php elseif (!empty($s['image_url'])): ?>
                   <img src="<?php echo htmlspecialchars($s['image_url']); ?>" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);" />
                 <?php else: ?>
-                  ⬢
+                  
                 <?php endif; ?>
               </div>
               <div class="service-title"><?php echo htmlspecialchars($s['title'] ?? ''); ?></div>
@@ -125,22 +168,22 @@
           <?php endforeach; ?>
         <?php else: ?>
           <div class="service-card reveal reveal-card stagger-1">
-            <div class="service-icon">✈️</div>
+            <div class="service-icon"> </div>
             <div class="service-title">Air Freight</div>
             <div class="service-desc">Efficient and reliable air freight solutions for your business needs.</div>
           </div>
           <div class="service-card reveal reveal-card stagger-2">
-            <div class="service-icon">🛳️</div>
+            <div class="service-icon"> </div>
             <div class="service-title">Ocean Freight</div>
             <div class="service-desc">Comprehensive ocean freight services worldwide.</div>
           </div>
           <div class="service-card reveal reveal-card stagger-3">
-            <div class="service-icon">🚚</div>
+            <div class="service-icon"> </div>
             <div class="service-title">Land Transport</div>
             <div class="service-desc">Efficient land transportation solutions for all your needs.</div>
           </div>
           <div class="service-card reveal reveal-card stagger-1">
-            <div class="service-icon">🏬</div>
+            <div class="service-icon"> </div>
             <div class="service-title">Warehousing</div>
             <div class="service-desc">Secure storage and inventory management.</div>
           </div>
@@ -155,23 +198,23 @@
         <div class="st-grid">
           <aside class="st-left" role="tablist" aria-label="Services">
             <button class="st-item active" role="tab" aria-selected="true" data-img="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" data-bullets='["Fast Delivery","Safety","Good Package","Privacy"]'>
-              <span class="st-icon">🛫</span>
+              <span class="st-icon"> </span>
               <span class="st-text">Air Transportation</span>
             </button>
             <button class="st-item" role="tab" aria-selected="false" data-img="images/truck-moving-shipping-container-min-1024x683.jpeg" data-bullets='["On-time","Tracking","Cost Effective","Secure"]'>
-              <span class="st-icon">🚆</span>
+              <span class="st-icon"> </span>
               <span class="st-text">Train Transportation</span>
             </button>
             <button class="st-item" role="tab" aria-selected="false" data-img="images/premium_photo-1661962420310-d3be75c8921c.jpg" data-bullets='["Worldwide","Bulk Cargo","Insured","Reliable"]'>
-              <span class="st-icon">🚢</span>
+              <span class="st-icon"> </span>
               <span class="st-text">Cargo Ship Freight</span>
             </button>
             <button class="st-item" role="tab" aria-selected="false" data-img="images/iStock-1024024568-scaled.jpg" data-bullets='["Climate Control","Inventory","Security","Compliance"]'>
-              <span class="st-icon">🛳️</span>
+              <span class="st-icon"> </span>
               <span class="st-text">Maritime Transportation</span>
             </button>
             <button class="st-item" role="tab" aria-selected="false" data-img="images/COLOURBOX35652344.jpg" data-bullets='["Express","Priority Handling","Live Support","Customs Help"]'>
-              <span class="st-icon">🛩️</span>
+              <span class="st-icon"> </span>
               <span class="st-text">Flight Transportation</span>
             </button>
           </aside>
@@ -179,7 +222,7 @@
             <div class="st-media">
               <img id="stImage" src="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" alt="Service preview">
               <div class="st-overlay">
-                <div class="st-badge">🚚</div>
+                <div class="st-badge"> </div>
                 <ul id="stBullets" class="st-bullets">
                   <li>Fast Delivery</li>
                   <li>Safety</li>
@@ -194,66 +237,88 @@
     </section>
     </div>
 
-    <!-- Transport system + secure packaging section with two feature bullets -->
+    <!-- Transport system + secure packaging section with two feature bullets (dynamic) -->
     <section class="about-us">
       <div class="container">
         <div class="about-content">
           <div class="about-image reveal stagger-1">
-            <img src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop" alt="Containers and Truck" />
+            <?php $aboutImg = trim((string)($about['image_url'] ?? '')); ?>
+            <img src="<?php echo htmlspecialchars($aboutImg ?: 'https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?q=80&w=900&auto=format&fit=crop'); ?>" alt="Containers and Truck" />
           </div>
           <div class="about-text">
-            <div class="about-eyebrow reveal reveal-left stagger-2">Safe Transportation &amp; Logistics</div>
-            <h2 class="reveal reveal-up stagger-2">Modern transport system &amp; secure packaging</h2>
-            <p class="reveal reveal-right stagger-3">We combine real‑time visibility with secure handling to move your freight quickly and safely.</p>
+            <div class="about-eyebrow reveal reveal-left stagger-2"><?php echo htmlspecialchars($about['eyebrow'] ?? ''); ?></div>
+            <h2 class="reveal reveal-up stagger-2"><?php echo htmlspecialchars($about['title'] ?? ''); ?></h2>
+            <p class="reveal reveal-right stagger-3"><?php echo htmlspecialchars($about['subtext'] ?? ''); ?></p>
             <div class="features-grid">
-              <div class="feature-item reveal reveal-left stagger-1"><div class="feature-icon">🏬</div><div class="feature-content"><h4>Air Freight Transportation</h4><p>Fast air cargo across regions.</p></div></div>
-              <div class="feature-item reveal reveal-right stagger-2"><div class="feature-icon">🚢</div><div class="feature-content"><h4>Ocean Freight Transportation</h4><p>Cost‑effective global lanes.</p></div></div>
+              <?php $f1icon = trim((string)($about['feature1_icon_url'] ?? '')); $f1txt = trim((string)($about['feature1_icon_text'] ?? '')); ?>
+              <div class="feature-item reveal reveal-left stagger-1">
+                <div class="feature-icon">
+                  <?php if ($f1icon): ?><img src="<?php echo htmlspecialchars($f1icon); ?>" alt="" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border);object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($f1txt ?: ' '); ?><?php endif; ?>
+                </div>
+                <div class="feature-content"><h4><?php echo htmlspecialchars($about['feature1_title'] ?? ''); ?></h4><p><?php echo htmlspecialchars($about['feature1_desc'] ?? ''); ?></p></div>
+              </div>
+              <?php $f2icon = trim((string)($about['feature2_icon_url'] ?? '')); $f2txt = trim((string)($about['feature2_icon_text'] ?? '')); ?>
+              <div class="feature-item reveal reveal-right stagger-2">
+                <div class="feature-icon">
+                  <?php if ($f2icon): ?><img src="<?php echo htmlspecialchars($f2icon); ?>" alt="" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border);object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($f2txt ?: ' '); ?><?php endif; ?>
+                </div>
+                <div class="feature-content"><h4><?php echo htmlspecialchars($about['feature2_title'] ?? ''); ?></h4><p><?php echo htmlspecialchars($about['feature2_desc'] ?? ''); ?></p></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- Why best in business (center image with two-left, two-right feature list) -->
+    <!-- Why best in business (dynamic) -->
     <section class="why-choose-us">
       <div class="container">
         <div class="why-choose-header">
-          <h2>Why we are considered the best in business</h2>
-          <p>Decentralized trade, direct transport, high flexibility and secure delivery.</p>
+          <h2><?php echo htmlspecialchars($why['header_title'] ?? ''); ?></h2>
+          <p><?php echo htmlspecialchars($why['header_subtext'] ?? ''); ?></p>
         </div>
         <div class="why-choose-layout">
           <div class="why-col left">
             <div class="why-item reveal stagger-1">
-              <div class="why-icon">⬢</div>
+              <div class="why-icon">
+                <?php if (!empty($why['f1_icon_url'])): ?><img src="<?php echo htmlspecialchars($why['f1_icon_url']); ?>" alt="" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($why['f1_icon_text'] ?? ''); ?><?php endif; ?>
+              </div>
               <div class="why-text">
-                <h3>Decentralized Trade</h3>
-                <p>Streamlined hubs maximize speed.</p>
+                <h3><?php echo htmlspecialchars($why['f1_title'] ?? ''); ?></h3>
+                <p><?php echo htmlspecialchars($why['f1_desc'] ?? ''); ?></p>
               </div>
             </div>
             <div class="why-item reveal stagger-2">
-              <div class="why-icon">➤</div>
+              <div class="why-icon">
+                <?php if (!empty($why['f2_icon_url'])): ?><img src="<?php echo htmlspecialchars($why['f2_icon_url']); ?>" alt="" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($why['f2_icon_text'] ?? ''); ?><?php endif; ?>
+              </div>
               <div class="why-text">
-                <h3>Direct Transport</h3>
-                <p>Fewer touches, faster delivery.</p>
+                <h3><?php echo htmlspecialchars($why['f2_title'] ?? ''); ?></h3>
+                <p><?php echo htmlspecialchars($why['f2_desc'] ?? ''); ?></p>
               </div>
             </div>
           </div>
           <div class="why-center reveal stagger-2">
-            <img src="https://images.unsplash.com/photo-1529078155058-5d716f45d604?q=80&w=1600&auto=format&fit=crop" alt="Container in yard" />
+            <?php $whyImg = trim((string)($why['center_image_url'] ?? '')); ?>
+            <img src="<?php echo htmlspecialchars($whyImg ?: 'https://images.unsplash.com/photo-1529078155058-5d716f45d604?q=80&w=1600&auto=format&fit=crop'); ?>" alt="Center" />
           </div>
           <div class="why-col right">
             <div class="why-item reveal stagger-1">
-              <div class="why-icon">⏱</div>
+              <div class="why-icon">
+                <?php if (!empty($why['f3_icon_url'])): ?><img src="<?php echo htmlspecialchars($why['f3_icon_url']); ?>" alt="" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($why['f3_icon_text'] ?? ''); ?><?php endif; ?>
+              </div>
               <div class="why-text">
-                <h3>Highly Flexible</h3>
-                <p>Adaptable capacity and routes.</p>
+                <h3><?php echo htmlspecialchars($why['f3_title'] ?? ''); ?></h3>
+                <p><?php echo htmlspecialchars($why['f3_desc'] ?? ''); ?></p>
               </div>
             </div>
             <div class="why-item reveal stagger-2">
-              <div class="why-icon">⬛</div>
+              <div class="why-icon">
+                <?php if (!empty($why['f4_icon_url'])): ?><img src="<?php echo htmlspecialchars($why['f4_icon_url']); ?>" alt="" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;object-fit:cover" /><?php else: ?><?php echo htmlspecialchars($why['f4_icon_text'] ?? ''); ?><?php endif; ?>
+              </div>
               <div class="why-text">
-                <h3>Secure Delivery</h3>
-                <p>Tamper‑evident packaging, QA.</p>
+                <h3><?php echo htmlspecialchars($why['f4_title'] ?? ''); ?></h3>
+                <p><?php echo htmlspecialchars($why['f4_desc'] ?? ''); ?></p>
               </div>
             </div>
           </div>
@@ -445,16 +510,17 @@
       </div>
     </section>
 
-    <!-- Map -->
+    <!-- Map (dynamic) -->
     <section class="location-map-section">
       <div class="map-bg" aria-hidden="true" style="background-image:url('https://staticmap.openstreetmap.de/staticmap.php?center=9.6574,80.1628&zoom=12&size=1600x900&maptype=mapnik&format=png');"></div>
       <div class="container">
         <div class="map-header">
-          <h2>Find Us Here</h2>
-          <p>Visit our office location in Kilinochchi, Sri Lanka</p>
+          <h2><?php echo htmlspecialchars($map['header_title'] ?? 'Find Us Here'); ?></h2>
+          <p><?php echo htmlspecialchars($map['header_subtext'] ?? 'Visit our office location in Kilinochchi, Sri Lanka'); ?></p>
         </div>
         <div class="map-container">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127317.59409384069!2d80.04778896986493!3d9.664430939428727!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3afe53c9c5a7a7c5%3A0x9b2b9a5f7b0d1d0!2sAriviyal%20Nagar!5e0!3m2!1sen!2slk!4v1700000000000" width="100%" height="320" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <?php $mapSrc = trim((string)($map['map_embed_url'] ?? '')); ?>
+          <iframe src="<?php echo htmlspecialchars($mapSrc ?: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127317.59409384069!2d80.04778896986493!3d9.664430939428727!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3afe53c9c5a7a7c5%3A0x9b2b9a5f7b0d1d0!2sAriviyal%20Nagar!5e0!3m2!1sen!2slk!4v1700000000000'); ?>" width="100%" height="320" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
 
         <!-- Contact info cards below the map -->
@@ -608,12 +674,11 @@
     function buildItems(items){
       function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
       if (!Array.isArray(items) || !items.length) return false;
-      track.innerHTML = items.map(it => {
+      track.innerHTML = items.map((it,i)=>{
         const day = it.day ? String(it.day).padStart(2,'0') : '';
         const month = it.month ? esc(String(it.month).slice(0,3)) : '';
         const tag = it.tag ? esc(it.tag) : 'Transport';
-        const img = esc(it.image_url || '');
-        if (!img) return '';
+        const img = it.image_url ? `<img src="${esc(it.image_url)}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
         const badge = (day||month) ? `<span class="date-badge"><strong>${day}</strong><small>${month}</small></span>` : '';
         return `<article class="tg-item news-card">${badge}<img src="${img}" alt=""><span class="tag-pill">${tag}</span></article>`;
       }).join('');
@@ -707,6 +772,40 @@
     });
   })();
 
+  // Services Tabs: fetch dynamic data from backend and build the left list + initial right content
+  (function(){
+    const root = document.getElementById('servicesTabs');
+    if (!root) return;
+    const aside = root.querySelector('.st-left');
+    const imgEl = document.getElementById('stImage');
+    const bulletsEl = document.getElementById('stBullets');
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+    function build(items){
+      if (!Array.isArray(items) || !items.length) return false;
+      const btns = items.map((it, i)=>{
+        const img = esc(it.image_url||'');
+        const title = esc(it.title||'');
+        const bullets = JSON.stringify((it.bullets||[]).map(String));
+        const iconText = it.icon_text ? esc(it.icon_text) : '';
+        const iconUrl = it.icon_url ? esc(it.icon_url) : '';
+        const iconHtml = iconUrl ? `<img src="${iconUrl}" alt="" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--border);object-fit:cover">` : (iconText || '⬢');
+        const cls = 'st-item' + (i===0 ? ' active' : '');
+        return `<button class="${cls}" role="tab" aria-selected="${i===0?'true':'false'}" data-img="${img}" data-bullets='${bullets}'>
+                  <span class="st-icon">${iconHtml}</span>
+                  <span class="st-text">${title}</span>
+                </button>`;
+      }).join('');
+      aside.innerHTML = btns;
+      const first = items[0];
+      if (first && imgEl) imgEl.src = first.image_url || imgEl.src;
+      if (first && bulletsEl){ bulletsEl.innerHTML = (first.bullets||[]).map(t=>`<li>✓ ${esc(t)}</li>`).join(''); }
+      return true;
+    }
+    fetch('/APLX/backend/service_tabs_list.php', { cache:'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { build(data && data.items); })
+      .catch(()=>{});
+  })();
   // Services Tabs logic (hover to activate)
   (function(){
     const root = document.getElementById('servicesTabs');
