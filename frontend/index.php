@@ -58,6 +58,23 @@
         $row = $m->fetch_assoc();
         if ($row) { $map = array_merge($map, $row); }
       }
+
+      // Load Help + Quote (left panel) dynamic content
+      $hq = [
+        'eyebrow' => 'Transport & Logistics Services',
+        'title' => 'We are the best',
+        'subtext' => "Transmds is the world's driving worldwide coordinations supplier — we uphold industry and exchange the world.",
+        'bullets_text' => "Preaching Worship An Online Family\nPreaching Worship An Online Family",
+        'mini_image_url' => '',
+        'mini_title' => 'Leading global logistic',
+        'mini_sub' => 'and transport agency since 1990',
+      ];
+      try {
+        if ($q = $conn->query('SELECT * FROM help_quote WHERE id=1')){
+          $row = $q->fetch_assoc();
+          if ($row) { $hq = array_merge($hq, $row); }
+        }
+      } catch (Throwable $e) { /* keep defaults */ }
       // Load home stats (single row id=1)
       $homeStats = [
         'hero_title'   => 'We Provide Full Assistance in Freight & Warehousing',
@@ -159,7 +176,7 @@
                 <?php elseif (!empty($s['image_url'])): ?>
                   <img src="<?php echo htmlspecialchars($s['image_url']); ?>" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);" />
                 <?php else: ?>
-                  
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;border:1px solid var(--border);">⬢</span>
                 <?php endif; ?>
               </div>
               <div class="service-title"><?php echo htmlspecialchars($s['title'] ?? ''); ?></div>
@@ -332,17 +349,22 @@
         <!-- Left info panel -->
         <div class="cq-left">
           <div class="cq-left-inner">
-            <div class="about-eyebrow">Transport &amp; Logistics Services</div>
-            <h2 class="cq-title">We are the best</h2>
-            <p class="cq-sub">Transmds is the world's driving worldwide coordinations supplier — we uphold industry and exchange the world.</p>
-            <ul class="cq-bullets">
-              <li><span class="tick">✓</span> Preaching Worship An Online Family</li>
-              <li><span class="tick">✓</span> Preaching Worship An Online Family</li>
+            <div class="about-eyebrow"><?php echo htmlspecialchars($hq['eyebrow'] ?? ''); ?></div>
+            <h2><?php echo htmlspecialchars($hq['title'] ?? ''); ?></h2>
+            <p><?php echo htmlspecialchars($hq['subtext'] ?? ''); ?></p>
+            <ul class="cq-bullets" style="list-style:none;padding:0;margin:10px 0;display:grid;gap:8px">
+              <?php $bul = preg_split('/\r?\n/', (string)($hq['bullets_text'] ?? ''), -1, PREG_SPLIT_NO_EMPTY); foreach ($bul as $b): ?>
+                <li><span class="tick">✓</span> <?php echo htmlspecialchars($b); ?></li>
+              <?php endforeach; ?>
             </ul>
+            <?php if (!empty($hq['mini_image_url']) || !empty($hq['mini_title']) || !empty($hq['mini_sub'])): ?>
             <div class="cq-mini">
-              <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1600&auto=format&fit=crop" alt="Air freight" />
-              <div class="mini-text"><strong>Leading global logistic</strong><br/>and transport agency since <b>1990</b></div>
+              <?php if (!empty($hq['mini_image_url'])): ?>
+                <img src="<?php echo htmlspecialchars($hq['mini_image_url']); ?>" alt="mini" />
+              <?php endif; ?>
+              <div class="mini-text"><strong><?php echo htmlspecialchars($hq['mini_title'] ?? ''); ?></strong><br/><?php echo htmlspecialchars($hq['mini_sub'] ?? ''); ?></div>
             </div>
+            <?php endif; ?>
           </div>
         </div>
         <!-- Right quote form panel -->
@@ -457,21 +479,21 @@
               <div class="hq-card-icon">📞</div>
               <div>
                 <div class="hq-card-title">Call Us Anytime</div>
-                <div class="hq-card-sub">+94 21 492 7799</div>
+                <div class="hq-card-sub"><?php echo htmlspecialchars($contact['phone'] ?? ''); ?></div>
               </div>
             </div>
             <div class="hq-card">
               <div class="hq-card-icon">✉️</div>
               <div>
                 <div class="hq-card-title">Email Us</div>
-                <div class="hq-card-sub">info@slgti.com</div>
+                <div class="hq-card-sub"><?php echo htmlspecialchars($contact['email'] ?? ''); ?></div>
               </div>
             </div>
             <div class="hq-card">
               <div class="hq-card-icon">📍</div>
               <div>
                 <div class="hq-card-title">Visit Us</div>
-                <div class="hq-card-sub">Ariviyal Nagar, Kilinochchi, Sri Lanka</div>
+                <div class="hq-card-sub"><?php echo htmlspecialchars($contact['address'] ?? ''); ?></div>
               </div>
             </div>
           </div>
@@ -614,29 +636,7 @@
   <script>
   // Services interactive grid
   (function() { const grid=document.querySelector('.services-grid'); if(!grid) return; const cards=[...grid.querySelectorAll('.service-card')]; let selected=null; function toggle(){ if(selected===this){ this.classList.remove('selected'); this.setAttribute('aria-selected','false'); grid.classList.remove('dim-others'); selected=null; return;} cards.forEach(c=>{c.classList.remove('selected'); c.setAttribute('aria-selected','false');}); this.classList.add('selected'); this.setAttribute('aria-selected','true'); grid.classList.add('dim-others'); selected=this; } cards.forEach(card=>{ card.setAttribute('tabindex','0'); card.setAttribute('role','button'); card.addEventListener('click',toggle); card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle.call(card);} }); }); })();
-  // Dynamic Services: load from backend if available, fallback to static
-  (function(){
-    const grid = document.getElementById('servicesGrid');
-    if (!grid) return;
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
-    fetch('/APLX/backend/services_list.php', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(data => {
-        const items = (data && Array.isArray(data.items)) ? data.items.slice(0,4) : [];
-        if (!items.length) return; // keep static
-        grid.innerHTML = items.map((it,i)=>{
-          const iconUrl = it.icon_url ? escapeHtml(it.icon_url) : '';
-          const title = escapeHtml(it.title);
-          const desc = escapeHtml(it.description);
-          const img = it.image_url ? `<img src="${escapeHtml(it.image_url)}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
-          const iconImg = iconUrl ? `<img src="${iconUrl}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
-          const iconHtml = iconImg ? `<div class=\"service-icon\">${iconImg}</div>` : (img ? `<div class=\"service-icon\">${img}</div>` : '<div class="service-icon">⬢</div>');
-          const cls = 'service-card reveal reveal-card stagger-' + ((i%3)+1);
-          return `<div class="${cls}">${iconHtml}<div class="service-title">${title}</div><div class="service-desc">${desc}</div></div>`;
-        }).join('');
-      })
-      .catch(()=>{});
-  })();
+  // Dynamic Services fetch disabled to rely on server-rendered cards for consistency
 
   // Quote/Contact forms -> submit to admin notifications (store message)
   (function(){
@@ -678,9 +678,10 @@
         const day = it.day ? String(it.day).padStart(2,'0') : '';
         const month = it.month ? esc(String(it.month).slice(0,3)) : '';
         const tag = it.tag ? esc(it.tag) : 'Transport';
-        const img = it.image_url ? `<img src="${esc(it.image_url)}" alt="" style="width:48px;height:48px;border-radius:999px;object-fit:cover;border:1px solid var(--border);">` : '';
+        const imgSrc = esc(it.image_url||'');
         const badge = (day||month) ? `<span class="date-badge"><strong>${day}</strong><small>${month}</small></span>` : '';
-        return `<article class="tg-item news-card">${badge}<img src="${img}" alt=""><span class="tag-pill">${tag}</span></article>`;
+        const imgTag = imgSrc ? `<img src="${imgSrc}" alt="">` : '';
+        return `<article class="tg-item news-card">${badge}${imgTag}<span class="tag-pill">${tag}</span></article>`;
       }).join('');
       return !!track.children.length;
     }
@@ -779,6 +780,7 @@
     const aside = root.querySelector('.st-left');
     const imgEl = document.getElementById('stImage');
     const bulletsEl = document.getElementById('stBullets');
+    const badgeEl = root.querySelector('.st-badge');
     function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
     function build(items){
       if (!Array.isArray(items) || !items.length) return false;
@@ -790,7 +792,7 @@
         const iconUrl = it.icon_url ? esc(it.icon_url) : '';
         const iconHtml = iconUrl ? `<img src="${iconUrl}" alt="" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--border);object-fit:cover">` : (iconText || '⬢');
         const cls = 'st-item' + (i===0 ? ' active' : '');
-        return `<button class="${cls}" role="tab" aria-selected="${i===0?'true':'false'}" data-img="${img}" data-bullets='${bullets}'>
+        return `<button class="${cls}" role="tab" aria-selected="${i===0?'true':'false'}" data-img="${img}" data-bullets='${bullets}' data-title='${title}'>
                   <span class="st-icon">${iconHtml}</span>
                   <span class="st-text">${title}</span>
                 </button>`;
@@ -799,6 +801,11 @@
       const first = items[0];
       if (first && imgEl) imgEl.src = first.image_url || imgEl.src;
       if (first && bulletsEl){ bulletsEl.innerHTML = (first.bullets||[]).map(t=>`<li>✓ ${esc(t)}</li>`).join(''); }
+      // Set badge from first bullet or title
+      if (badgeEl){
+        const txt = (first && Array.isArray(first.bullets) && first.bullets[0]) ? String(first.bullets[0]) : (first ? String(first.title||'') : '');
+        badgeEl.innerHTML = `<span class="dot" style="display:inline-block;width:34px;height:34px;border-radius:50%;background:#fff;margin-right:10px;vertical-align:middle"></span><span style="vertical-align:middle">✓ ${esc(txt)}</span>`;
+      }
       return true;
     }
     fetch('/APLX/backend/service_tabs_list.php', { cache:'no-store' })
@@ -806,32 +813,42 @@
       .then(data => { build(data && data.items); })
       .catch(()=>{});
   })();
-  // Services Tabs logic (hover to activate)
+  // Services Tabs logic (event delegation so dynamic items work on hover/click)
   (function(){
     const root = document.getElementById('servicesTabs');
     if (!root) return;
-    const items = root.querySelectorAll('.st-item');
+    const aside = root.querySelector('.st-left');
     const imgEl = document.getElementById('stImage');
     const bulletsEl = document.getElementById('stBullets');
+    const badgeEl = root.querySelector('.st-badge');
 
     function activate(btn){
-      items.forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      const all = root.querySelectorAll('.st-item');
+      all.forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
       btn.classList.add('active');
       btn.setAttribute('aria-selected','true');
       const url = btn.getAttribute('data-img');
-      const bullets = JSON.parse(btn.getAttribute('data-bullets')||'[]');
+      let bullets = [];
+      try { bullets = JSON.parse(btn.getAttribute('data-bullets')||'[]'); } catch(e) { bullets = []; }
       if (url && imgEl) imgEl.src = url;
-      if (bulletsEl){ bulletsEl.innerHTML = bullets.map(t => `<li>✓ ${t}</li>`).join(''); }
+      if (bulletsEl){ bulletsEl.innerHTML = bullets.map(t => `<li>✓ ${esc(t)}</li>`).join(''); }
+      if (badgeEl){
+        const title = btn.getAttribute('data-title')||'';
+        const txt = (bullets && bullets[0]) ? bullets[0] : title;
+        badgeEl.innerHTML = `<span class="dot" style="display:inline-block;width:34px;height:34px;border-radius:50%;background:#fff;margin-right:10px;vertical-align:middle"></span><span style="vertical-align:middle">✓ ${esc(txt)}</span>`;
+      }
     }
 
-    items.forEach(btn=>{
-      btn.addEventListener('mouseenter', ()=> activate(btn));
-      btn.addEventListener('focus', ()=> activate(btn));
-      btn.addEventListener('click', ()=> activate(btn));
+    function getBtn(target){ return target.closest && target.closest('.st-item'); }
+    ['mouseover','focusin','click'].forEach(evt=>{
+      aside.addEventListener(evt, (e)=>{
+        const btn = getBtn(e.target);
+        if (btn) activate(btn);
+      });
     });
 
-    // Initialize first/active
-    const initial = root.querySelector('.st-item.active') || items[0];
+    // Initialize if static markup exists
+    const initial = root.querySelector('.st-item.active') || root.querySelector('.st-item');
     if (initial) activate(initial);
   })();
 

@@ -82,6 +82,14 @@
         </div>
       </div>
       <div class="setting-card">
+        <div class="icon">🆘</div>
+        <h3>Help + Quote (Left Panel)</h3>
+        <p>Edit eyebrow, title, subtext, bullets and mini image/text shown on the left side of the Help + Quote section.</p>
+        <div class="actions">
+          <a class="btn" href="/APLX/frontend/admin/help_quote.php">Open Help + Quote</a>
+        </div>
+      </div>
+      <div class="setting-card">
         <div class="icon">🗺️</div>
         <h3>Map / Find Us</h3>
         <p>Manage the header title, subtext, and Google Maps embed URL for the 'Find Us Here' section.</p>

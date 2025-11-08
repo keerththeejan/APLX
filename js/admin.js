@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // After both loaded, init behaviors
     initActiveAndTitle();
     initTopbarBehaviors();
+    initSettingsPinBehavior();
     // Reveal layout
     document.body.removeAttribute('data-admin-loading');
   }).catch(console.error);
@@ -228,6 +229,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', closeAll);
     loadNotifications();
+  }
+
+  // Click a settings card to pin a compact pill near the header
+  function initSettingsPinBehavior(){
+    const grid = document.querySelector('.settings-grid');
+    if (!grid) return;
+    const pinSlot = document.getElementById('pinSlot');
+    if (!pinSlot) return;
+
+    // Delegate clicks on cards
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('.setting-card');
+      if (!card) return;
+      const label = (card.querySelector('h3')?.textContent || 'Pinned').trim();
+      const icon = (card.querySelector('.icon')?.textContent || '📌').trim();
+      flyToPin(card, pinSlot, { label, icon });
+    });
+
+    function flyToPin(sourceEl, targetSlot, meta){
+      try{
+        const sRect = sourceEl.getBoundingClientRect();
+        const tRect = targetSlot.getBoundingClientRect();
+        // Create floating clone
+        const ghost = document.createElement('div');
+        ghost.style.position = 'fixed';
+        ghost.style.left = sRect.left + 'px';
+        ghost.style.top = sRect.top + 'px';
+        ghost.style.width = sRect.width + 'px';
+        ghost.style.height = sRect.height + 'px';
+        ghost.style.borderRadius = '12px';
+        ghost.style.background = getComputedStyle(sourceEl).backgroundColor || '#111827';
+        ghost.style.border = '1px solid var(--border)';
+        ghost.style.boxShadow = '0 20px 60px rgba(0,0,0,.35)';
+        ghost.style.zIndex = '2000';
+        ghost.style.display = 'flex';
+        ghost.style.alignItems = 'center';
+        ghost.style.justifyContent = 'center';
+        ghost.style.color = getComputedStyle(sourceEl).color || '#fff';
+        ghost.style.transition = 'transform .55s cubic-bezier(.2,.8,.2,1), opacity .55s ease, width .55s ease, height .55s ease';
+        ghost.textContent = meta.label;
+        document.body.appendChild(ghost);
+
+        // Compute translate to target
+        const toX = (tRect.left + Math.min(220, Math.max(0, tRect.width - 120)) ) - sRect.left;
+        const toY = (tRect.top + 6) - sRect.top;
+
+        // Shrink while moving
+        requestAnimationFrame(() => {
+          ghost.style.transform = `translate(${toX}px, ${toY}px) scale(0.3)`;
+          ghost.style.opacity = '0.8';
+          ghost.style.width = '140px';
+          ghost.style.height = '40px';
+          ghost.style.borderRadius = '999px';
+        });
+
+        const onDone = () => {
+          ghost.removeEventListener('transitionend', onDone);
+          ghost.remove();
+          // Render/replace pinned pill
+          targetSlot.innerHTML = '';
+          const pill = document.createElement('div');
+          pill.className = 'pinned-mini';
+          pill.innerHTML = `<span class="icon">${meta.icon}</span><span class="label">${escapeHtml(meta.label)}</span>`;
+          targetSlot.appendChild(pill);
+        };
+        ghost.addEventListener('transitionend', onDone);
+      }catch(err){
+        console.error(err);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c)=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'
+      })[c]);
+    }
   }
 });
 

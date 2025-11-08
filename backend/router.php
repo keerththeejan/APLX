@@ -29,6 +29,9 @@ try {
         case 'admin/hero':
             require __DIR__ . '/admin/hero_api.php';
             break;
+        case 'admin/help-quote':
+            require __DIR__ . '/admin/help_quote_api.php';
+            break;
         case 'admin/customers':
             require __DIR__ . '/admin/customers_api.php';
             break;

@@ -22,11 +22,17 @@
   .btn-danger:hover{ filter:brightness(1.05) }
   /* Ensure red overrides modal's generic .btn green */
   .modal-body .btn.btn-danger{ background:#ef4444 !important; color:#ffffff; border:1px solid #dc2626 }
+  .pin-slot{ display:flex; align-items:center; gap:10px; margin-left:12px }
+  .pinned-mini{ display:flex; align-items:center; gap:8px; background:#111827; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,.3) }
+  body[data-theme="light"] .pinned-mini{ background:#ffffff; color:#0b1220 }
+  .pinned-mini .icon{ font-size:16px }
+  .pinned-mini .label{ font-size:13px; white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis }
 </style>
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
     <button class="hamburger" id="toggleSidebar" title="Toggle sidebar">≡</button>
     <h1 id="pageTitle">Dashboard</h1>
+    <div id="pinSlot" class="pin-slot" aria-live="polite"></div>
   </div>
   <div class="right" style="position:relative">
     <div class="clock" id="lk-clock">Loading...</div>
