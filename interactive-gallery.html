@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Image Gallery</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/interactive-gallery.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Our Services</h1>
+        
+        <div class="interactive-gallery">
+            <!-- Main Image Display -->
+            <div class="main-image-container">
+                <img id="mainImage" src="frontend/images/3d-characters-with-boxes-van-removebg-preview.png" alt="Main Service">
+                <div id="imageDetails" class="image-details">
+                    <h3>Our Services</h3>
+                    <p>Hover over the areas to learn more about our services</p>
+                </div>
+            </div>
+            
+            <!-- Interactive Areas -->
+            <div class="interactive-areas">
+                <div class="area" data-image="frontend/images/3d-characters-with-boxes-van-removebg-preview.png" data-title="Road Freight" data-desc="Efficient and reliable road transportation services across the country.">
+                    <div class="area-highlight"></div>
+                    <span>Road Freight</span>
+                </div>
+                
+                <div class="area" data-image="frontend/images/88576710-truck-airplane-and-ship-with-carrier-boxes-as-a-symbol-for-international-trade-removebg-preview.png" data-title="Air Freight" data-desc="Fast and secure air cargo solutions for time-sensitive shipments.">
+                    <div class="area-highlight"></div>
+                    <span>Air Freight</span>
+                </div>
+                
+                <div class="area" data-image="frontend/images/36552862-cardboard-boxes-around-globe-cargo-ship-truck-and-plane-concept-of-online-goods-orders-worldwide-removebg-preview.png" data-title="Sea Freight" data-desc="Cost-effective shipping solutions for international cargo by sea.">
+                    <div class="area-highlight"></div>
+                    <span>Sea Freight</span>
+                </div>
+                
+                <div class="area" data-image="frontend/images/young-deliverywoman-with-box-removebg-preview.png" data-title="Warehousing" data-desc="Secure and well-managed storage solutions for your goods.">
+                    <div class="area-highlight"></div>
+                    <span>Warehousing</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/interactive-gallery.js"></script>
+</body>
+</html>

@@ -152,17 +152,37 @@ while($r=$res->fetch_assoc()){ $rows[]=$r; }
                   <td><?php echo $i+1; ?></td>
                   <td><?php echo h($it['title']); ?></td>
                   <td>
-                    <?php if (!empty($it['icon_url'])): ?><img class="image-thumb" src="<?php echo h($it['icon_url']); ?>" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"><?php endif; ?>
-                    <?php if (!empty($it['icon_text'])) echo ' ' . h($it['icon_text']); ?>
+                    <?php if (!empty($it['icon_url']) || !empty($it['icon_text'])): ?>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #333; border: 1px solid #ddd;">
+                          <?php if (!empty($it['icon_url'])): ?>
+                            <img src="<?php echo h($it['icon_url']); ?>" alt="" style="width: 24px; height: 24px; object-fit: contain;">
+                          <?php else: ?>
+                            <?php echo h($it['icon_text']); ?>
+                          <?php endif; ?>
+                        </div>
+                        <?php if (!empty($it['icon_text']) && !empty($it['icon_url'])): ?>
+                          <span><?php echo h($it['icon_text']); ?></span>
+                        <?php endif; ?>
+                      </div>
+                    <?php else: ?>
+                      <div style="width: 36px; height: 36px; border-radius: 50%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #999;">
+                        <span>?</span>
+                      </div>
+                    <?php endif; ?>
                   </td>
                   <td><?php if(!empty($it['image_url'])): ?><img class="image-thumb" src="<?php echo h($it['image_url']); ?>" alt="" style="width:64px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"><?php endif; ?></td>
                   <td style="display:flex;gap:8px;align-items:center;">
-                    <a class="btn btn-small" href="/APLX/frontend/admin/service_tabs.php?id=<?php echo (int)$it['id']; ?>">Edit</a>
-                    <form method="post" onsubmit="return confirm('Delete this item?');">
+                    <a href="/APLX/frontend/admin/service_tabs.php?id=<?php echo (int)$it['id']; ?>" class="btn-icon" style="background-color: #3b82f6; color: white; border: 1px solid #2563eb; padding: 6px 10px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;" title="Edit">
+                      <span style="font-size: 16px;">✏️</span>
+                    </a>
+                    <form method="post" onsubmit="return confirm('Delete this item?');" style="margin: 0;">
                       <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
                       <input type="hidden" name="_mode" value="delete">
                       <input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
-                      <button class="btn btn-red btn-small" type="submit">Delete</button>
+                      <button type="submit" class="btn-icon" style="background-color: #ef4444; color: white; border: 1px solid #dc2626; padding: 6px 10px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; cursor: pointer;" title="Delete">
+                        <span style="font-size: 16px;">🗑️</span>
+                      </button>
                     </form>
                   </td>
                 </tr>
@@ -184,10 +204,10 @@ while($r=$res->fetch_assoc()){ $rows[]=$r; }
             <div class="actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
               <?php if ($edit): ?>
                 <button class="btn btn-green" type="submit">Update</button>
-                <a class="btn btn-outline" href="/APLX/frontend/admin/service_tabs.php">Cancel</a>
+                <a class="btn btn-red" href="/APLX/frontend/admin/service_tabs.php" style="background-color: #ef4444; color: white; border: 1px solid #dc2626;">Cancel</a>
               <?php else: ?>
                 <button class="btn btn-green" type="submit">Create</button>
-                <a class="btn btn-outline" href="/APLX/frontend/admin/service_tabs.php">Cancel</a>
+                <a class="btn btn-red" href="/APLX/frontend/admin/service_tabs.php" style="background-color: #ef4444; color: white; border: 1px solid #dc2626;">Cancel</a>
               <?php endif; ?>
             </div>
           </form>

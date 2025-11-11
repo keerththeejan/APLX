@@ -112,6 +112,7 @@
         'header_title' => 'Why we are considered the best in business',
         'header_subtext' => 'Decentralized trade, direct transport, high flexibility and secure delivery.',
         'center_image_url' => '',
+        'bg_image_url' => '',
         'f1_icon_text' => '⬢', 'f1_icon_url' => '', 'f1_title' => 'Decentralized Trade', 'f1_desc' => 'Streamlined hubs maximize speed.',
         'f2_icon_text' => '➤', 'f2_icon_url' => '', 'f2_title' => 'Direct Transport', 'f2_desc' => 'Fewer touches, faster delivery.',
         'f3_icon_text' => '⏱', 'f3_icon_url' => '', 'f3_title' => 'Highly Flexible', 'f3_desc' => 'Adaptable capacity and routes.',
@@ -213,38 +214,68 @@
     <section class="services-tabs" id="servicesTabs">
       <div class="container">
         <div class="st-grid">
+          <?php
+            // Load service tabs (title, icons, image, bullets)
+            $tabs = [];
+            try {
+              if ($q = $conn->query("SELECT title, icon_text, icon_url, image_url, bullets_json FROM service_tabs ORDER BY sort_order ASC, id ASC")) {
+                while ($row = $q->fetch_assoc()) { $tabs[] = $row; }
+              }
+            } catch (Throwable $e) { /* ignore */ }
+            $firstTab = $tabs[0] ?? null;
+            $firstImg = $firstTab && !empty($firstTab['image_url']) ? $firstTab['image_url'] : 'images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg';
+            $firstBullets = [];
+            if ($firstTab && !empty($firstTab['bullets_json'])) {
+              $tmp = json_decode($firstTab['bullets_json'], true);
+              if (is_array($tmp)) { $firstBullets = $tmp; }
+            }
+            if (!$tabs) {
+              // Fallback static when no DB rows
+              $tabs = [
+                ['title'=>'Air Transportation','icon_text'=>'','icon_url'=>'','image_url'=>'images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg','bullets_json'=>json_encode(['Fast Delivery','Safety','Good Package','Privacy'])],
+                ['title'=>'Train Transportation','icon_text'=>'','icon_url'=>'','image_url'=>'images/truck-moving-shipping-container-min-1024x683.jpeg','bullets_json'=>json_encode(['On-time','Tracking','Cost Effective','Secure'])],
+              ];
+              $firstImg = $tabs[0]['image_url'];
+              $firstBullets = json_decode($tabs[0]['bullets_json'], true);
+            }
+          ?>
           <aside class="st-left" role="tablist" aria-label="Services">
-            <button class="st-item active" role="tab" aria-selected="true" data-img="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" data-bullets='["Fast Delivery","Safety","Good Package","Privacy"]'>
-              <span class="st-icon"> </span>
-              <span class="st-text">Air Transportation</span>
+            <?php foreach ($tabs as $i => $t):
+              $title = htmlspecialchars($t['title'] ?? '');
+              $iconText = trim((string)($t['icon_text'] ?? ''));
+              $iconUrl  = trim((string)($t['icon_url'] ?? ''));
+              $imgUrl   = trim((string)($t['image_url'] ?? ''));
+              $bulletsA = [];
+              if (!empty($t['bullets_json'])) {
+                $tmp = json_decode($t['bullets_json'], true);
+                if (is_array($tmp)) { $bulletsA = $tmp; }
+              }
+              $dataBullets = htmlspecialchars(json_encode($bulletsA, JSON_UNESCAPED_UNICODE));
+              $isActive = $i === 0 ? ' active' : '';
+            ?>
+            <button class="st-item<?php echo $isActive; ?>" role="tab" aria-selected="<?php echo $i===0 ? 'true' : 'false'; ?>" data-title="<?php echo $title; ?>" data-img="<?php echo htmlspecialchars($imgUrl ?: $firstImg); ?>" data-bullets='<?php echo $dataBullets; ?>' data-icon-url="<?php echo htmlspecialchars($iconUrl); ?>">
+              <span class="st-icon" style="border-radius:50%; display:inline-flex; align-items:center; justify-content:center; overflow:hidden;">
+                <?php if ($iconUrl): ?>
+                  <img src="<?php echo htmlspecialchars($iconUrl); ?>" alt="" style="width:20px;height:20px;object-fit:contain;" />
+                <?php else: ?>
+                  
+                <?php endif; ?>
+              </span>
+              <span class="st-text"><?php echo $title; ?></span>
             </button>
-            <button class="st-item" role="tab" aria-selected="false" data-img="images/truck-moving-shipping-container-min-1024x683.jpeg" data-bullets='["On-time","Tracking","Cost Effective","Secure"]'>
-              <span class="st-icon"> </span>
-              <span class="st-text">Train Transportation</span>
-            </button>
-            <button class="st-item" role="tab" aria-selected="false" data-img="images/premium_photo-1661962420310-d3be75c8921c.jpg" data-bullets='["Worldwide","Bulk Cargo","Insured","Reliable"]'>
-              <span class="st-icon"> </span>
-              <span class="st-text">Cargo Ship Freight</span>
-            </button>
-            <button class="st-item" role="tab" aria-selected="false" data-img="images/iStock-1024024568-scaled.jpg" data-bullets='["Climate Control","Inventory","Security","Compliance"]'>
-              <span class="st-icon"> </span>
-              <span class="st-text">Maritime Transportation</span>
-            </button>
-            <button class="st-item" role="tab" aria-selected="false" data-img="images/COLOURBOX35652344.jpg" data-bullets='["Express","Priority Handling","Live Support","Customs Help"]'>
-              <span class="st-icon"> </span>
-              <span class="st-text">Flight Transportation</span>
-            </button>
+            <?php endforeach; ?>
           </aside>
           <div class="st-right">
             <div class="st-media">
-              <img id="stImage" src="images/cda6387f3ee1ca2a8f08f4e846dfcf59.jpg" alt="Service preview">
+              <img id="stImage" src="<?php echo htmlspecialchars($firstImg); ?>" alt="Service preview">
               <div class="st-overlay">
                 <div class="st-badge"> </div>
                 <ul id="stBullets" class="st-bullets">
-                  <li>Fast Delivery</li>
-                  <li>Safety</li>
-                  <li>Good Package</li>
-                  <li>Privacy</li>
+                  <?php if ($firstBullets): foreach ($firstBullets as $b): ?>
+                    <li>✓ <?php echo htmlspecialchars($b); ?></li>
+                  <?php endforeach; else: ?>
+                    <li>✓ </li>
+                  <?php endif; ?>
                 </ul>
               </div>
             </div>
@@ -288,7 +319,7 @@
     </section>
     
     <!-- Why best in business (dynamic) -->
-    <section class="why-choose-us">
+    <section class="why-choose-us" <?php $bg = trim((string)($why['bg_image_url'] ?? '')); if ($bg) { echo 'style="--why-bg: url(\''.htmlspecialchars($bg).'\')"'; } ?>>
       <div class="container">
         <div class="why-choose-header">
           <h2><?php echo htmlspecialchars($why['header_title'] ?? ''); ?></h2>
@@ -835,7 +866,12 @@
       if (badgeEl){
         const title = btn.getAttribute('data-title')||'';
         const txt = (bullets && bullets[0]) ? bullets[0] : title;
-        badgeEl.innerHTML = `<span class="dot" style="display:inline-block;width:34px;height:34px;border-radius:50%;background:#fff;margin-right:10px;vertical-align:middle"></span><span style="vertical-align:middle">✓ ${esc(txt)}</span>`;
+        const iconUrl = btn.getAttribute('data-icon-url') || '';
+        let circleInner = '';
+        if (iconUrl) {
+          circleInner = `<img src="${esc(iconUrl)}" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle" />`;
+        }
+        badgeEl.innerHTML = `<span class="dot" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;margin-right:10px;vertical-align:middle;overflow:hidden">${circleInner}</span><span style="vertical-align:middle">✓ ${esc(txt)}</span>`;
       }
     }
 

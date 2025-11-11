@@ -8,6 +8,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS why_best (
   header_title VARCHAR(200) NOT NULL DEFAULT 'Why we are considered the best in business',
   header_subtext VARCHAR(400) NOT NULL DEFAULT 'Decentralized trade, direct transport, high flexibility and secure delivery.',
   center_image_url VARCHAR(600) NOT NULL DEFAULT '',
+  bg_image_url VARCHAR(600) NOT NULL DEFAULT '',
   f1_icon_text VARCHAR(16) NULL,
   f1_icon_url VARCHAR(512) NULL,
   f1_title VARCHAR(140) NOT NULL DEFAULT '',
@@ -27,6 +28,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS why_best (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 $conn->query("INSERT IGNORE INTO why_best (id) VALUES (1)");
+
+// Lightweight migration: add bg_image_url if the table existed before
+try {
+  $colCheck = $conn->query("SHOW COLUMNS FROM why_best LIKE 'bg_image_url'");
+  if ($colCheck && $colCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE why_best ADD COLUMN bg_image_url VARCHAR(600) NOT NULL DEFAULT ''");
+  }
+} catch (Throwable $e) { /* ignore */ }
 
 function ensure_dir($p){ if (!is_dir($p)) { @mkdir($p, 0775, true); } return is_dir($p); }
 function save_upload_img($field, $subdir){
@@ -57,6 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
   $center_image_url = $imgUp ?: trim($_POST['center_image_url'] ?? '');
   if (!$center_image_url && !empty($row['center_image_url'])) $center_image_url = $row['center_image_url'];
 
+  // Background image (for section backdrop)
+  $bgUp = save_upload_img('bg_image_file','why_best/bg');
+  $bg_image_url = $bgUp ?: trim($_POST['bg_image_url'] ?? '');
+  if (!$bg_image_url && !empty($row['bg_image_url'])) $bg_image_url = $row['bg_image_url'];
+
   $f = [];
   for ($i=1;$i<=4;$i++){
     $icon_text = trim($_POST["f{$i}_icon_text"] ?? '');
@@ -68,9 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $f[$i] = compact('icon_text','icon_url','title','desc');
   }
 
-  $stmt = $conn->prepare('UPDATE why_best SET header_title=?, header_subtext=?, center_image_url=?, f1_icon_text=?, f1_icon_url=?, f1_title=?, f1_desc=?, f2_icon_text=?, f2_icon_url=?, f2_title=?, f2_desc=?, f3_icon_text=?, f3_icon_url=?, f3_title=?, f3_desc=?, f4_icon_text=?, f4_icon_url=?, f4_title=?, f4_desc=? WHERE id=1');
-  $stmt->bind_param('sssssssssssssssssss',
-    $header_title, $header_subtext, $center_image_url,
+  $stmt = $conn->prepare('UPDATE why_best SET header_title=?, header_subtext=?, center_image_url=?, bg_image_url=?, f1_icon_text=?, f1_icon_url=?, f1_title=?, f1_desc=?, f2_icon_text=?, f2_icon_url=?, f2_title=?, f2_desc=?, f3_icon_text=?, f3_icon_url=?, f3_title=?, f3_desc=?, f4_icon_text=?, f4_icon_url=?, f4_title=?, f4_desc=? WHERE id=1');
+  $stmt->bind_param('ssssssssssssssssssss',
+    $header_title, $header_subtext, $center_image_url, $bg_image_url,
     $f[1]['icon_text'], $f[1]['icon_url'], $f[1]['title'], $f[1]['desc'],
     $f[2]['icon_text'], $f[2]['icon_url'], $f[2]['title'], $f[2]['desc'],
     $f[3]['icon_text'], $f[3]['icon_url'], $f[3]['title'], $f[3]['desc'],
@@ -121,6 +135,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
             <label>Header Subtext<textarea name="header_subtext" rows="3" placeholder="Decentralized trade, direct transport, ..."><?php echo h($row['header_subtext'] ?? ''); ?></textarea></label>
             <label>Upload Center Image<input type="file" name="center_image_file" accept="image/*"></label>
             <label>Or Image URL<input name="center_image_url" placeholder="https://..." value="<?php echo h($row['center_image_url'] ?? ''); ?>"></label>
+            <hr>
+            <label>Section Background Image (Why Choose Us)</label>
+            <label>Upload Background Image<input type="file" name="bg_image_file" accept="image/*"></label>
+            <label>Or Background URL<input name="bg_image_url" placeholder="https://..." value="<?php echo h($row['bg_image_url'] ?? ''); ?>"></label>
+            <?php if (!empty($row['bg_image_url'])): ?><div class="muted"><img class="image-thumb" src="<?php echo h($row['bg_image_url']); ?>" alt=""></div><?php endif; ?>
           </div>
           <div>
             <?php for($i=1;$i<=4;$i++): ?>

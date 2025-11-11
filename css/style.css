@@ -231,7 +231,7 @@ body.collapsed .side-user .meta{display:none}
 /* Why Choose Us */
 .why-choose-us{padding:28px 0;background-size:cover;background-position:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border); position:relative}
 .why-choose-us::before{ content:""; position:absolute; inset:0; pointer-events:none; background:
-  url('../frontend/images/88576710-truck-airplane-and-ship-with-carrier-boxes-as-a-symbol-for-international-trade-removebg-preview.png') center/cover no-repeat; 
+  var(--why-bg, url('../frontend/images/88576710-truck-airplane-and-ship-with-carrier-boxes-as-a-symbol-for-international-trade-removebg-preview.png')) center/cover no-repeat; 
   opacity:.14 }
 .why-choose-header{text-align:center;max-width:780px;margin:0 auto 20px}
 .why-choose-layout{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:20px;align-items:center}

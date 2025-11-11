@@ -1,0 +1,109 @@
+/* Interactive Gallery Styles */
+.interactive-gallery {
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px;
+}
+
+.main-image-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #0b1220;
+    border: 1px solid var(--border);
+}
+
+#mainImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: opacity 0.3s ease;
+}
+
+.image-details {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(11, 18, 32, 0.9);
+    padding: 20px;
+    color: white;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+.interactive-areas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.area {
+    position: relative;
+    height: 100px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding: 15px;
+    text-align: center;
+}
+
+.area:hover {
+    transform: translateY(-5px);
+    border-color: #ef4444;
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.2);
+}
+
+.area-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(239, 68, 68, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.area:hover .area-highlight {
+    opacity: 1;
+}
+
+.area span {
+    position: relative;
+    z-index: 1;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .interactive-areas {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .main-image-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .interactive-areas {
+        grid-template-columns: 1fr;
+    }
+    
+    .main-image-container {
+        height: 250px;
+    }
+}
