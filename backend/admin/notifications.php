@@ -123,8 +123,80 @@ try {
         }
     }
 
+    // Fetch recent mail logs (outgoing via send_mail)
+    $mailLogItems = [];
+    {
+        try {
+            $conn->query("CREATE TABLE IF NOT EXISTS mail_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                recipient_type ENUM('admin','customer') NOT NULL,
+                recipient_email VARCHAR(255) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                status VARCHAR(32) NOT NULL DEFAULT 'sent',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $lim = $all ? 200 : $limit;
+            $off = $all ? 0 : $offset;
+            $sqlL = 'SELECT id, recipient_type, recipient_email, subject, status, created_at FROM mail_logs ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?';
+            $stmtL = $conn->prepare($sqlL);
+            $stmtL->bind_param('ii', $lim, $off);
+            $stmtL->execute();
+            $resL = $stmtL->get_result();
+            while ($r = $resL->fetch_assoc()) {
+                $title = 'Mail: ' . ($r['subject'] ?? '');
+                $msg = ($r['recipient_type'] ?? 'customer') . ' • ' . ($r['recipient_email'] ?? '') . ' • ' . ($r['status'] ?? '');
+                $mailLogItems[] = [
+                    'id' => (int)$r['id'],
+                    'type' => 'Mail',
+                    'title' => $title,
+                    'message' => $msg,
+                    'created_at' => $r['created_at'] ?? null,
+                    'source' => 'mail_log'
+                ];
+            }
+        } catch (Throwable $e) { /* ignore mail logs if not available */ }
+    }
+
+    // Fetch admin_mailbox (inbound/outbound threads)
+    $mboxItems = [];
+    {
+        try {
+            $conn->query("CREATE TABLE IF NOT EXISTS admin_mailbox (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                direction ENUM('in','out') NOT NULL,
+                from_email VARCHAR(255) NOT NULL,
+                to_email VARCHAR(255) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                body TEXT NOT NULL,
+                reply_to_id INT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_dir_created (direction, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $lim = $all ? 200 : $limit;
+            $off = $all ? 0 : $offset;
+            $sqlB = 'SELECT id, direction, from_email, to_email, subject, created_at FROM admin_mailbox ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?';
+            $stmtB = $conn->prepare($sqlB);
+            $stmtB->bind_param('ii', $lim, $off);
+            $stmtB->execute();
+            $resB = $stmtB->get_result();
+            while ($b = $resB->fetch_assoc()) {
+                $dir = strtolower((string)($b['direction'] ?? ''));
+                $title = ($dir === 'in' ? 'Incoming' : 'Outgoing') . ': ' . ($b['subject'] ?? '');
+                $msg = ($b['from_email'] ?? '') . ' → ' . ($b['to_email'] ?? '');
+                $mboxItems[] = [
+                    'id' => (int)$b['id'],
+                    'type' => ($dir === 'in' ? 'Incoming Mail' : 'Outgoing Mail'),
+                    'title' => $title,
+                    'message' => $msg,
+                    'created_at' => $b['created_at'] ?? null,
+                    'source' => 'admin_mailbox'
+                ];
+            }
+        } catch (Throwable $e) { /* ignore mailbox if not available */ }
+    }
+
     // Merge and sort by time desc
-    $allItems = array_merge($shipItems, $msgItems);
+    $allItems = array_merge($shipItems, $msgItems, $mailLogItems, $mboxItems);
     usort($allItems, function($a,$b){ return strcmp(($b['created_at']??''), ($a['created_at']??'')); });
 
     // Total: approximate by combined count (no heavy count)

@@ -21,6 +21,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS about_section (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 $conn->query("INSERT IGNORE INTO about_section (id) VALUES (1)");
 
+// Ensure About background settings table
+$conn->query("CREATE TABLE IF NOT EXISTS about_bg_settings (
+  id TINYINT PRIMARY KEY,
+  bg_image_url VARCHAR(600) NOT NULL DEFAULT '',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+try { $conn->query("INSERT IGNORE INTO about_bg_settings (id, bg_image_url) VALUES (1, '')"); } catch (Throwable $e) { }
+
 function ensure_dir($p){ if (!is_dir($p)) { @mkdir($p, 0775, true); } return is_dir($p); }
 function save_upload_img($field, $subdir){
   if (!isset($_FILES[$field]) || !is_uploaded_file($_FILES[$field]['tmp_name'])) return null;
@@ -39,14 +47,56 @@ function save_upload_img($field, $subdir){
   return '/APLX/uploads/' . trim($subdir,'/') . '/' . $name;
 }
 
+// Delete a previously uploaded background file if it is within uploads/about_bg
+function delete_local_about_bg($url){
+  $url = (string)$url;
+  if (!$url) return false;
+  $prefix = '/APLX/uploads/about_bg';
+  if (strpos($url, $prefix) !== 0) return false;
+  $root = realpath(__DIR__ . '/../../');
+  $path = $root . str_replace('/APLX', '', $url);
+  if ($path && file_exists($path)) { @unlink($path); return true; }
+  return false;
+}
+
 $msg = '';
 $err = '';
 $row = [];
 $res = $conn->query('SELECT * FROM about_section WHERE id=1');
 $row = $res->fetch_assoc() ?: [];
 
+// Load current about background setting
+$aboutBg = ['bg_image_url' => ''];
+try { if ($q=$conn->query('SELECT bg_image_url FROM about_bg_settings WHERE id=1')){ $t=$q->fetch_assoc(); if($t){ $aboutBg=$t; } } } catch (Throwable $e) { }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
   csrf_check();
+  // Background actions
+  $mode = $_POST['_mode'] ?? '';
+  if ($mode === 'save_about_bg'){
+    $up = save_upload_img('about_bg_file','about_bg');
+    $bg = $up ?: trim($_POST['about_bg_url'] ?? '');
+    if ($bg){
+      // delete old local if replacing
+      try { if ($r=$conn->query('SELECT bg_image_url FROM about_bg_settings WHERE id=1')){ $old=$r->fetch_assoc(); if($old && !empty($old['bg_image_url'])){ if ($up || ($bg !== $old['bg_image_url'])) delete_local_about_bg($old['bg_image_url']); } } } catch (Throwable $e) { }
+      $st = $conn->prepare('UPDATE about_bg_settings SET bg_image_url=? WHERE id=1');
+      $st->bind_param('s', $bg);
+      $st->execute();
+      header('Location: /APLX/frontend/admin/about.php?msg='.urlencode('Background saved'));
+      exit;
+    }
+  }
+  if ($mode === 'clear_about_bg'){
+    try { if ($r=$conn->query('SELECT bg_image_url FROM about_bg_settings WHERE id=1')){ $old=$r->fetch_assoc(); if($old && !empty($old['bg_image_url'])){ delete_local_about_bg($old['bg_image_url']); } } } catch (Throwable $e) { }
+    $empty = '';
+    $st = $conn->prepare('UPDATE about_bg_settings SET bg_image_url=? WHERE id=1');
+    $st->bind_param('s', $empty);
+    $st->execute();
+    header('Location: /APLX/frontend/admin/about.php?msg='.urlencode('Background removed'));
+    exit;
+  }
+
+  // Content save
   $eyebrow = trim($_POST['eyebrow'] ?? '');
   $title = trim($_POST['title'] ?? '');
   $subtext = trim($_POST['subtext'] ?? '');
@@ -139,6 +189,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
           <button class="btn btn-green" type="submit">Save</button>
           <a class="btn btn-outline" href="/APLX/frontend/admin/settings.php">Cancel</a>
         </div>
+      </form>
+      <hr style="margin:16px 0; border:0; border-top:1px solid var(--border)">
+      <h3 style="margin:8px 0">About Section Background</h3>
+      <form class="stack" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+        <input type="hidden" name="_mode" value="save_about_bg">
+        <label>Background Image URL<input type="text" name="about_bg_url" placeholder="https://..." value="<?php echo h($aboutBg['bg_image_url'] ?? ''); ?>"></label>
+        <label>Or Upload Background Image<input type="file" name="about_bg_file" accept="image/*"></label>
+        <?php if (!empty($aboutBg['bg_image_url'])): ?>
+          <img src="<?php echo h($aboutBg['bg_image_url']); ?>" alt="Preview" style="max-width:100%;max-height:220px;border:1px solid var(--border);border-radius:12px;display:block">
+        <?php endif; ?>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn" type="submit">Save Background</button>
+          <a class="btn btn-outline" href="/APLX/frontend/index.php" target="_blank">View Site</a>
+        </div>
+      </form>
+      <form method="post" onsubmit="return confirm('Remove about background?');" style="margin-top:8px; display:flex; justify-content:flex-end;">
+        <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+        <input type="hidden" name="_mode" value="clear_about_bg">
+        <button class="btn btn-outline" type="submit" style="border-color:#ef4444;color:#ef4444">Remove Background</button>
       </form>
     </section>
   </main>

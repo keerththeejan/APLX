@@ -39,12 +39,12 @@
     <div id="topbar"></div>
 
     <div class="toolbar">
-      <h2>Mail Logs</h2>
+      <h2>Mail</h2>
       <div class="bar-row">
         <div class="mc-row"><a class="btn" href="/APLX/frontend/admin/message_customer.php">Message Customer</a></div>
         <div class="controls-right">
           <div class="searchbox">
-            <input id="q" type="search" placeholder="Search email or subject">
+            <input id="q" type="search" placeholder="Search email or subject (logs)">
             <button class="btn" id="btnSearch">Search</button>
           </div>
           <div class="under-search">
@@ -59,6 +59,7 @@
     </div>
 
     <div class="card">
+      <h3 style="margin:8px 12px">Mail Logs (Outgoing via send_mail)</h3>
       <table class="data">
         <thead>
           <tr>
@@ -76,6 +77,40 @@
         <button class="btn btn-sm" id="prevPg">Prev</button>
         <span id="pgInfo" class="muted">–</span>
         <button class="btn btn-sm" id="nextPg">Next</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin:8px 12px">Mailbox (Incoming / Outgoing Threads)</h3>
+      <div class="bar-row" style="padding:0 12px 8px 12px">
+        <div class="searchbox">
+          <input id="mb_q" type="search" placeholder="Search from/to/subject (mailbox)">
+          <button class="btn" id="mb_btnSearch">Search</button>
+        </div>
+        <div class="under-search">
+          <select id="mb_dir" class="sm-select">
+            <option value="">All</option>
+            <option value="in">Incoming</option>
+            <option value="out">Outgoing</option>
+          </select>
+        </div>
+      </div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Direction</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Subject</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="mbTbody"></tbody>
+      </table>
+      <div class="pager">
+        <button class="btn btn-sm" id="mb_prevPg">Prev</button>
+        <span id="mb_pgInfo" class="muted">–</span>
+        <button class="btn btn-sm" id="mb_nextPg">Next</button>
       </div>
     </div>
   </main>
@@ -283,6 +318,60 @@
     });
     if (r.ok) { statusEl.textContent = 'Updated'; closeModal(); load(); } else { statusEl.textContent = 'Save failed'; }
   });
+
+  load();
+})();
+
+// Mailbox (admin_mailbox) listing
+(function(){
+  const tbody = document.getElementById('mbTbody');
+  const q = document.getElementById('mb_q');
+  const fDir = document.getElementById('mb_dir');
+  const btnSearch = document.getElementById('mb_btnSearch');
+  const prevPg = document.getElementById('mb_prevPg');
+  const nextPg = document.getElementById('mb_nextPg');
+  const pgInfo = document.getElementById('mb_pgInfo');
+  let page = 1, limit = 12, total = 0;
+
+  async function load(){
+    const params = new URLSearchParams({ page, limit });
+    const dir = (fDir.value||'').trim();
+    const search = (q.value||'').trim();
+    if (dir) params.set('direction', dir);
+    if (search) params.set('search', search);
+    const res = await fetch('/APLX/backend/admin/admin_mailbox.php?' + params.toString());
+    if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5" class="muted" style="background:transparent;border:none;padding:8px 12px">Failed to load</td></tr>'; return; }
+    const data = await res.json();
+    total = data.total || 0;
+    renderRows(data.items||[]);
+    const maxPg = Math.max(1, Math.ceil(total/limit));
+    pgInfo.textContent = `Page ${page} / ${maxPg} — ${total} threads`;
+    prevPg.disabled = page<=1; nextPg.disabled = page>=maxPg;
+  }
+
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;", ">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+  function formatDT(s){ if (!s) return ''; const d = new Date((s||'').replace(' ','T')); if (isNaN(d)) return esc(s); return d.toLocaleString(); }
+
+  function renderRows(items){
+    tbody.innerHTML = items.map(r => `
+      <tr>
+        <td>${esc(r.direction)}</td>
+        <td>${esc(r.from_email)}</td>
+        <td>${esc(r.to_email)}</td>
+        <td>${esc(r.subject)}</td>
+        <td>${formatDT(r.created_at)}</td>
+      </tr>
+    `).join('');
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="muted" style="background:transparent;border:none;padding:8px 12px">No mailbox items</td></tr>`;
+    }
+  }
+
+  btnSearch.addEventListener('click', ()=>{ page=1; load(); });
+  q.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); }});
+  fDir.addEventListener('change', ()=>{ page=1; load(); });
+  prevPg.addEventListener('click', ()=>{ if(page>1){ page--; load(); }});
+  nextPg.addEventListener('click', ()=>{ page++; load(); });
 
   load();
 })();

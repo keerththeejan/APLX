@@ -174,9 +174,12 @@ body.collapsed .side-user .meta{display:none}
 
 /* Services Tabs (left list + right image with red overlay) */
 .services-tabs{ padding:28px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); position:relative; }
-/* Only one background image (no layered pseudo elements) */
-.services-tabs::before{ content:none; }
-.services-tabs{ background-image:none; }
+/* Dynamic background image via CSS variable --st-bg */
+.services-tabs::before{ 
+  content:""; position:absolute; inset:0; pointer-events:none; 
+  background: var(--st-bg, none) no-repeat right -40px bottom -20px; 
+  background-size:520px auto; opacity:.20; filter:saturate(.95); 
+}
 .st-grid{ display:grid; grid-template-columns:1fr 1.3fr; gap:20px; align-items:stretch; }
 .st-left{ background:#0b1220; border:1px solid var(--border); border-radius:16px; padding:12px; display:grid; gap:10px; }
 [data-theme="light"] .st-left{ background:#ffffff; }
@@ -206,13 +209,13 @@ body.collapsed .side-user .meta{display:none}
   .st-overlay{ position:static; transform:none; margin:10px; }
   .st-badge{ position:static; transform:none; margin-bottom:8px; left:auto; top:auto; }
   .hero-wrap.full-bleed::after{background-position:right -100px bottom -40px;background-size:320px auto;opacity:.22}
-  .services-tabs{ background-position:initial; background-size:auto; }
+  .services-tabs::before{ background-position:right -100px bottom -40px; background-size:320px auto; opacity:.18; }
 }
 
 /* About Us */
 .about-us{padding:40px 0; position:relative}
 .about-us::before{ content:""; position:absolute; inset:0; pointer-events:none; background:
-  url('../frontend/images/young-deliverywoman-with-box-removebg-preview.png') no-repeat right -40px top -150px; 
+  var(--about-bg, url('../frontend/images/young-deliverywoman-with-box-removebg-preview.png')) no-repeat right -40px top -150px; 
   background-size:520px auto; opacity:.34; filter:saturate(1.1) brightness(1.18) contrast(1.05) }
 .about-content{display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:center}
 .about-image{position:relative}

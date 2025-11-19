@@ -3,6 +3,7 @@
 // Lightweight lookup for customers by name/email for admin UI autocomplete
 require_once __DIR__ . '/../init.php';
 require_admin();
+require_once __DIR__ . '/customers_api.php';
 header('Content-Type: application/json');
 
 $q = trim($_GET['q'] ?? '');
@@ -15,13 +16,14 @@ $total = 0;
 
 if ($q !== '') {
     $like = '%' . $q . '%';
-    // Only customers
-    $stmt = $conn->prepare('SELECT COUNT(*) c FROM users WHERE role = "customer" AND (name LIKE ? OR email LIKE ?)');
+    $sqlCnt = "SELECT COUNT(*) c FROM `{$TABLE}` WHERE ({$COL_NAME} LIKE ? OR {$COL_EMAIL} LIKE ?)";
+    $stmt = $conn->prepare($sqlCnt);
     $stmt->bind_param('ss', $like, $like);
     $stmt->execute();
     $total = (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
 
-    $stmt = $conn->prepare('SELECT id, name, email FROM users WHERE role = "customer" AND (name LIKE ? OR email LIKE ?) ORDER BY id DESC LIMIT ? OFFSET ?');
+    $sql = "SELECT {$COL_ID} id, {$COL_NAME} name, {$COL_EMAIL} email FROM `{$TABLE}` WHERE ({$COL_NAME} LIKE ? OR {$COL_EMAIL} LIKE ?) ORDER BY {$COL_ID} DESC LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($sql);
     $stmt->bind_param('ssii', $like, $like, $limit, $offset);
     $stmt->execute();
     $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

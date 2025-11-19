@@ -28,8 +28,17 @@ $AUTH_DISABLED = false;
 $COMPANY_NAME   = 'Parcel Transport';
 // Outgoing sender for system emails
 $SUPPORT_EMAIL  = 'saravanyaa1@gmail.com';
-$SUPPORT_PHONE  = '+91-00000-00000';
-$SUPPORT_ADDRESS= 'Chennai, TN';
-$BOOKING_EMAIL  = 'booking@parcel.local';
+$SUPPORT_PHONE  = '+94 772912755';
+$SUPPORT_ADDRESS= 'Visuvamadu, Mullaithivu';
+$BOOKING_EMAIL  = 'admin@parcel.locall';
+
+// SMTP configuration (set these for PHPMailer SMTP). For Gmail, use:
+// host: smtp.gmail.com, port: 587 (TLS) or 465 (SSL)
+// username: your full Gmail address, password: app password (not your actual login password)
+$SMTP_HOST   = getenv('SMTP_HOST')   ?: '';
+$SMTP_PORT   = getenv('SMTP_PORT')   ?: '';
+$SMTP_USER   = getenv('SMTP_USER')   ?: '';
+$SMTP_PASS   = getenv('SMTP_PASS')   ?: '';
+$SMTP_SECURE = getenv('SMTP_SECURE') ?: 'tls'; // 'tls' or 'ssl'
 
 ?>

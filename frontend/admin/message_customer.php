@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../backend/init.php'; require_admin(); ?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -31,8 +32,10 @@
     <div id="topbar"></div>
     <section class="card">
       <h2 class="title-yellow">Message Customer</h2>
+      <div id="sendNotice" class="notice" style="display:none;margin-bottom:10px"></div>
       <p class="muted help-green">Start by selecting a customer by name. The Customer Email will auto-fill. You will type the actual message on the next step.</p>
-      <form id="msgCustForm" class="form-grid" method="get" action="/APLX/backend/admin/message_customer.php">
+      <form id="msgCustForm" class="form-grid" method="post" action="/APLX/backend/admin/message_customer.php">
+        <input type="hidden" name="csrf" value="<?php echo h(csrf_token()); ?>">
         <!-- Hidden field actually sent to backend -->
         <input type="hidden" id="mc_customer_id" name="customer_id" />
 
@@ -63,6 +66,17 @@
 </div>
 <script src="/APLX/js/admin.js"></script>
 <script>
+  // Success notice from redirect (?sent=1&to=...)
+  (function(){
+    const params = new URLSearchParams(window.location.search);
+    const sent = params.get('sent');
+    const to = params.get('to') || '';
+    const box = document.getElementById('sendNotice');
+    if (sent === '1' && box){
+      box.style.display = 'block';
+      box.textContent = to ? (`Mail sent to ${to}`) : 'Mail sent';
+    }
+  })();
   // Lightweight autocomplete for Customer Name -> fills ID and Email
   (function(){
     const nameInput = document.getElementById('mc_customer_name');
@@ -111,9 +125,9 @@
     function setAuto(hit){
       // Hidden field holds actual id for submission
       idInput.value = String(hit.id||'');
-      // Show info as placeholders (email only visible)
+      // Fill visible email value directly
       if (idDisplay){ idDisplay.value = String(hit.id||''); idDisplay.placeholder = 'Auto-filled'; }
-      if (emailInput){ emailInput.value = ''; emailInput.placeholder = hit.email || 'Auto-filled'; }
+      if (emailInput){ emailInput.value = hit.email || ''; emailInput.placeholder = hit.email ? '' : 'Auto-filled'; }
       const subj = document.getElementById('mc_subject');
       if(subj && !subj.value){ subj.placeholder = `Subject for ${hit.name||'customer'}`; }
     }

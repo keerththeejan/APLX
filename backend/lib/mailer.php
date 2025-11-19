@@ -34,11 +34,47 @@ function infer_recipient_type($to){
     return 'customer';
 }
 
-    // Some MTAs prefer CRLF line endings
-    $headersStr = implode("\r\n", $headers);
-    // Note: PHP mail() does not support alternative multipart easily without building MIME manually.
-    // For simplicity, send HTML content directly. For production, switch to PHPMailer.
-    $ok = @mail($to, $subject, $htmlBody, $headersStr);
+    // Try PHPMailer SMTP if available and configured; else fallback to PHP mail()
+    $ok = false;
+    $smtpHost = $GLOBALS['SMTP_HOST']   ?? '';
+    $smtpPort = (int)($GLOBALS['SMTP_PORT']   ?? 0);
+    $smtpUser = $GLOBALS['SMTP_USER']   ?? '';
+    $smtpPass = $GLOBALS['SMTP_PASS']   ?? '';
+    $smtpSecure = strtolower((string)($GLOBALS['SMTP_SECURE'] ?? 'tls'));
+
+    if (class_exists('PHPMailer\\PHPMailer\\PHPMailer') && $smtpHost) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host = $smtpHost;
+            $mail->Port = $smtpPort ?: (($smtpSecure === 'ssl') ? 465 : 587);
+            $mail->SMTPAuth = (bool)($smtpUser !== '' || $smtpPass !== '');
+            if ($smtpSecure === 'ssl') {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+            if ($smtpUser) { $mail->Username = $smtpUser; }
+            if ($smtpPass) { $mail->Password = $smtpPass; }
+
+            $mail->setFrom($fromEmail, $fromName);
+            $mail->addAddress($to);
+            $mail->addReplyTo($fromEmail, $fromName);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = $textBody;
+            $ok = $mail->send();
+        } catch (\Throwable $e) {
+            $ok = false; // fall through to logging as failed
+        }
+    } else {
+        // Some MTAs prefer CRLF line endings
+        $headersStr = implode("\r\n", $headers);
+        // Note: PHP mail() does not support alternative multipart easily without building MIME manually.
+        // For simplicity, send HTML content directly.
+        $ok = @mail($to, $subject, $htmlBody, $headersStr);
+    }
 
     // Log every outgoing mail to mail_logs for admin audit/history
     try {

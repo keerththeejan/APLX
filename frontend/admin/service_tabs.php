@@ -17,6 +17,13 @@ $conn->query("CREATE TABLE IF NOT EXISTS service_tabs (
   KEY idx_active_order (is_active, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+$conn->query("CREATE TABLE IF NOT EXISTS services_tabs_settings (
+  id INT PRIMARY KEY,
+  bg_image_url VARCHAR(600) NOT NULL DEFAULT '',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+try { $conn->query("INSERT INTO services_tabs_settings (id, bg_image_url) VALUES (1,'') ON DUPLICATE KEY UPDATE bg_image_url=bg_image_url"); } catch (Throwable $e) { }
+
 function ensure_dir($p){ if (!is_dir($p)) { @mkdir($p, 0775, true); } return is_dir($p); }
 function save_upload_img($field, $subdir){
   if (!isset($_FILES[$field]) || !is_uploaded_file($_FILES[$field]['tmp_name'])) return null;
@@ -35,6 +42,19 @@ function save_upload_img($field, $subdir){
   return '/APLX/uploads/' . trim($subdir,'/') . '/' . $name;
 }
 
+// Delete a previously uploaded background file if it is within our uploads directory
+function delete_local_bg($url){
+  $url = (string)$url;
+  if (!$url) return false;
+  // Only allow deletion inside our uploads/services_tabs path
+  $prefix = '/APLX/uploads/services_tabs';
+  if (strpos($url, $prefix) !== 0) return false;
+  $root = realpath(__DIR__ . '/../../');
+  $path = $root . str_replace('/APLX', '', $url); // map to filesystem
+  if ($path && file_exists($path)) { @unlink($path); return true; }
+  return false;
+}
+
 $id = intval($_GET['id'] ?? 0);
 $msg = '';
 $err = '';
@@ -43,6 +63,38 @@ $edit = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
   csrf_check();
   $mode = $_POST['_mode'] ?? 'create';
+  if ($mode === 'save_bg'){
+    $bg_up = save_upload_img('bg_file', 'services_tabs');
+    $bg = $bg_up ?: trim($_POST['bg_image_url'] ?? '');
+    if ($bg){
+      // Load current to remove if needed
+      $cur = null;
+      try { if ($r=$conn->query("SELECT bg_image_url FROM services_tabs_settings WHERE id=1")){ $row=$r->fetch_assoc(); if($row){ $cur=$row['bg_image_url'] ?? ''; } } } catch (Throwable $e) { }
+      if (!empty($bg_up) && !empty($cur)) { delete_local_bg($cur); }
+      if (empty($bg_up) && !empty($cur) && $bg !== $cur) { // replacing with a new URL; delete old if local
+        delete_local_bg($cur);
+      }
+      $st = $conn->prepare('UPDATE services_tabs_settings SET bg_image_url=? WHERE id=1');
+      $st->bind_param('s', $bg);
+      $st->execute();
+      $msg = 'Background saved';
+      header('Location: /APLX/frontend/admin/service_tabs.php?msg='.urlencode($msg));
+      exit;
+    } else {
+      $err = 'Image required';
+    }
+  }
+  if ($mode === 'clear_bg'){
+    // Delete current local file if any
+    try { if ($r=$conn->query("SELECT bg_image_url FROM services_tabs_settings WHERE id=1")){ $row=$r->fetch_assoc(); if($row && !empty($row['bg_image_url'])){ delete_local_bg($row['bg_image_url']); } } } catch (Throwable $e) { }
+    $empty = '';
+    $st = $conn->prepare('UPDATE services_tabs_settings SET bg_image_url=? WHERE id=1');
+    $st->bind_param('s', $empty);
+    $st->execute();
+    $msg = 'Background removed';
+    header('Location: /APLX/frontend/admin/service_tabs.php?msg='.urlencode($msg));
+    exit;
+  }
   if ($mode === 'delete'){
     $delId = intval($_POST['id'] ?? 0);
     if ($delId > 0){
@@ -101,6 +153,9 @@ if ($id > 0){
 $rows = [];
 $res = $conn->query('SELECT * FROM service_tabs ORDER BY id ASC');
 while($r=$res->fetch_assoc()){ $rows[]=$r; }
+
+$stSetting = ['bg_image_url' => ''];
+try { if ($r=$conn->query('SELECT bg_image_url FROM services_tabs_settings WHERE id=1')){ $row=$r->fetch_assoc(); if($row){ $stSetting=$row; } } } catch (Throwable $e) { }
 ?>
 <!doctype html>
 <html lang="en">
@@ -210,6 +265,25 @@ while($r=$res->fetch_assoc()){ $rows[]=$r; }
                 <a class="btn btn-red" href="/APLX/frontend/admin/service_tabs.php" style="background-color: #ef4444; color: white; border: 1px solid #dc2626;">Cancel</a>
               <?php endif; ?>
             </div>
+          </form>
+          <hr style="margin:14px 0; border:0; border-top:1px solid var(--border)">
+          <form class="stack" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+            <input type="hidden" name="_mode" value="save_bg">
+            <label>Section Background Image URL<input type="text" name="bg_image_url" placeholder="https://..." value="<?php echo h($stSetting['bg_image_url'] ?? ''); ?>"></label>
+            <label>Or Upload Background Image<input type="file" name="bg_file" accept="image/*"></label>
+            <?php if (!empty($stSetting['bg_image_url'])): ?>
+              <img src="<?php echo h($stSetting['bg_image_url']); ?>" alt="Preview" style="max-width:100%;max-height:180px;border:1px solid var(--border);border-radius:8px;display:block">
+            <?php endif; ?>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn" type="submit">Save Background</button>
+              <a class="btn btn-outline" href="/APLX/frontend/index.php" target="_blank">View Site</a>
+            </div>
+          </form>
+          <form method="post" onsubmit="return confirm('Remove background image?');" style="margin-top:8px; display:flex; justify-content:flex-end; gap:8px;">
+            <input type="hidden" name="csrf" value="<?php echo csrf_token(); ?>">
+            <input type="hidden" name="_mode" value="clear_bg">
+            <button class="btn btn-outline" type="submit" style="border-color:#ef4444;color:#ef4444">Remove Background</button>
           </form>
         </div>
       </div>

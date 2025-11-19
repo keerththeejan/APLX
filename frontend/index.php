@@ -107,6 +107,14 @@
         $row = $a->fetch_assoc();
         if ($row) { $about = array_merge($about, $row); }
       }
+      // Load About background (single row id=1)
+      $aboutBgUrl = '';
+      try {
+        if ($ab = $conn->query("SELECT bg_image_url FROM about_bg_settings WHERE id=1")) {
+          $row = $ab->fetch_assoc();
+          if ($row && !empty($row['bg_image_url'])) { $aboutBgUrl = (string)$row['bg_image_url']; }
+        }
+      } catch (Throwable $e) { /* ignore */ }
       // Load why-best section (single row id=1)
       $why = [
         'header_title' => 'Why we are considered the best in business',
@@ -122,6 +130,14 @@
         $row = $w->fetch_assoc();
         if ($row) { $why = array_merge($why, $row); }
       }
+      // Load Services Tabs background (single row id=1)
+      $stBg = '';
+      try {
+        if ($sb = $conn->query("SELECT bg_image_url FROM services_tabs_settings WHERE id=1")) {
+          $row = $sb->fetch_assoc();
+          if ($row && !empty($row['bg_image_url'])) { $stBg = (string)$row['bg_image_url']; }
+        }
+      } catch (Throwable $e) { /* ignore */ }
     } catch (Throwable $e) { /* ignore, fallback to static */ }
   ?>
   <div class="spotlight-layer" id="spotlight"></div>
@@ -157,7 +173,7 @@
           <a id="heroCta1" class="btn btn-primary" href="/APLX/frontend/customer/register.php" style="text-decoration:none;">
             <?php echo htmlspecialchars(($heroFirst['cta1_text'] ?? 'Get Started') ?: 'Get Started'); ?>
           </a>
-          <a id="heroCta2" class="btn btn-secondary" href="<?php echo htmlspecialchars(($heroFirst['cta2_link'] ?? '#') ?: '#'); ?>" style="text-decoration:none;">
+          <a id="heroCta2" class="btn btn-secondary" href="#siteFooter" style="text-decoration:none;">
             <?php echo htmlspecialchars(($heroFirst['cta2_text'] ?? 'Learn More') ?: 'Learn More'); ?>
           </a>
         </div>
@@ -211,7 +227,7 @@
     </section>
 
 <!-- Services Tabs (left list + right image with red overlay) -->
-    <section class="services-tabs" id="servicesTabs">
+    <section class="services-tabs" id="servicesTabs" <?php if (!empty($stBg)) { echo 'style="--st-bg: url(' . "'" . htmlspecialchars($stBg) . "'" . ')"'; } ?>>
       <div class="container">
         <div class="st-grid">
           <?php
@@ -286,7 +302,7 @@
     </div>
 
     <!-- Transport system + secure packaging section with two feature bullets (dynamic) -->
-    <section class="about-us">
+    <section class="about-us" <?php if (!empty($aboutBgUrl)) { echo 'style="--about-bg: url(' . "'" . htmlspecialchars($aboutBgUrl) . "'" . ')"'; } ?>>
       <div class="container">
         <div class="about-content">
           <div class="about-image reveal stagger-1">
@@ -610,7 +626,7 @@
       </div>
     </section>
   </main>
-  <footer class="footer">
+  <footer id="siteFooter" class="footer">
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col">

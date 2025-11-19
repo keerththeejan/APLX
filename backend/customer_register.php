@@ -59,6 +59,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Ignore failure silently in UI; optionally log in future
             @send_mail($email, $subject, $htmlBody);
 
+            // Notify admin about the new customer registration
+            try {
+                // Ensure admin mailbox table exists
+                $conn->query("CREATE TABLE IF NOT EXISTS admin_mailbox (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    direction ENUM('in','out') NOT NULL,
+                    from_email VARCHAR(255) NOT NULL,
+                    to_email VARCHAR(255) NOT NULL,
+                    subject VARCHAR(255) NOT NULL,
+                    body TEXT NOT NULL,
+                    reply_to_id INT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_dir_created (direction, created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+                $adminEmail = $SUPPORT_EMAIL ?? 'admin@localhost';
+                $adminSubject = 'New customer registered: ' . $name;
+                $adminBody = '<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#111">'
+                    . '<h3 style="margin:0 0 10px">New customer registration</h3>'
+                    . '<p><strong>Name:</strong> ' . h($name) . '</p>'
+                    . '<p><strong>Email:</strong> ' . h($email) . '</p>'
+                    . ($phone ? '<p><strong>Phone:</strong> ' . h($phone) . '</p>' : '')
+                    . ($address ? '<p><strong>Address:</strong> ' . h($address) . '</p>' : '')
+                    . '<p><strong>District/Province:</strong> ' . h($district) . ', ' . h($province) . '</p>'
+                    . '</div>';
+                @send_mail($adminEmail, $adminSubject, $adminBody);
+
+                // Log inbound message to admin mailbox (from customer to admin)
+                $dir = 'in'; $from = $email; $to = $adminEmail; $subj = $adminSubject; $body = strip_tags($adminBody);
+                $ins = $conn->prepare('INSERT INTO admin_mailbox(direction, from_email, to_email, subject, body, reply_to_id) VALUES (?,?,?,?,?,NULL)');
+                $ins->bind_param('sssss', $dir, $from, $to, $subj, $body);
+                $ins->execute();
+            } catch (Throwable $e) {
+                // no-op
+            }
+
             $msg = 'Registration successful. You can now log in.';
         }
     }
