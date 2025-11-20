@@ -199,6 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadNotifications(){
       try{
+        // Best-effort sync of inbound mailbox before loading list
+        try { await fetch('/APLX/backend/admin/mailbox_sync.php', { method:'POST', cache:'no-store' }); } catch(_){ }
         // Preferred API endpoint; adjust if your backend differs
         const res = await fetch('/APLX/backend/admin/notifications.php?api=1', { cache:'no-store' });
         if (!res.ok) throw new Error('HTTP '+res.status);
@@ -220,13 +222,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = escapeHtml(n.title || n.type || 'Notification');
         const msg = escapeHtml(n.message || n.body || '');
         const time = escapeHtml(n.created_at || n.time || '');
-        return `<li>
+        const id = String(n.id||'');
+        const src = String(n.source||'');
+        return `<li data-id="${id}" data-source="${src}" class="notif-item">
           <div class="desc"><strong>${title}</strong>${msg?` — ${msg}`:''}</div>
           <div class="time muted" style="font-size:12px">${time}</div>
         </li>`;
       }).join('');
+
+      // Attach click to open detail for mailbox items
+      notifList.querySelectorAll('.notif-item').forEach(li => {
+        li.addEventListener('click', async () => {
+          const id = li.getAttribute('data-id');
+          const src = li.getAttribute('data-source');
+          if (src !== 'admin_mailbox' || !id) return;
+          try{
+            const res = await fetch(`/APLX/backend/admin/mailbox_get.php?id=${encodeURIComponent(id)}`, { cache:'no-store' });
+            if (!res.ok) throw new Error('HTTP '+res.status);
+            const data = await res.json();
+            if (data && data.ok && data.item){
+              showMailboxDetail(data.item);
+            }
+          }catch(_){ /* ignore */ }
+        });
+      });
     }
 
+    // Simple detail modal for full mailbox view
+    const mbModal = document.createElement('div');
+    mbModal.className = 'modal-backdrop';
+    mbModal.setAttribute('aria-hidden','true');
+    mbModal.innerHTML = `
+      <div class="modal-panel" style="max-width:720px">
+        <div class="modal-header">
+          <h3 class="modal-title">Mail</h3>
+          <button class="modal-close" id="mbDetailClose" type="button" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="mbDetailMeta" class="muted" style="margin-bottom:8px"></div>
+          <div id="mbDetailBody" style="white-space:pre-wrap"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(mbModal);
+    function showMailboxDetail(item){
+      try{
+        const meta = mbModal.querySelector('#mbDetailMeta');
+        const body = mbModal.querySelector('#mbDetailBody');
+        const from = escapeHtml(item.from_email||'');
+        const to = escapeHtml(item.to_email||'');
+        const sub = escapeHtml(item.subject||'');
+        const when = escapeHtml(item.created_at||'');
+        meta.textContent = `${from} → ${to} • ${sub} • ${when}`;
+        // show HTML as text fallback; if stored HTML, strip tags server-side in preview already
+        body.textContent = String(item.body||'');
+        mbModal.classList.add('open');
+        mbModal.setAttribute('aria-hidden','false');
+        document.body.style.overflow='hidden';
+      }catch(_){ }
+    }
+    mbModal.addEventListener('click', (e)=>{ if(e.target===mbModal) closeMb(); });
+    function closeMb(){ mbModal.classList.remove('open'); mbModal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
     document.addEventListener('click', closeAll);
     loadNotifications();
   }

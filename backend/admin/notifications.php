@@ -174,7 +174,7 @@ try {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
             $lim = $all ? 200 : $limit;
             $off = $all ? 0 : $offset;
-            $sqlB = 'SELECT id, direction, from_email, to_email, subject, created_at FROM admin_mailbox ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?';
+            $sqlB = 'SELECT id, direction, from_email, to_email, subject, body, created_at FROM admin_mailbox ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?';
             $stmtB = $conn->prepare($sqlB);
             $stmtB->bind_param('ii', $lim, $off);
             $stmtB->execute();
@@ -183,11 +183,12 @@ try {
                 $dir = strtolower((string)($b['direction'] ?? ''));
                 $title = ($dir === 'in' ? 'Incoming' : 'Outgoing') . ': ' . ($b['subject'] ?? '');
                 $msg = ($b['from_email'] ?? '') . ' → ' . ($b['to_email'] ?? '');
+                $preview = trim(mb_substr(strip_tags((string)($b['body'] ?? '')), 0, 160));
                 $mboxItems[] = [
                     'id' => (int)$b['id'],
                     'type' => ($dir === 'in' ? 'Incoming Mail' : 'Outgoing Mail'),
                     'title' => $title,
-                    'message' => $msg,
+                    'message' => $msg . ($preview ? (' • ' . $preview) : ''),
                     'created_at' => $b['created_at'] ?? null,
                     'source' => 'admin_mailbox'
                 ];

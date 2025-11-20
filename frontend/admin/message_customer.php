@@ -60,7 +60,7 @@
           <a class="btn btn-secondary" href="/APLX/frontend/admin/dashboard.php">Cancel</a>
           <button class="btn" type="submit">Continue to Send</button>
         </div>
-      <div class="muted" style="margin-top:10px">Alternatively, you can open the full backend page: <a class="btn btn-sm btn-outline" href="/APLX/backend/admin/message_customer.php">Open Live</a></div>
+     
     </section>
   </main>
 </div>
@@ -71,10 +71,21 @@
     const params = new URLSearchParams(window.location.search);
     const sent = params.get('sent');
     const to = params.get('to') || '';
+    const err = params.get('err');
     const box = document.getElementById('sendNotice');
     if (sent === '1' && box){
+      const msg = to ? (`Mail sent to ${to}`) : 'Mail sent';
       box.style.display = 'block';
-      box.textContent = to ? (`Mail sent to ${to}`) : 'Mail sent';
+      box.textContent = msg;
+      try { alert(msg); } catch(_) {}
+    }
+    if (err){
+      try { alert(err); } catch(_) {}
+    }
+    // Clean URL after showing popups
+    if (sent === '1' || err){
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
     }
   })();
   // Lightweight autocomplete for Customer Name -> fills ID and Email

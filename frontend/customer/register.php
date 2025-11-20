@@ -211,12 +211,9 @@
     if (status === 'ok') box.classList.add('reg-ok');
     else box.classList.add('reg-fail');
     box.style.display = '';
-    // Clean the URL so message doesn't persist on refresh
+    try { alert(msg); } catch(_) {}
     const cleanUrl = window.location.origin + window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
   }
 })();
-
-
-
-
+</script>

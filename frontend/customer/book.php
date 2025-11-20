@@ -73,6 +73,7 @@
             <div class="booking-grid">
               <input type="text" name="sender_name" placeholder="Sender Name" required>
               <input type="tel" name="sender_phone" placeholder="Sender Phone" required>
+              <input type="email" name="sender_email" placeholder="Sender Email (Gmail)" required>
               <input type="text" name="receiver_name" placeholder="Receiver Name" required>
               <input type="tel" name="receiver_phone" placeholder="Receiver Phone" required>
               <input type="text" name="origin" placeholder="Origin City" required>

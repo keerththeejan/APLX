@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   tracking_number VARCHAR(32) NULL,
   sender_name VARCHAR(120) NOT NULL,
+  sender_email VARCHAR(150) NOT NULL,
   receiver_name VARCHAR(120) NOT NULL,
   origin VARCHAR(120) NOT NULL,
   destination VARCHAR(120) NOT NULL,

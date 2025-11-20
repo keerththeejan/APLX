@@ -3,7 +3,7 @@
 // Simple mail helper using PHP's mail(). For reliable delivery, configure SMTP in php.ini
 // or replace this helper with PHPMailer/SMTP as needed.
 
-function send_mail($to, $subject, $htmlBody, $textBody = '') {
+function send_mail($to, $subject, $htmlBody, $textBody = '', $replyToEmail = null, $replyToName = null) {
     // Basic headers for HTML email
     $headers = [];
     $headers[] = 'MIME-Version: 1.0';
@@ -12,7 +12,9 @@ function send_mail($to, $subject, $htmlBody, $textBody = '') {
     $fromEmail = $GLOBALS['SUPPORT_EMAIL'] ?? 'no-reply@localhost';
     $fromName  = $GLOBALS['COMPANY_NAME'] ?? 'Parcel Transport';
     $headers[] = 'From: ' . encode_addr($fromName, $fromEmail);
-    $headers[] = 'Reply-To: ' . encode_addr($fromName, $fromEmail);
+    $rtEmail = $replyToEmail ?: $fromEmail;
+    $rtName  = $replyToName  ?: $fromName;
+    $headers[] = 'Reply-To: ' . encode_addr($rtName, $rtEmail);
     $headers[] = 'X-Mailer: PHP/' . phpversion();
 
     // Fallback plain text body if not provided
@@ -45,6 +47,7 @@ function infer_recipient_type($to){
     if (class_exists('PHPMailer\\PHPMailer\\PHPMailer') && $smtpHost) {
         try {
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->CharSet = 'UTF-8';
             $mail->isSMTP();
             $mail->Host = $smtpHost;
             $mail->Port = $smtpPort ?: (($smtpSecure === 'ssl') ? 465 : 587);
@@ -59,7 +62,7 @@ function infer_recipient_type($to){
 
             $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($to);
-            $mail->addReplyTo($fromEmail, $fromName);
+            $mail->addReplyTo($rtEmail, $rtName);
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $htmlBody;
