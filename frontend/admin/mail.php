@@ -30,6 +30,8 @@
     .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:4px;border:none;cursor:pointer;font-size:16px}
     .btn-blue{background:#3b82f6;color:#fff}
     .btn-red{background:#ef4444;color:#fff}
+    /* Customer incoming message highlight in View modal */
+    .mb-view-in #mbViewBody{ color:#60a5fa }
   </style>
 </head>
 <body>
@@ -103,6 +105,7 @@
             <th>To</th>
             <th>Subject</th>
             <th>Time</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="mbTbody"></tbody>
@@ -333,14 +336,20 @@
   const pgInfo = document.getElementById('mb_pgInfo');
   let page = 1, limit = 12, total = 0;
 
+  // Force inbox to show only customer-sent (incoming) messages
+  try { if (fDir) { fDir.value = 'in'; fDir.disabled = true; } } catch(_){}
+
   async function load(){
     const params = new URLSearchParams({ page, limit });
-    const dir = (fDir.value||'').trim();
+    // Always filter by incoming direction (customer-sent)
+    const dir = 'in';
     const search = (q.value||'').trim();
     if (dir) params.set('direction', dir);
     if (search) params.set('search', search);
+    // Request only messages sent from known customer emails
+    params.set('customer_only', '1');
     const res = await fetch('/APLX/backend/admin/admin_mailbox.php?' + params.toString());
-    if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5" class="muted" style="background:transparent;border:none;padding:8px 12px">Failed to load</td></tr>'; return; }
+    if (!res.ok) { tbody.innerHTML = '<tr><td colspan="6" class="muted" style="background:transparent;border:none;padding:8px 12px">Failed to load</td></tr>'; return; }
     const data = await res.json();
     total = data.total || 0;
     renderRows(data.items||[]);
@@ -352,6 +361,14 @@
   function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;", ">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
   function formatDT(s){ if (!s) return ''; const d = new Date((s||'').replace(' ','T')); if (isNaN(d)) return esc(s); return d.toLocaleString(); }
 
+  const mbCache = new Map(); // id -> {item, ts}
+  function prefetchView(id){
+    if (!id || mbCache.has(id)) return;
+    fetch(`/APLX/backend/admin/mailbox_get.php?id=${encodeURIComponent(id)}`, { cache:'no-store', credentials:'same-origin' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.ok && d.item){ mbCache.set(id, { item: d.item, ts: Date.now() }); } })
+      .catch(()=>{});
+  }
   function renderRows(items){
     tbody.innerHTML = items.map(r => `
       <tr>
@@ -360,18 +377,154 @@
         <td>${esc(r.to_email)}</td>
         <td>${esc(r.subject)}</td>
         <td>${formatDT(r.created_at)}</td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon btn-blue mb-view" data-id="${esc(r.id)}" title="View">👁️</button>
+            <button class="btn-icon btn-red mb-del" data-id="${esc(r.id)}" title="Delete">🗑️</button>
+          </div>
+        </td>
       </tr>
     `).join('');
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="muted" style="background:transparent;border:none;padding:8px 12px">No mailbox items</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="muted" style="background:transparent;border:none;padding:8px 12px">No mailbox items</td></tr>`;
     }
+    // Attach lightweight hover prefetch so click is instant
+    tbody.querySelectorAll('.mb-view').forEach(btn => {
+      const id = parseInt(btn.getAttribute('data-id')||'0',10);
+      if (!id) return;
+      btn.addEventListener('mouseenter', () => prefetchView(id), { passive: true });
+      btn.addEventListener('touchstart', () => prefetchView(id), { passive: true });
+    });
   }
 
   btnSearch.addEventListener('click', ()=>{ page=1; load(); });
   q.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); page=1; load(); }});
-  fDir.addEventListener('change', ()=>{ page=1; load(); });
+  // Direction is locked to Incoming; no change handler needed
   prevPg.addEventListener('click', ()=>{ if(page>1){ page--; load(); }});
   nextPg.addEventListener('click', ()=>{ page++; load(); });
+
+  // View Modal for mailbox item
+  const mbModal = document.createElement('div');
+  mbModal.className = 'modal-backdrop';
+  mbModal.setAttribute('aria-hidden','true');
+  // Force center for this modal regardless of global bottom-sheet style
+  try { mbModal.style.display='none'; mbModal.style.alignItems='center'; mbModal.style.justifyContent='center'; } catch(_){ }
+  mbModal.innerHTML = `
+    <div class="modal-panel" style="max-width:900px; max-height:80vh; display:flex; flex-direction:column;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="mbViewTitle">Mail</h3>
+        <button class="modal-close" id="mbViewClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="overflow:auto; flex:1; display:flex; flex-direction:column; gap:10px;">
+        <div id="mbViewMeta" class="muted" style="margin-bottom:4px"></div>
+        <pre id="mbViewBody" style="white-space:pre-wrap; margin:0"></pre>
+      </div>
+    </div>`;
+  document.body.appendChild(mbModal);
+  function openMb(){ mbModal.classList.add('open'); mbModal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; try{ mbModal.style.display='flex'; }catch(_){ } }
+  function closeMb(){ mbModal.classList.remove('open'); mbModal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; try{ mbModal.style.display='none'; }catch(_){ } }
+  mbModal.addEventListener('click', (e)=>{ if(e.target===mbModal) closeMb(); });
+  mbModal.querySelector('#mbViewClose').addEventListener('click', closeMb);
+
+  // Local confirm modal for deletes
+  const confirm = document.createElement('div');
+  confirm.className = 'modal-backdrop';
+  confirm.setAttribute('aria-hidden','true');
+  confirm.innerHTML = `
+    <div class="modal-panel" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+        <button class="modal-close" id="mbConfirmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="mbConfirmMsg" style="margin-bottom:12px">Delete this message?</div>
+        <div class="form-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="btn" id="mbConfirmOk">OK</button>
+          <button type="button" class="btn btn-danger" id="mbConfirmCancel">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(confirm);
+  function openConfirm(){ confirm.classList.add('open'); confirm.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeConfirm(){ confirm.classList.remove('open'); confirm.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function showConfirm(){
+    openConfirm();
+    return new Promise((resolve)=>{
+      const ok = ()=>{ cleanup(); closeConfirm(); resolve(true); };
+      const cancel = ()=>{ cleanup(); closeConfirm(); resolve(false); };
+      const onBackdrop = (e)=>{ if(e.target===confirm) cancel(); };
+      function cleanup(){
+        document.getElementById('mbConfirmOk').removeEventListener('click', ok);
+        document.getElementById('mbConfirmCancel').removeEventListener('click', cancel);
+        document.getElementById('mbConfirmClose').removeEventListener('click', cancel);
+        confirm.removeEventListener('click', onBackdrop);
+      }
+      document.getElementById('mbConfirmOk').addEventListener('click', ok);
+      document.getElementById('mbConfirmCancel').addEventListener('click', cancel);
+      document.getElementById('mbConfirmClose').addEventListener('click', cancel);
+      confirm.addEventListener('click', onBackdrop);
+      window.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ cancel(); window.removeEventListener('keydown', esc); } });
+    });
+  }
+
+  // Delegate actions
+  tbody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = parseInt(btn.getAttribute('data-id')||'0',10);
+    if (!id) return;
+    if (btn.classList.contains('mb-view')){
+      try{
+        // If cached, show instantly
+        let it = null;
+        const cached = mbCache.get(id);
+        if (cached && cached.item){ it = cached.item; }
+        if (it){
+          const meta = `${esc(it.from_email||'')} → ${esc(it.to_email||'')} • ${formatDT(it.created_at||'')}`;
+          const title = esc(it.subject||'Mail');
+          const titleEl = mbModal.querySelector('#mbViewTitle');
+          if (titleEl) titleEl.textContent = title;
+          mbModal.querySelector('#mbViewMeta').textContent = meta;
+          mbModal.querySelector('#mbViewBody').textContent = String(it.body||'');
+          const panel = mbModal.querySelector('.modal-panel');
+          if (panel){ const isIn = String(it.direction||'').toLowerCase()==='in'; panel.classList.toggle('mb-view-in', !!isIn); }
+          openMb();
+        } else {
+          // Optimistic open while fetching
+          const titleEl = mbModal.querySelector('#mbViewTitle');
+          if (titleEl) titleEl.textContent = 'Mail';
+          mbModal.querySelector('#mbViewMeta').textContent = '';
+          mbModal.querySelector('#mbViewBody').textContent = 'Loading...';
+          openMb();
+        }
+
+        // Always fetch fresh in background to update modal/cache
+        const res = await fetch(`/APLX/backend/admin/mailbox_get.php?id=${encodeURIComponent(id)}`, { cache:'no-store', credentials:'same-origin' });
+        if (res.ok){
+          let data = null; try { data = await res.json(); } catch(_){ }
+          if (data && data.ok && data.item){
+            mbCache.set(id, { item: data.item, ts: Date.now() });
+            const it2 = data.item;
+            const meta2 = `${esc(it2.from_email||'')} → ${esc(it2.to_email||'')} • ${formatDT(it2.created_at||'')}`;
+            const title2 = esc(it2.subject||'Mail');
+            const titleEl2 = mbModal.querySelector('#mbViewTitle');
+            if (titleEl2) titleEl2.textContent = title2;
+            mbModal.querySelector('#mbViewMeta').textContent = meta2;
+            mbModal.querySelector('#mbViewBody').textContent = String(it2.body||'');
+            const panel2 = mbModal.querySelector('.modal-panel');
+            if (panel2){ const isIn2 = String(it2.direction||'').toLowerCase()==='in'; panel2.classList.toggle('mb-view-in', !!isIn2); }
+          }
+        }
+      }catch(_){ }
+    } else if (btn.classList.contains('mb-del')){
+      const ok = await showConfirm();
+      if (!ok) return;
+      try{
+        const r = await fetch('/APLX/backend/admin/admin_mailbox.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', id }) });
+        if (r.ok){ load(); }
+      }catch(_){ }
+    }
+  });
 
   load();
 })();

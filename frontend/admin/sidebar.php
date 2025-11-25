@@ -1,4 +1,5 @@
 <?php /* Admin Sidebar partial */ 
+if (!defined('SKIP_MIGRATIONS')) define('SKIP_MIGRATIONS', true);
 require_once __DIR__ . '/../../backend/init.php';
 $u = $_SESSION['user'] ?? null;
 $name = trim((string)($u['name'] ?? 'Admin'));

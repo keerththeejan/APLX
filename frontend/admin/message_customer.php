@@ -26,6 +26,7 @@
     .help-green{ color:#22c55e; }
   </style>
 </head>
+<body>
 <div class="layout">
   <aside id="sidebar"></aside>
   <main class="content">
@@ -60,7 +61,7 @@
           <a class="btn btn-secondary" href="/APLX/frontend/admin/dashboard.php">Cancel</a>
           <button class="btn" type="submit">Continue to Send</button>
         </div>
-     
+      </form>
     </section>
   </main>
 </div>

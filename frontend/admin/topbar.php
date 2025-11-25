@@ -1,3 +1,4 @@
+<?php if (!defined('SKIP_MIGRATIONS')) define('SKIP_MIGRATIONS', true); require_once __DIR__ . '/../../backend/init.php'; ?>
 <style>
   .hamburger{background:transparent;border:2px solid #22c55e;color:#ffffff;padding:10px;border-radius:10px;box-shadow:none;font-size:26px;line-height:1;cursor:pointer}
   .hamburger:hover{filter:brightness(1.1)}

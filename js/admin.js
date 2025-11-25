@@ -1,21 +1,86 @@
 document.addEventListener('DOMContentLoaded', () => {
   // While loading partials, hide layout to prevent flash/jumps
   document.body.setAttribute('data-admin-loading','1');
-  // Load partials
-  Promise.all([
-    fetch('/APLX/frontend/admin/sidebar.php', { cache:'no-store' }).then(r => r.text()).then(html => {
-      const host = document.getElementById('sidebar');
-      if (host) host.outerHTML = html;
-    }),
-    fetch('/APLX/frontend/admin/topbar.php', { cache:'no-store' }).then(r => r.text()).then(html => {
-      const host = document.getElementById('topbar');
-      if (host) host.outerHTML = html;
-    })
-  ]).then(() => {
+  // Safety: auto-clear loading flag in case of any unexpected error
+  setTimeout(() => { document.body.removeAttribute('data-admin-loading'); }, 2000);
+  // Also clear once window fully loads, as an extra guarantee
+  window.addEventListener('load', () => {
+    document.body.removeAttribute('data-admin-loading');
+  });
+  // Load partials (sequential to avoid PHP session lock on parallel requests)
+  (async function loadPartials(){
+    async function fetchWithTimeout(url, opts={}, ms=3500){
+      const ctrl = new AbortController();
+      const t = setTimeout(()=> ctrl.abort(), ms);
+      try{
+        const res = await fetch(url, { cache:'no-store', credentials:'same-origin', signal: ctrl.signal, ...opts });
+        return res;
+      } finally { clearTimeout(t); }
+    }
+    try{
+      // Sidebar first
+      const s = await fetchWithTimeout('/APLX/frontend/admin/sidebar.php');
+      if (s.ok){
+        const html = await s.text();
+        const host = document.getElementById('sidebar');
+        if (host) host.outerHTML = html;
+      }
+      // Then topbar
+      const t = await fetchWithTimeout('/APLX/frontend/admin/topbar.php');
+      if (t.ok){
+        const html = await t.text();
+        const host = document.getElementById('topbar');
+        if (host) host.outerHTML = html;
+      }
+    } catch(_) { /* ignore */ }
+    // Fallbacks: if partials missing, inject minimal markup
+    try{
+      if (!document.querySelector('.sidebar')){
+        const sideHost = document.getElementById('sidebar');
+        if (sideHost){
+          sideHost.outerHTML = `
+            <aside class="sidebar">
+              <div>
+                <div class="side-header"><div class="logo">📦</div><div class="app">Admin Panel</div></div>
+                <nav>
+                  <a href="/APLX/frontend/admin/dashboard.php"><span class="icon">🏠</span><span>Dashboard</span></a>
+                  <a href="/APLX/frontend/admin/customers.php"><span class="icon">👥</span><span>Customers</span></a>
+                  <a href="/APLX/frontend/admin/mail.php"><span class="icon">✉️</span><span>Mail</span></a>
+                  <a href="/APLX/frontend/admin/shipments.php"><span class="icon">📦</span><span>Shipments</span></a>
+                  <a href="/APLX/frontend/admin/booking.php"><span class="icon">📝</span><span>Bookings</span></a>
+                  <a href="/APLX/frontend/admin/analytics.php"><span class="icon">📊</span><span>Analytics</span></a>
+                  <a href="/APLX/frontend/admin/settings.php"><span class="icon">⚙️</span><span>Settings</span></a>
+                </nav>
+              </div>
+            </aside>`;
+        }
+      }
+      if (!document.querySelector('.topbar')){
+        const topHost = document.getElementById('topbar');
+        if (topHost){
+          topHost.outerHTML = `
+            <div class="topbar">
+              <div style="display:flex;align-items:center;gap:10px">
+                <button class="hamburger" id="toggleSidebar" title="Toggle sidebar">≡</button>
+                <h1 id="pageTitle">Dashboard</h1>
+                <div id="pinSlot" class="pin-slot" aria-live="polite"></div>
+              </div>
+              <div class="right" style="position:relative">
+                <div class="clock" id="lk-clock">Loading...</div>
+                <div class="icon-btn notif" id="notifBtn" title="Notifications">🔔<span class="notif-badge" id="notifBadge" aria-hidden="true">0</span></div>
+                <div class="icon-btn" id="profileBtn" title="Admin Profile">👤</div>
+              </div>
+            </div>`;
+        }
+      }
+    }catch(_){ }
+  })().then(() => {
     // After both loaded, init behaviors
     initActiveAndTitle();
     initTopbarBehaviors();
     initSettingsPinBehavior();
+    enablePjaxNav();
+    enableNavPrefetch();
     // Reveal layout
     document.body.removeAttribute('data-admin-loading');
   }).catch(console.error);
@@ -29,16 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Treat specific pages as Settings
     try{
       const curPath = (window.location.pathname || '').toLowerCase();
-      if (/\/frontend\/admin\/(services|gallery|contact)\.html$/.test(curPath)) {
-        const settings = Array.from(links).find(a => (a.getAttribute('href')||'').toLowerCase().endsWith('/frontend/admin/settings.html'));
+      if (/\/frontend\/admin\/(services|gallery|contact)\.(php|html)$/.test(curPath)) {
+        const settings = Array.from(links).find(a => (a.getAttribute('href')||'').toLowerCase().endsWith('/frontend/admin/settings.php') || (a.getAttribute('href')||'').toLowerCase().endsWith('/frontend/admin/settings.html'));
         if (settings) { settings.classList.add('active'); activeSet = true; }
       }
     }catch(_){ }
     links.forEach(a => {
       try {
         const aUrl = new URL(a.href, window.location.origin);
-        const aPath = aUrl.pathname.replace(/\/index\.html$/, '/');
-        const cur = window.location.pathname.replace(/\/index\.html$/, '/');
+        const aPath = aUrl.pathname.replace(/\/index\.(html|php)$/, '/');
+        const cur = window.location.pathname.replace(/\/index\.(html|php)$/, '/');
         if (cur === aPath) {
           a.classList.add('active');
           activeSet = true;
@@ -53,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try{
           const aFile = (new URL(a.href, window.location.origin).pathname.split('/').pop() || '').toLowerCase();
           if (aFile && aFile === curFile) { a.classList.add('active'); activeSet = true; }
-        }catch(_){}
+        }catch(_){ }
       });
     }
     // If not matched, fallback by title text
@@ -73,6 +138,140 @@ document.addEventListener('DOMContentLoaded', () => {
     btn && btn.addEventListener('click', () => {
       document.body.classList.toggle('collapsed');
     });
+  }
+
+  // Execute scripts present anywhere in the fetched document (head/body), skipping admin.js itself
+  function executePageScripts(doc){
+    try{
+      const all = doc.querySelectorAll('script');
+      all.forEach((s) => {
+        const src = (s.getAttribute('src')||'').toLowerCase();
+        if (src.includes('/aplx/js/admin.js')) return; // avoid re-injecting self
+        const ns = document.createElement('script');
+        for (const attr of s.attributes){ ns.setAttribute(attr.name, attr.value); }
+        if (s.src){ ns.src = s.src; } else { ns.textContent = s.textContent || ''; }
+        document.body.appendChild(ns);
+        ns.parentNode && ns.parentNode.removeChild(ns);
+      });
+    }catch(_){ }
+  }
+
+  // Lightweight PJAX navigation for sidebar links
+  function enablePjaxNav(){
+    const nav = document.querySelector('.sidebar nav');
+    if (!nav) return;
+    nav.addEventListener('click', (e)=>{
+      const a = e.target.closest('a');
+      if (!a) return;
+      const href = a.getAttribute('href');
+      if (!href) return;
+      // Same-origin only
+      try{
+        const url = new URL(href, window.location.origin);
+        if (url.origin !== window.location.origin) return; // allow default
+        e.preventDefault();
+        pjaxNavigate(url.toString(), false);
+      }catch(_){ /* ignore */ }
+    });
+    window.addEventListener('popstate', () => {
+      pjaxNavigate(window.location.href, true);
+    });
+  }
+
+  async function pjaxNavigate(href, replace){
+    try{
+      // Use prefetched response if present
+      const cacheKey = new URL(href, window.location.origin).toString();
+      let htmlText = prefetchCache.get(cacheKey);
+      let res;
+      if (!htmlText){
+        res = await fetch(href, { cache:'no-store' });
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        htmlText = await res.text();
+      }
+      const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+      const newMain = doc.querySelector('main.content');
+      const curMain = document.querySelector('main.content');
+      if (newMain && curMain){
+        curMain.innerHTML = newMain.innerHTML;
+      } else {
+        // Missing expected content -> full load to ensure page works (e.g., login redirect or different layout)
+        window.location.href = href; return;
+      }
+      const t = doc.querySelector('title');
+      if (t) document.title = t.textContent || document.title;
+      const url = new URL(href, window.location.origin);
+      if (replace){ history.replaceState({url: url.pathname+url.search}, '', url.pathname+url.search); }
+      else { history.pushState({url: url.pathname+url.search}, '', url.pathname+url.search); }
+      // Reload topbar partial for the new page
+      try{
+        const top = await fetch('/APLX/frontend/admin/topbar.php', { cache:'no-store' });
+        const topHtml = await top.text();
+        const host = document.getElementById('topbar');
+        if (host) host.outerHTML = topHtml;
+      }catch(_){ }
+      // Re-init behaviors for new content
+      initActiveAndTitle();
+      initTopbarBehaviors();
+      initSettingsPinBehavior();
+      // Execute inline scripts from the fetched main content
+      if (newMain){ executeScriptsFrom(newMain); }
+      // Also execute any page scripts present outside main (e.g., in head or after layout), excluding admin.js
+      executePageScripts(doc);
+    }catch(err){
+      console.error('Navigation failed', err);
+      window.location.href = href; // fallback to full load
+    }finally{
+      // Always clear potential loading indicators
+      document.body.removeAttribute('data-admin-loading');
+    }
+  }
+
+  function executeScriptsFrom(container){
+    try{
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach((s) => {
+        const ns = document.createElement('script');
+        // Copy attributes
+        for (const attr of s.attributes){ ns.setAttribute(attr.name, attr.value); }
+        if (s.src){
+          ns.src = s.src;
+        } else {
+          ns.textContent = s.textContent || '';
+        }
+        document.body.appendChild(ns);
+        // Remove to keep DOM clean
+        ns.parentNode && ns.parentNode.removeChild(ns);
+      });
+    }catch(_){ /* ignore */ }
+  }
+
+  // Simple prefetch on hover for faster instant loads
+  const prefetchCache = new Map(); // url -> html string
+  function enableNavPrefetch(){
+    const nav = document.querySelector('.sidebar nav');
+    if (!nav) return;
+    nav.addEventListener('mouseenter', attachPrefetch, { once: true });
+    function attachPrefetch(){
+      nav.querySelectorAll('a[href]').forEach(a => {
+        a.addEventListener('mouseenter', () => prefetchLink(a), { passive: true });
+        a.addEventListener('touchstart', () => prefetchLink(a), { passive: true });
+      });
+    }
+  }
+  async function prefetchLink(a){
+    try{
+      const href = a.getAttribute('href');
+      if (!href) return;
+      const url = new URL(href, window.location.origin).toString();
+      if (prefetchCache.has(url)) return;
+      const r = await fetch(url, { cache:'no-store' });
+      if (!r.ok) return;
+      const html = await r.text();
+      prefetchCache.set(url, html);
+      // expire after 30s to avoid staleness
+      setTimeout(() => prefetchCache.delete(url), 30000);
+    }catch(_){ }
   }
 
   function initTopbarBehaviors() {
@@ -199,8 +398,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadNotifications(){
       try{
-        // Best-effort sync of inbound mailbox before loading list
-        try { await fetch('/APLX/backend/admin/mailbox_sync.php', { method:'POST', cache:'no-store' }); } catch(_){ }
+        // Best-effort sync of inbound mailbox before loading list with a short timeout
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 2500);
+          await fetch('/APLX/backend/admin/mailbox_sync.php', { method:'POST', cache:'no-store', signal: ctrl.signal });
+          clearTimeout(t);
+        } catch(_){ /* ignore sync failures/timeouts */ }
         // Preferred API endpoint; adjust if your backend differs
         const res = await fetch('/APLX/backend/admin/notifications.php?api=1', { cache:'no-store' });
         if (!res.ok) throw new Error('HTTP '+res.status);

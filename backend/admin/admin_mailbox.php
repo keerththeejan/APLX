@@ -26,6 +26,7 @@ try {
         // Filters
         $direction = strtolower(trim((string)($_GET['direction'] ?? '')));
         $search    = trim((string)($_GET['search'] ?? ''));
+        $customerOnly = (isset($_GET['customer_only']) && $_GET['customer_only'] !== '' && $_GET['customer_only'] !== '0');
         $page      = max(1, (int)($_GET['page'] ?? 1));
         $limit     = max(1, min(100, (int)($_GET['limit'] ?? 10)));
         $offset    = ($page - 1) * $limit;
@@ -42,6 +43,20 @@ try {
             $where[] = '(from_email LIKE CONCAT("%", ?, "%") OR to_email LIKE CONCAT("%", ?, "%") OR subject LIKE CONCAT("%", ?, "%"))';
             $types  .= 'sss';
             $params[] = $search; $params[] = $search; $params[] = $search;
+        }
+        // Optional: restrict to emails that belong to customers table
+        if ($customerOnly) {
+            // Detect customer table name: `customer` or `customers`
+            $custTable = null;
+            foreach (['customer','customers'] as $t) {
+                try {
+                    $chk = $conn->prepare("SELECT 1 FROM `{$t}` LIMIT 1");
+                    if ($chk) { $chk->execute(); $chk->close(); $custTable = $t; break; }
+                } catch (Throwable $e) { /* continue */ }
+            }
+            if ($custTable) {
+                $where[] = "from_email IN (SELECT email FROM `{$custTable}` WHERE email IS NOT NULL AND email <> '')";
+            }
         }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
@@ -61,12 +76,32 @@ try {
             $stmt2->bind_param('ii', $limit, $offset);
         }
         $stmt2->execute();
-        $r2 = $stmt2->get_result();
+        $res2 = $stmt2->get_result();
         $items = [];
-        while ($row = $r2->fetch_assoc()) { $items[] = $row; }
+        while ($row = $res2->fetch_assoc()) { $items[] = $row; }
         respond(['ok'=>true,'total'=>$total,'items'=>$items,'page'=>$page,'limit'=>$limit]);
     }
-
+    elseif ($method === 'POST') {
+        // Support JSON { action: 'delete', id } or form _method=DELETE
+        $raw = file_get_contents('php://input');
+        $json = null;
+        if ($raw && strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+            $json = json_decode($raw, true);
+        }
+        $action = isset($json['action']) ? (string)$json['action'] : (string)($_POST['action'] ?? '');
+        $id = isset($json['id']) ? (int)$json['id'] : (int)($_POST['id'] ?? 0);
+        $methodOverride = strtolower((string)($_POST['_method'] ?? ''));
+        if ($methodOverride === 'delete' || $action === 'delete') {
+            if ($id <= 0) respond(['ok'=>false,'error'=>'Invalid id'], 400);
+            $stmt = $conn->prepare("DELETE FROM admin_mailbox WHERE id = ?");
+            if (!$stmt) respond(['ok'=>false,'error'=>'Failed to prepare'], 500);
+            $stmt->bind_param('i', $id);
+            $ok = $stmt->execute();
+            $stmt->close();
+            if ($ok) respond(['ok'=>true]); else respond(['ok'=>false,'error'=>'Delete failed'], 500);
+        }
+        respond(['ok'=>false,'error'=>'Unsupported action'], 400);
+    }
     // Future: POST/DELETE for manual entries if needed
     respond(['error'=>'Method not allowed'], 405);
 } catch (Throwable $e) {
